@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozmo Robot Control</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Cozmo Robot Control</h1>
+            <div class="status-indicator">
+                <span id="connection-status" class="status-disconnected">Disconnected</span>
+            </div>
+        </header>
+        
+        <div class="content">
+            <div class="camera-container">
+                <h2>Camera Feed</h2>
+                <img id="camera-feed" src="placeholder-image.jpg" alt="Camera Feed">
+            </div>
+            
+            <div class="controls-container">
+                <div class="movement-controls">
+                    <h2>Movement</h2>
+                    <div class="control-pad">
+                        <button id="forward-btn" class="control-btn">▲</button>
+                        <button id="left-btn" class="control-btn">◀</button>
+                        <button id="stop-btn" class="control-btn">■</button>
+                        <button id="right-btn" class="control-btn">▶</button>
+                        <button id="backward-btn" class="control-btn">▼</button>
+                    </div>
+                </div>
+                
+                <div class="camera-controls">
+                    <h2>Camera Position</h2>
+                    <div class="slider-control">
+                        <label for="pan-slider">Pan</label>
+                        <input type="range" id="pan-slider" min="0" max="180" value="90">
+                    </div>
+                    <div class="slider-control">
+                        <label for="tilt-slider">Tilt</label>
+                        <input type="range" id="tilt-slider" min="0" max="180" value="90">
+                    </div>
+                </div>
+                
+                <div class="arm-controls">
+                    <h2>Arm Control</h2>
+                    <div class="slider-control">
+                        <label for="arm-slider">Arm Position</label>
+                        <input type="range" id="arm-slider" min="0" max="180" value="90">
+                    </div>
+                    <div class="button-group">
+                        <button id="pickup-btn" class="action-btn">Pick Up</button>
+                        <button id="drop-btn" class="action-btn">Drop</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sensor-data">
+                <h2>Sensor Data</h2>
+                <div class="data-point">
+                    <span>Gyroscope X:</span>
+                    <span id="gyro-x">0.00</span>
+                </div>
+                <div class="data-point">
+                    <span>Gyroscope Y:</span>
+                    <span id="gyro-y">0.00</span>
+                </div>
+                <div class="data-point">
+                    <span>Gyroscope Z:</span>
+                    <span id="gyro-z">0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

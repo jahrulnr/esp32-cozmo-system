@@ -1,0 +1,66 @@
+#pragma once
+
+// Camera configuration
+#define CAMERA_ENABLED true
+#define CAMERA_FRAME_SIZE FRAMESIZE_VGA
+#define CAMERA_QUALITY 10
+#define CAMERA_FPS 15
+
+// Utility examples configuration
+#define ENABLE_SPI_JSON_EXAMPLE false
+#define ENABLE_I2C_SCANNER_EXAMPLE false
+#define ENABLE_SSTRING_EXAMPLE false
+
+// Motor configuration
+#define MOTOR_ENABLED true
+#define MOTOR_SPEED_DEFAULT 200
+#define LEFT_MOTOR_PIN1 2
+#define LEFT_MOTOR_PIN2 4
+#define RIGHT_MOTOR_PIN1 14
+#define RIGHT_MOTOR_PIN2 0
+
+// Servo configuration
+#define SERVO_ENABLED true
+#define HEAD_SERVO_PIN 14
+#define HAND_SERVO_PIN 12
+#define DEFAULT_HEAD_ANGLE 90
+#define DEFAULT_HAND_ANGLE 90
+
+// Gyroscope configuration
+#define GYRO_ENABLED true
+#define GYRO_SDA_PIN 13
+#define GYRO_SCL_PIN 15
+
+// Screen configuration
+#define SCREEN_ENABLED true
+#define SCREEN_SDA_PIN GYRO_SDA_PIN
+#define SCREEN_SCL_PIN GYRO_SCL_PIN
+
+// WiFi configuration
+#define WIFI_ENABLED true
+#define WIFI_SSID "ANDROID AP"
+#define WIFI_PASSWORD "tes12345"
+#define WIFI_AP_SSID "CozmoRobot"
+#define WIFI_AP_PASSWORD "CozmoPass"
+
+// Web server configuration
+#define WEBSERVER_ENABLED true
+#define WEBSERVER_PORT 80
+
+// WebSocket configuration
+#define WEBSOCKET_ENABLED true
+
+// GPT API configuration
+#define GPT_ENABLED false
+#define GPT_API_KEY "your api key"
+#define GPT_MODEL "gpt-4.1-nano-2025-04-14"
+#define GPT_MAX_TOKENS 1024
+#define GPT_TEMPERATURE 0.7
+
+// Health check configuration
+#define HEALTH_CHECK_ENABLED true
+#define HEALTH_CHECK_INTERVAL 10000  // milliseconds
+
+// Miscellaneous
+#define SERIAL_BAUD_RATE 115200
+#define DEBUG_ENABLED true
