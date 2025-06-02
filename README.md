@@ -78,8 +78,13 @@ lib/
 ```
 app/
 ├── app.ino         # Main application entry point
-├── config.h        # Configuration settings
 └── tasks.cpp       # FreeRTOS task definitions
+```
+
+### Configuration
+```
+include/
+└── Config.h        # Configuration settings
 ```
 
 ## Installation
@@ -94,7 +99,7 @@ app/
 
 3. Libraries will be automatically installed by PlatformIO.
 
-4. Copy `app/config.h.example` to `app/config.h` and configure your settings:
+4. Copy `include/Config.h.example` to `include/Config.h` and configure your settings:
    ```cpp
    // WiFi credentials
    #define WIFI_SSID "YOUR_SSID"

@@ -2,7 +2,7 @@
 
 namespace Communication {
 
-WebSocketHandler::WebSocketHandler() : _server(nullptr), _webSocket(nullptr), _initialized(false), _ownsServer(false) {
+WebSocketHandler::WebSocketHandler() : _server(nullptr), _webSocket(nullptr), _initialized(false), _ownsServer(false), _mux(xSemaphoreCreateMutex()) {
 }
 
 WebSocketHandler::~WebSocketHandler() {
@@ -61,6 +61,7 @@ void WebSocketHandler::sendText(int clientId, const String& message) {
         return;
     }
     
+    if (xSemaphoreTake(_mux, pdMS_TO_TICKS(1000)) == pdFALSE) return;
     if (clientId < 0) {
         _webSocket->textAll(message);
     } else {
@@ -69,6 +70,48 @@ void WebSocketHandler::sendText(int clientId, const String& message) {
             client->text(message);
         }
     }
+    vTaskDelay(pdMS_TO_TICKS(10));
+    xSemaphoreGive(_mux);
+}
+
+void WebSocketHandler::sendJsonMessage(int clientId, const String& type, const JsonVariant& data) {
+    Utils::SpiJsonDocument doc;
+    doc["type"] = type;
+    doc["data"] = data;
+    
+    String jsonString;
+    serializeJson(doc, jsonString);
+    sendText(clientId, jsonString);
+}
+
+void WebSocketHandler::sendJsonMessage(int clientId, const String& type, const String& jsonString) {
+    String message = "{\"type\":\"" + type + "\",\"data\":" + jsonString + "}";
+    sendText(clientId, message);
+}
+
+void WebSocketHandler::sendError(int clientId, int code, const String& message) {
+    Utils::SpiJsonDocument doc;
+    JsonObject data = doc["data"];
+    data["code"] = code;
+    data["message"] = message;
+    
+    String jsonString;
+    doc["type"] = "error";
+    serializeJson(doc, jsonString);
+    
+    sendText(clientId, jsonString);
+}
+
+void WebSocketHandler::sendOk(int clientId, const String& message) {
+    Utils::SpiJsonDocument doc;
+    JsonObject data = doc["data"];
+    data["message"] = message;
+    
+    String jsonString;
+    doc["type"] = "ok";
+    serializeJson(doc, jsonString);
+    
+    sendText(clientId, jsonString);
 }
 
 void WebSocketHandler::sendBinary(int clientId, const uint8_t* data, size_t length) {
@@ -76,6 +119,7 @@ void WebSocketHandler::sendBinary(int clientId, const uint8_t* data, size_t leng
         return;
     }
     
+    if (xSemaphoreTake(_mux, pdMS_TO_TICKS(1000)) == pdFALSE) return;
     if (clientId < 0) {
         _webSocket->binaryAll(data, length);
     } else {
@@ -84,6 +128,7 @@ void WebSocketHandler::sendBinary(int clientId, const uint8_t* data, size_t leng
             client->binary((const char*)data, length);
         }
     }
+    xSemaphoreGive(_mux);
 }
 
 void WebSocketHandler::onEvent(std::function<void(AsyncWebSocket* server, AsyncWebSocketClient* client, 
@@ -102,6 +147,26 @@ IPAddress WebSocketHandler::remoteIP(uint32_t clientId) {
     }
     
     return IPAddress(0, 0, 0, 0);
+}
+
+Utils::SpiJsonDocument WebSocketHandler::parseJsonMessage(uint8_t* data, size_t len) {
+    Utils::SpiJsonDocument doc;
+    
+    // Ensure null termination for the JSON parser
+    char* jsonStr = new char[len + 1];
+    memcpy(jsonStr, data, len);
+    jsonStr[len] = 0;
+    
+    DeserializationError error = deserializeJson(doc, jsonStr);
+    delete[] jsonStr;
+    
+    if (error) {
+        Serial.print("JSON parse failed: ");
+        Serial.println(error.c_str());
+        return Utils::SpiJsonDocument();
+    }
+    
+    return doc;
 }
 
 } // namespace Communication

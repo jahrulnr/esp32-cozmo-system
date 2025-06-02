@@ -3,79 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cozmo Robot Control</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Robot Control Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status-connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-section {
+            flex: 1;
+            min-width: 250px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .direction-btn {
+            padding: 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .slider-control {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .data-display {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .log-container {
+            background-color: #f8f9fa;
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 20px;
+            font-family: monospace;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px;
+            border-bottom: 1px solid #eee;
+        }
+        .log-entry.sent {
+            color: #0c5460;
+            background-color: #d1ecf1;
+        }
+        .log-entry.received {
+            color: #383d41;
+            background-color: #e2e3e5;
+        }
+        .log-entry.error {
+            color: #721c24;
+            background-color: #f8d7da;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Cozmo Robot Control</h1>
-            <div class="status-indicator">
-                <span id="connection-status" class="status-disconnected">Disconnected</span>
+    <h1>Robot Control Interface</h1>
+    
+    <div id="connection-status" class="status status-disconnected">Disconnected</div>
+    
+    <div class="control-panel">
+        <div class="control-section">
+            <h2>Movement Controls</h2>
+            <div class="button-grid">
+                <button class="direction-btn"></button>
+                <button id="forward-btn" class="direction-btn">Forward</button>
+                <button class="direction-btn"></button>
+                
+                <button id="left-btn" class="direction-btn">Left</button>
+                <button id="stop-btn" class="direction-btn">Stop</button>
+                <button id="right-btn" class="direction-btn">Right</button>
+                
+                <button class="direction-btn"></button>
+                <button id="backward-btn" class="direction-btn">Backward</button>
+                <button class="direction-btn"></button>
             </div>
-        </header>
+        </div>
         
-        <div class="content">
-            <div class="camera-container">
-                <h2>Camera Feed</h2>
-                <img id="camera-feed" src="placeholder-image.jpg" alt="Camera Feed">
+        <div class="control-section">
+            <h2>Head Position</h2>
+            <div>
+                <label for="pan-slider">Pan: <span id="pan-value">0</span>°</label>
+                <input id="pan-slider" class="slider-control" type="range" min="-90" max="90" value="0">
             </div>
-            
-            <div class="controls-container">
-                <div class="movement-controls">
-                    <h2>Movement</h2>
-                    <div class="control-pad">
-                        <button id="forward-btn" class="control-btn">▲</button>
-                        <button id="left-btn" class="control-btn">◀</button>
-                        <button id="stop-btn" class="control-btn">■</button>
-                        <button id="right-btn" class="control-btn">▶</button>
-                        <button id="backward-btn" class="control-btn">▼</button>
-                    </div>
-                </div>
-                
-                <div class="camera-controls">
-                    <h2>Camera Position</h2>
-                    <div class="slider-control">
-                        <label for="pan-slider">Pan</label>
-                        <input type="range" id="pan-slider" min="0" max="180" value="90">
-                    </div>
-                    <div class="slider-control">
-                        <label for="tilt-slider">Tilt</label>
-                        <input type="range" id="tilt-slider" min="0" max="180" value="90">
-                    </div>
-                </div>
-                
-                <div class="arm-controls">
-                    <h2>Arm Control</h2>
-                    <div class="slider-control">
-                        <label for="arm-slider">Arm Position</label>
-                        <input type="range" id="arm-slider" min="0" max="180" value="90">
-                    </div>
-                    <div class="button-group">
-                        <button id="pickup-btn" class="action-btn">Pick Up</button>
-                        <button id="drop-btn" class="action-btn">Drop</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="sensor-data">
-                <h2>Sensor Data</h2>
-                <div class="data-point">
-                    <span>Gyroscope X:</span>
-                    <span id="gyro-x">0.00</span>
-                </div>
-                <div class="data-point">
-                    <span>Gyroscope Y:</span>
-                    <span id="gyro-y">0.00</span>
-                </div>
-                <div class="data-point">
-                    <span>Gyroscope Z:</span>
-                    <span id="gyro-z">0.00</span>
-                </div>
+            <div>
+                <label for="tilt-slider">Tilt: <span id="tilt-value">0</span>°</label>
+                <input id="tilt-slider" class="slider-control" type="range" min="-45" max="45" value="0">
             </div>
         </div>
     </div>
-
-    <script src="js/main.js"></script>
+    
+    <div class="data-display">
+        <h2>Sensor Data</h2>
+        <div>
+            <strong>Gyroscope:</strong> 
+            X: <span id="gyro-x">0.00</span>°/s, 
+            Y: <span id="gyro-y">0.00</span>°/s, 
+            Z: <span id="gyro-z">0.00</span>°/s
+        </div>
+        <div style="margin-top: 10px;">
+            <strong>Accelerometer:</strong> 
+            X: <span id="accel-x">0.00</span>g, 
+            Y: <span id="accel-y">0.00</span>g, 
+            Z: <span id="accel-z">0.00</span>g, 
+            Magnitude: <span id="accel-magnitude">0.00</span>g
+            
+            <div style="width: 100%; height: 20px; background: linear-gradient(to right, #c8e6c9 0%, #ffcc80 50%, #ef9a9a 100%); position: relative; border-radius: 4px; margin-top: 8px;">
+                <div id="magnitude-pointer" style="position: absolute; top: -5px; width: 8px; height: 30px; background-color: #000; margin-left: -4px; transition: left 0.2s ease-out; left: 50%;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <h2>Camera Feed</h2>
+        <img id="camera-feed" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAGQAQMAAADpvnrjAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAADlJREFUeNrtwTEBAAAAwiD7p14MH2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAx4IAAAEmTsWpAAAAAElFTkSuQmCC" 
+            alt="Camera Feed" width="640" height="480">
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+        <a href="/sensor-monitor.html" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+            Open Detailed Sensor Monitor
+        </a>
+    </div>
+    
+    <div>
+        <h2>WebSocket Communication Log</h2>
+        <div id="ws-log" class="log-container"></div>
+    </div>
+    <script src="/js/main.js"></script>
 </body>
 </html>

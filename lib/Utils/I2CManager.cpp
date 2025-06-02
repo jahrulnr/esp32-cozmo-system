@@ -11,7 +11,6 @@ I2CManager& I2CManager::getInstance() {
 bool I2CManager::initBus(const char* busName, int sda, int scl, uint32_t frequency, bool useWire) {
     // Check if bus already exists
     if (_buses.find(busName) != _buses.end()) {
-        Serial.printf("I2C bus '%s' already initialized\n", busName);
         return true;
     }
 

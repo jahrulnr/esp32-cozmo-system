@@ -1,0 +1,16 @@
+{
+	"files.associations": {
+		"*.twig": "twig",
+		"*.vcl": "bat",
+		"*.cf": "properties",
+		"unordered_map": "cpp",
+		"istream": "cpp",
+		"numeric": "cpp",
+		"ostream": "cpp",
+		"sstream": "cpp",
+		"random": "cpp",
+		"string.h": "c",
+		"u8g2.h": "c",
+		"u8x8.h": "c"
+	}
+}

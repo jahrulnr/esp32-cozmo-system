@@ -4,6 +4,8 @@
 #include <WiFi.h>
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
+#include "../Utils/SpiAllocatorUtils.h"
 
 namespace Communication {
 
@@ -40,6 +42,37 @@ public:
     void sendText(int clientId, const String& message);
 
     /**
+     * Send a standardized JSON format message to a specific client
+     * @param clientId The client ID to send to (or -1 for broadcast)
+     * @param type The message type (command_type)
+     * @param data The JsonVariant object containing the data payload
+     */
+    void sendJsonMessage(int clientId, const String& type, const JsonVariant& data);
+
+    /**
+     * Send a standardized JSON format message to a specific client
+     * @param clientId The client ID to send to (or -1 for broadcast)
+     * @param type The message type (command_type)
+     * @param jsonString A pre-formatted JSON string for the data field
+     */
+    void sendJsonMessage(int clientId, const String& type, const String& jsonString);
+    
+    /**
+     * Send an error message in the standard format
+     * @param clientId The client ID to send to
+     * @param code The error code
+     * @param message The error message
+     */
+    void sendError(int clientId, int code, const String& message);
+    
+    /**
+     * Send a simple OK response
+     * @param clientId The client ID to send to
+     * @param message Optional success message
+     */
+    void sendOk(int clientId, const String& message = "Success");
+
+    /**
      * Send binary data to a specific client
      * @param clientId The client ID to send to (or -1 for broadcast)
      * @param data Pointer to the data to send
@@ -60,12 +93,21 @@ public:
      * @return IP address of the client
      */
     IPAddress remoteIP(uint32_t clientId);
+    
+    /**
+     * Helper to parse incoming JSON messages
+     * @param data Pointer to the message data
+     * @param len Length of the message
+     * @return JsonDocument with the parsed message, or null if parsing failed
+     */
+    static Utils::SpiJsonDocument parseJsonMessage(uint8_t* data, size_t len);
 
 private:
     AsyncWebServer* _server;
     AsyncWebSocket* _webSocket;
     bool _initialized;
     bool _ownsServer;
+    SemaphoreHandle_t _mux;
 
     // Event handler function
     std::function<void(AsyncWebSocket* server, AsyncWebSocketClient* client,

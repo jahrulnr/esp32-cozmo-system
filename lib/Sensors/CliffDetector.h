@@ -18,7 +18,7 @@ public:
      * @param rightPin The pin for the right sensor
      * @return true if initialization was successful, false otherwise
      */
-    bool init(int leftPin = 13, int rightPin = 12);
+    bool init(int pin = 13, int rightPin = 12);
 
     /**
      * Update sensor readings

@@ -5,4 +5,4 @@
 .vscode/ipch
 
 data/config/wifi.conf
-**/config.h
+**/Config.h

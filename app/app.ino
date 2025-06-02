@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "config.h"
+#include "Config.h"
 
 // Include core libraries
 #include <AsyncWebSocket.h>
@@ -20,7 +20,6 @@
 #include "../lib/Utils/I2CScanner.h"
 #include "../lib/Utils/I2CManager.h"
 #include "../lib/Utils/Sstring.h"
-#include "../lib/Utils/Examples.h"
 
 // Forward declarations
 void setupCamera();
@@ -50,31 +49,13 @@ Utils::FileManager* fileManager = nullptr;
 Utils::HealthCheck* healthCheck = nullptr;
 Utils::Logger* logger = nullptr;
 
-// Run utility examples
-void runUtilityExamples() {
-  // Example for SpiJsonDocument
-  if (ENABLE_SPI_JSON_EXAMPLE) {
-    Utils::spiJsonExample();
-  }
-  
-  // Example for I2CScanner
-  if (ENABLE_I2C_SCANNER_EXAMPLE) {
-    Utils::i2cScannerExample(GYRO_SDA_PIN, GYRO_SCL_PIN);
-  }
-  
-  // Example for Sstring
-  if (ENABLE_SSTRING_EXAMPLE) {
-    Utils::sstringExample();
-  }
-}
-
 void setup() {
+  heap_caps_malloc_extmem_enable(0);  
+  disableLoopWDT();
+  setCpuFrequencyMhz(240);
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
   Serial.println("\n\nCozmo System Starting...");
-  
-  // Run utility examples if enabled
-  runUtilityExamples();
   
   // Initialize Logger
   logger = &Utils::Logger::getInstance();
@@ -103,14 +84,22 @@ void setup() {
   }
 }
 
+long timer = millis();
 void loop() {
   // Run health checks
   if (healthCheck) {
     healthCheck->update();
   }
   
-  // Add your main loop code here
-  delay(1);
+  if (millis() - timer > 5000){
+    screen->clear();
+    screen->drawCenteredText(40, "hello");
+    screen->mutexUpdate();
+    timer = millis();
+  }
+  else if (screen)
+    screen->mutexUpdateFace();
+  vTaskDelay(pdMS_TO_TICKS(33));
 }
 
 // Component setup functions

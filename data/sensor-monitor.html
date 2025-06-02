@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Sensor Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status-connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .sensor-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .sensor-card {
+            flex: 1;
+            min-width: 250px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+        }
+        .sensor-value {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 8px 0;
+        }
+        .chart-container {
+            height: 200px;
+            margin-top: 20px;
+        }
+        .magnitude-indicator {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(to right, #c8e6c9 0%, #ffcc80 50%, #ef9a9a 100%);
+            position: relative;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .magnitude-pointer {
+            position: absolute;
+            top: -10px;
+            width: 10px;
+            height: 50px;
+            background-color: #000;
+            margin-left: -5px;
+            transition: left 0.2s ease-out;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Robot Sensor Monitor</h1>
+    
+    <div id="connection-status" class="status status-disconnected">Disconnected</div>
+    
+    <div class="sensor-panel">
+        <div class="sensor-card">
+            <h2>Gyroscope (°/s)</h2>
+            <div class="sensor-value">X: <span id="gyro-x">0.00</span></div>
+            <div class="sensor-value">Y: <span id="gyro-y">0.00</span></div>
+            <div class="sensor-value">Z: <span id="gyro-z">0.00</span></div>
+        </div>
+        
+        <div class="sensor-card">
+            <h2>Accelerometer (g)</h2>
+            <div class="sensor-value">X: <span id="accel-x">0.00</span></div>
+            <div class="sensor-value">Y: <span id="accel-y">0.00</span></div>
+            <div class="sensor-value">Z: <span id="accel-z">0.00</span></div>
+            <div class="sensor-value">Magnitude: <span id="accel-magnitude">0.00</span></div>
+            
+            <div class="magnitude-indicator">
+                <div id="magnitude-pointer" class="magnitude-pointer" style="left: 50%;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="sensor-card">
+        <h2>Sensor Data Log</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Sensor</th>
+                    <th>Values</th>
+                </tr>
+            </thead>
+            <tbody id="sensor-log">
+                <!-- Sensor data log will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let websocket;
+        const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const wsURL = wsProtocol + window.location.hostname + '/ws';
+        const connectionStatus = document.getElementById('connection-status');
+        
+        // Sensor elements
+        const gyroX = document.getElementById('gyro-x');
+        const gyroY = document.getElementById('gyro-y');
+        const gyroZ = document.getElementById('gyro-z');
+        const accelX = document.getElementById('accel-x');
+        const accelY = document.getElementById('accel-y');
+        const accelZ = document.getElementById('accel-z');
+        const accelMagnitude = document.getElementById('accel-magnitude');
+        const magnitudePointer = document.getElementById('magnitude-pointer');
+        const sensorLog = document.getElementById('sensor-log');
+        
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            websocket = new WebSocket(wsURL);
+            
+            websocket.onopen = onWebSocketOpen;
+            websocket.onclose = onWebSocketClose;
+            websocket.onmessage = onWebSocketMessage;
+            websocket.onerror = onWebSocketError;
+        }
+        
+        // WebSocket event handlers
+        function onWebSocketOpen(event) {
+            connectionStatus.textContent = 'Connected';
+            connectionStatus.className = 'status status-connected';
+            
+            // Request initial sensor data
+            sendJsonMessage('gyro_request', {});
+        }
+        
+        function onWebSocketClose(event) {
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.className = 'status status-disconnected';
+            
+            // Try to reconnect after a delay
+            setTimeout(initWebSocket, 2000);
+        }
+        
+        function onWebSocketMessage(event) {
+            try {
+                const message = JSON.parse(event.data);
+                
+                // Check if message follows the standard format
+                if (!message.type || message.data === undefined) {
+                    console.warn('Received message does not follow standard format:', message);
+                    return;
+                }
+                
+                // Process message based on type
+                switch (message.type) {
+                    case 'sensor_data':
+                        updateSensorData(message.data);
+                        addToSensorLog('Combined', message.data);
+                        break;
+                    case 'gyro_data': // For backwards compatibility
+                        updateGyroData(message.data);
+                        addToSensorLog('Gyro', message.data);
+                        break;
+                    case 'error':
+                        console.error(`Error ${message.data.code}: ${message.data.message}`);
+                        break;
+                }
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        }
+        
+        function onWebSocketError(event) {
+            console.error('WebSocket error:', event);
+        }
+        
+        // Update gyroscope data (backward compatibility)
+        function updateGyroData(data) {
+            if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {
+                gyroX.textContent = parseFloat(data.x).toFixed(2);
+                gyroY.textContent = parseFloat(data.y).toFixed(2);
+                gyroZ.textContent = parseFloat(data.z).toFixed(2);
+            }
+        }
+        
+        // Update sensor data with the new format
+        function updateSensorData(data) {
+            // Update gyroscope data
+            if (data.gyro) {
+                gyroX.textContent = parseFloat(data.gyro.x).toFixed(2);
+                gyroY.textContent = parseFloat(data.gyro.y).toFixed(2);
+                gyroZ.textContent = parseFloat(data.gyro.z).toFixed(2);
+            }
+            
+            // Update accelerometer data
+            if (data.accel) {
+                accelX.textContent = parseFloat(data.accel.x).toFixed(2);
+                accelY.textContent = parseFloat(data.accel.y).toFixed(2);
+                accelZ.textContent = parseFloat(data.accel.z).toFixed(2);
+                
+                const magValue = parseFloat(data.accel.magnitude);
+                accelMagnitude.textContent = magValue.toFixed(2);
+                
+                // Update magnitude indicator
+                const percentage = Math.min(Math.max((magValue - 0.5) * 100, 0), 100);
+                magnitudePointer.style.left = `${percentage}%`;
+            }
+        }
+        
+        // Add entry to sensor log
+        function addToSensorLog(sensorType, data) {
+            const row = document.createElement('tr');
+            const timeCell = document.createElement('td');
+            const typeCell = document.createElement('td');
+            const valueCell = document.createElement('td');
+            
+            timeCell.textContent = new Date().toLocaleTimeString();
+            typeCell.textContent = sensorType;
+            
+            if (sensorType === 'Combined') {
+                valueCell.textContent = `G(${parseFloat(data.gyro.x).toFixed(1)}, ${parseFloat(data.gyro.y).toFixed(1)}, ${parseFloat(data.gyro.z).toFixed(1)}) A(${parseFloat(data.accel.x).toFixed(1)}, ${parseFloat(data.accel.y).toFixed(1)}, ${parseFloat(data.accel.z).toFixed(1)})`;
+            } else {
+                valueCell.textContent = `(${parseFloat(data.x).toFixed(1)}, ${parseFloat(data.y).toFixed(1)}, ${parseFloat(data.z).toFixed(1)})`;
+            }
+            
+            row.appendChild(timeCell);
+            row.appendChild(typeCell);
+            row.appendChild(valueCell);
+            
+            sensorLog.insertBefore(row, sensorLog.firstChild);
+            
+            // Keep only the last 10 entries
+            if (sensorLog.children.length > 10) {
+                sensorLog.removeChild(sensorLog.lastChild);
+            }
+        }
+        
+        // Send standardized JSON message
+        function sendJsonMessage(type, data) {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                const message = JSON.stringify({
+                    type: type,
+                    data: data
+                });
+                websocket.send(message);
+            }
+        }
+        
+        // Initialize WebSocket connection when page loads
+        window.addEventListener('load', initWebSocket);
+        
+        // Ping the server periodically to keep the connection alive
+        setInterval(() => {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                sendJsonMessage('ping', { timestamp: Date.now() });
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

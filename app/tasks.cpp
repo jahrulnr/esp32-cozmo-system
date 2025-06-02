@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "config.h"
+#include <Config.h>
 
 // Include core libraries
 #include <AsyncWebSocket.h>
@@ -12,6 +12,7 @@
 #include "../lib/Communication/WebSocketHandler.h"
 #include "../lib/Screen/Screen.h"
 #include "../lib/Utils/Logger.h"
+#include "../lib/Utils/SpiAllocatorUtils.h"
 
 // External component instances (defined in app.ino)
 extern Sensors::Camera* camera;
@@ -111,24 +112,29 @@ void sensorMonitorTask(void* parameter) {
     // Monitor sensors forever
     while (true) {
         // Create JSON object for sensor data
-        String jsonData = "{";
+        Utils::SpiJsonDocument jsonData;
         
-        // Add gyroscope data if available
+        // Add gyroscope and accelerometer data if available
         if (gyro) {
             gyro->update();
-            jsonData += "\"gyro\":{";
-            jsonData += "\"x\":" + String(gyro->getX()) + ",";
-            jsonData += "\"y\":" + String(gyro->getY()) + ",";
-            jsonData += "\"z\":" + String(gyro->getZ());
-            jsonData += "}";
+            
+            // Create nested objects for gyro and accelerometer data
+            jsonData["gyro"]["x"] = String(gyro->getX());
+            jsonData["gyro"]["y"] = String(gyro->getY());
+            jsonData["gyro"]["z"] = String(gyro->getZ());
+            
+            jsonData["accel"]["x"] = String(gyro->getAccelX());
+            jsonData["accel"]["y"] = String(gyro->getAccelY());
+            jsonData["accel"]["z"] = String(gyro->getAccelZ());
+            jsonData["accel"]["magnitude"] = String(gyro->getAccelMagnitude());
         }
         
-        jsonData += "}";
-        
         // Send the data to all connected clients
-        webSocket->sendText(-1, jsonData);
+        String data;
+        serializeJson(jsonData, data);
+        webSocket->sendJsonMessage(-1, "sensor_data", data);
         
         // Delay before next reading
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }

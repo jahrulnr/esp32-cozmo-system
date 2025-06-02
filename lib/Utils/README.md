@@ -100,7 +100,7 @@ Utils::Sstring sub = str1.substring(6, 5);  // Substring (World)
 
 To run the examples:
 
-1. Edit `app/config.h` and set the desired example flags to true:
+1. Edit `include/Config.h` and set the desired example flags to true:
    ```cpp
    #define ENABLE_SPI_JSON_EXAMPLE true
    #define ENABLE_I2C_SCANNER_EXAMPLE true

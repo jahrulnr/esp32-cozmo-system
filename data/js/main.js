@@ -16,11 +16,6 @@ const stopBtn = document.getElementById('stop-btn');
 const panSlider = document.getElementById('pan-slider');
 const tiltSlider = document.getElementById('tilt-slider');
 
-// Arm control slider and buttons
-const armSlider = document.getElementById('arm-slider');
-const pickupBtn = document.getElementById('pickup-btn');
-const dropBtn = document.getElementById('drop-btn');
-
 // Sensor data display elements
 const gyroX = document.getElementById('gyro-x');
 const gyroY = document.getElementById('gyro-y');
@@ -42,6 +37,9 @@ function onWebSocketOpen(event) {
     console.log('WebSocket connection established');
     connectionStatus.textContent = 'Connected';
     connectionStatus.className = 'status-connected';
+    
+    // Request initial gyro data when connection is established
+    sendJsonMessage('gyro_request', {});
 }
 
 function onWebSocketClose(event) {
@@ -58,13 +56,45 @@ function onWebSocketMessage(event) {
     if (event.data instanceof ArrayBuffer) {
         handleCameraFrame(event.data);
     } 
-    // Handle text data (JSON sensor data)
+    // Handle text data (JSON messages)
     else {
         try {
-            const data = JSON.parse(event.data);
-            updateSensorData(data);
+            const message = JSON.parse(event.data);
+            
+            // Check if message follows the standard format
+            if (!message.type || message.data === undefined) {
+                console.warn('Received message does not follow the standard format:', message);
+                return;
+            }
+            
+            // Process message based on type
+            switch (message.type) {
+                case 'sensor_data':
+                    updateSensorData(message.data);
+                    break;
+                case 'gyro_data': // For backwards compatibility
+                    updateGyroData(message.data);
+                    break;
+                case 'camera_frame':
+                    // Handle base64 encoded camera frame if it's in JSON
+                    if (message.data.format === 'base64') {
+                        handleBase64CameraFrame(message.data.data);
+                    }
+                    break;
+                case 'system_status':
+                    updateSystemStatus(message.data);
+                    break;
+                case 'error':
+                    handleError(message.data);
+                    break;
+                case 'ok':
+                    console.log('Command successful:', message.data.message);
+                    break;
+                default:
+                    console.log('Unknown message type:', message.type, message.data);
+            }
         } catch (error) {
-            console.error('Error parsing WebSocket message:', error);
+            // console.error('Error parsing WebSocket message:', error, event.data);
         }
     }
 }
@@ -86,68 +116,147 @@ function handleCameraFrame(arrayBuffer) {
     cameraFeed.onload = () => URL.revokeObjectURL(url);
 }
 
-// Update sensor data display
-function updateSensorData(data) {
-    if (data.gyro) {
-        gyroX.textContent = data.gyro.x.toFixed(2);
-        gyroY.textContent = data.gyro.y.toFixed(2);
-        gyroZ.textContent = data.gyro.z.toFixed(2);
+// Handle base64 encoded camera frame
+function handleBase64CameraFrame(base64Data) {
+    cameraFeed.src = `data:image/jpeg;base64,${base64Data}`;
+}
+
+// Update gyroscope data display (for backward compatibility)
+function updateGyroData(data) {
+    if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {
+        gyroX.textContent = data.x;
+        gyroY.textContent = data.y;
+        gyroZ.textContent = data.z;
     }
 }
 
-// Send commands to the robot
-function sendCommand(command) {
+// Update sensor data with the new format
+function updateSensorData(data) {
+    // Update gyroscope data
+    if (data.gyro) {
+        gyroX.textContent = data.gyro.x;
+        gyroY.textContent = data.gyro.y;
+        gyroZ.textContent = data.gyro.z;
+    }
+    
+    // Update accelerometer data
+    if (data.accel) {
+        const accelX = document.getElementById('accel-x');
+        const accelY = document.getElementById('accel-y');
+        const accelZ = document.getElementById('accel-z');
+        const accelMag = document.getElementById('accel-magnitude');
+        const magnitudePointer = document.getElementById('magnitude-pointer');
+        
+        if (accelX) accelX.textContent = data.accel.x;
+        if (accelY) accelY.textContent = data.accel.y;
+        if (accelZ) accelZ.textContent = data.accel.z;
+        if (accelMag) accelMag.textContent = data.accel.magnitude;
+        
+        // Update magnitude indicator if present
+        if (magnitudePointer) {
+            const magValue = parseFloat(data.accel.magnitude);
+            // Scale the pointer position based on magnitude (0.5g to 1.5g range mapped to 0-100%)
+            const percentage = Math.min(Math.max((magValue - 0.5) * 100, 0), 100);
+            magnitudePointer.style.left = `${percentage}%`;
+        }
+    }
+}
+
+// Update system status display
+function updateSystemStatus(data) {
+    // Implementation depends on what system status fields are available
+    console.log('System status:', data);
+    // Example: if you have UI elements for battery, temperature, etc.
+    // batteryLevel.textContent = data.battery + '%';
+    // temperature.textContent = data.temperature + '°C';
+}
+
+// Handle error messages
+function handleError(data) {
+    console.error(`Error ${data.code}: ${data.message}`);
+    // You might want to display this in the UI
+    // errorDisplay.textContent = `Error: ${data.message}`;
+}
+
+// Send standardized JSON message
+function sendJsonMessage(type, data) {
     if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(command);
+        const message = JSON.stringify({
+            type: type,
+            data: data
+        });
+        websocket.send(message);
     } else {
-        console.warn('WebSocket not ready, command not sent:', command);
+        console.warn('WebSocket not ready, message not sent:', type, data);
     }
 }
 
 // Movement command functions
 function moveForward() {
-    sendCommand('move:forward');
+    sendJsonMessage('motor_command', {
+        left: 0.75,
+        right: 0.75,
+        duration: 0 // 0 means continue until stopped
+    });
 }
 
 function moveBackward() {
-    sendCommand('move:backward');
+    sendJsonMessage('motor_command', {
+        left: -0.75,
+        right: -0.75,
+        duration: 0
+    });
 }
 
 function turnLeft() {
-    sendCommand('move:left');
+    sendJsonMessage('motor_command', {
+        left: -0.5,
+        right: 0.5,
+        duration: 0
+    });
 }
 
 function turnRight() {
-    sendCommand('move:right');
+    sendJsonMessage('motor_command', {
+        left: 0.5,
+        right: -0.5,
+        duration: 0
+    });
 }
 
 function stopMoving() {
-    sendCommand('move:stop');
+    sendJsonMessage('motor_command', {
+        left: 0,
+        right: 0,
+        duration: 0
+    });
 }
 
 // Camera position command functions
 function updatePan() {
-    const angle = panSlider.value;
-    sendCommand(`servo:pan:${angle}`);
+    const angle = parseInt(panSlider.value, 10);
+    sendJsonMessage('head_command', {
+        pan: angle
+    });
 }
 
 function updateTilt() {
-    const angle = tiltSlider.value;
-    sendCommand(`servo:tilt:${angle}`);
-}
-
-// Arm control functions
-function updateArm() {
-    const angle = armSlider.value;
-    sendCommand(`servo:arm:${angle}`);
+    const angle = parseInt(tiltSlider.value, 10);
+    sendJsonMessage('head_command', {
+        tilt: angle
+    });
 }
 
 function pickUp() {
-    sendCommand('action:pickup');
+    sendJsonMessage('action_command', {
+        action: 'pickup'
+    });
 }
 
 function drop() {
-    sendCommand('action:drop');
+    sendJsonMessage('action_command', {
+        action: 'drop'
+    });
 }
 
 // Event listeners for controls
@@ -171,10 +280,6 @@ stopBtn.addEventListener('click', stopMoving);
 
 panSlider.addEventListener('change', updatePan);
 tiltSlider.addEventListener('change', updateTilt);
-armSlider.addEventListener('change', updateArm);
-
-pickupBtn.addEventListener('click', pickUp);
-dropBtn.addEventListener('click', drop);
 
 // Touch event support for mobile devices
 forwardBtn.addEventListener('touchstart', moveForward);
@@ -195,6 +300,6 @@ window.addEventListener('load', initWebSocket);
 // Ping the server periodically to keep the connection alive
 setInterval(() => {
     if (websocket && websocket.readyState === WebSocket.OPEN) {
-        sendCommand('ping');
+        sendJsonMessage('ping', { timestamp: Date.now() });
     }
 }, 30000);

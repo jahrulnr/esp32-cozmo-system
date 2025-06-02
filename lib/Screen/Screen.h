@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <Wire.h>
+#include "Face/Face.h"
+#include "../../include/Config.h"
 
 namespace Screen {
 
@@ -73,6 +75,7 @@ public:
      * Update the display (call this after drawing operations)
      */
     void update();
+    void mutexUpdate();
 
     /**
      * Set the font
@@ -92,9 +95,20 @@ public:
      */
     int getHeight() const;
 
+    Face* getFace();
+    void autoFace(bool exp = true);
+    void updateFace();
+    void mutexUpdateFace();
+
 private:
-    U8G2_SSD1306_128X64_NONAME_F_SW_I2C* _u8g2;
+    U8G2_SSD1306_128X64_NONAME_F_HW_I2C* _u8g2;
     bool _initialized;
+    SemaphoreHandle_t _mux;
+    Face *_face;
+    bool _holdFace;
+
+    bool _lock();
+    void _unlock();
 };
 
 } // namespace Utils
