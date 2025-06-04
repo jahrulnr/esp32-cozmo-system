@@ -44,10 +44,31 @@ public:
      * @return The current resolution
      */
     framesize_t getResolution() const;
+    
+    /**
+     * Get the streaming interval in milliseconds
+     * @return Time in ms between frames
+     */
+    uint32_t getStreamingInterval() const;
+    
+    /**
+     * Set streaming interval in milliseconds
+     * @param interval Time in ms between frames
+     */
+    void setStreamingInterval(uint32_t interval);
+    
+    /**
+     * Adjust camera settings
+     * @param brightness Value from -2 to 2
+     * @param contrast Value from -2 to 2
+     * @param saturation Value from -2 to 2
+     */
+    void adjustSettings(int brightness, int contrast, int saturation);
 
 private:
     framesize_t _resolution;
     bool _initialized;
+    uint32_t _streamingInterval;
 };
 
 } // namespace Sensors

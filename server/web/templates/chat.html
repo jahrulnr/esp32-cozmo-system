@@ -1,0 +1,376 @@
+{{ template "header.html" . }}
+
+<div class="chat-container">
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <h3>ChatGPT Interface</h3>
+            <p>Talk with GPT-4.1 nano model</p>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="settings-section">
+                <h4>Settings</h4>
+                <div class="form-group">
+                    <label for="voice-enabled">Enable Voice Output</label>
+                    <label class="switch">
+                        <input type="checkbox" id="voice-enabled">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="cozmo-speak">Cozmo Speaks Responses</label>
+                    <label class="switch">
+                        <input type="checkbox" id="cozmo-speak" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="conversation-history">
+                <h4>Past Conversations</h4>
+                <ul id="conversation-list">
+                    <li class="conversation-item active" data-id="current">
+                        <span>Current Conversation</span>
+                        <button class="btn-icon" id="new-chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-main">
+        <div class="chat-messages" id="chat-messages">
+            <div class="message-welcome">
+                <h2>Welcome to Cozmo Chat</h2>
+                <p>Powered by GPT-4.1 nano model, this chat interface allows you to interact with your Cozmo robot using natural language.</p>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-wrapper">
+                <textarea id="chat-input-text" placeholder="Type your message..."></textarea>
+                <div class="input-buttons">
+                    <button class="btn-icon" id="start-voice">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16c-2.47 0-4.52-1.8-4.93-4.15-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" id="send-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // WebSocket connection
+    let socket;
+    
+    // Store conversation history
+    let conversation = [];
+    let isRecording = false;
+    const voiceEnabled = localStorage.getItem('voice-enabled') === 'true';
+    const cozmoSpeak = localStorage.getItem('cozmo-speak') === 'true' || localStorage.getItem('cozmo-speak') === null;
+    
+    // Set initial state of switches
+    $('#voice-enabled').prop('checked', voiceEnabled);
+    $('#cozmo-speak').prop('checked', cozmoSpeak);
+    
+    // Update local storage when switches are toggled
+    $('#voice-enabled').on('change', function() {
+        localStorage.setItem('voice-enabled', this.checked);
+    });
+    
+    $('#cozmo-speak').on('change', function() {
+        localStorage.setItem('cozmo-speak', this.checked);
+    });
+    
+    // Initialize WebSocket connection
+    function connectWebSocket() {
+        // Get the secure protocol based on the current page protocol
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const token = localStorage.getItem('auth_token');
+        
+        // Connect to the WebSocket server with the auth token
+        socket = new WebSocket(`${protocol}//${window.location.host}/ws/browser?token=${token}`);
+        
+        socket.onopen = function() {
+            console.log('WebSocket connection established');
+        };
+        
+        socket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                // Handle different message types
+                switch (data.type) {
+                    case 'chat_response':
+                        // Remove typing indicator if exists
+                        $(".typing").remove();
+                        
+                        // Handle chat response
+                        addMessage(data.data, true);
+                        
+                        // Check if TTS is enabled
+                        if ($('#voice-enabled').is(':checked')) {
+                            requestTTS(data.data);
+                        }
+                        
+                        // Make Cozmo speak the response if enabled
+                        if ($('#cozmo-speak').is(':checked')) {
+                            sendToCozmo('speak', data.data);
+                        }
+                        break;
+                        
+                    case 'tts_response':
+                        // Play the generated speech
+                        const audio = new Audio(data.data.audioPath);
+                        audio.play().catch(e => console.log('TTS audio play error:', e));
+                        break;
+                        
+                    default:
+                        console.warn('Unknown WebSocket message type:', data.type);
+                }
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        };
+        
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                console.log('WebSocket connection closed cleanly');
+            } else {
+                console.error('WebSocket connection abruptly closed');
+                // Try to reconnect after a delay
+                setTimeout(connectWebSocket, 3000);
+            }
+        };
+        
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+    }
+    
+    // Connect to WebSocket when the page loads
+    connectWebSocket();
+    
+    // Send message when button is clicked
+    $('#send-message').on('click', function() {
+        sendMessage();
+    });
+    
+    // Send message when Enter key is pressed (but allow Shift+Enter for new lines)
+    $('#chat-input-text').on('keydown', function(event) {
+        if (event.keyCode === 13 && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Start a new chat
+    $('#new-chat').on('click', function() {
+        conversation = [];
+        $('#chat-messages').empty();
+        $('#chat-messages').append(`
+            <div class="message-welcome">
+                <h2>New Conversation</h2>
+                <p>Start a new conversation with GPT-4.1 nano model.</p>
+            </div>
+        `);
+        $('#chat-input-text').focus();
+    });
+    
+    // Send message function
+    function sendMessage() {
+        const message = $('#chat-input-text').val().trim();
+        if (message === '' || !socket || socket.readyState !== WebSocket.OPEN) return;
+        
+        // Add user message to chat
+        addMessage(message, false);
+        
+        // Clear input
+        $('#chat-input-text').val('');
+        
+        // Add typing indicator
+        addTypingIndicator();
+        
+        // Send message via WebSocket
+        socket.send(JSON.stringify({
+            type: 'chat',
+            data: message
+        }));
+    }
+    
+    // Request TTS via WebSocket
+    function requestTTS(text) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'tts',
+                data: text
+            }));
+        } else {
+            console.error('WebSocket connection not available for TTS request');
+        }
+    }
+    
+    // Add message to chat
+    function addMessage(content, isBot, isError = false) {
+        const timestamp = new Date().getTime();
+        const username = isBot ? 'Cozmo' : localStorage.getItem('username') || 'You';
+        
+        // Add message to conversation history
+        conversation.push({
+            content: content,
+            timestamp: timestamp,
+            username: username,
+            isBot: isBot
+        });
+        
+        // Create message element
+        const messageClass = isBot ? 'message bot' : 'message user';
+        const errorClass = isError ? ' error' : '';
+        const message = $(`
+            <div class="${messageClass}${errorClass}">
+                <div class="message-header">
+                    <span class="message-username">${username}</span>
+                    <span class="message-time">${formatTime(timestamp)}</span>
+                </div>
+                <div class="message-content">${formatMessage(content)}</div>
+            </div>
+        `);
+        
+        // Add message to chat
+        $('#chat-messages').append(message);
+        
+        // Scroll to bottom
+        scrollToBottom();
+    }
+    
+    // Add typing indicator
+    function addTypingIndicator() {
+        // Remove any existing typing indicators
+        $('.typing').remove();
+        
+        const indicator = $(`
+            <div class="message bot typing">
+                <div class="message-header">
+                    <span class="message-username">Cozmo</span>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        `);
+        
+        // Add indicator to chat
+        $('#chat-messages').append(indicator);
+        
+        // Scroll to bottom
+        scrollToBottom();
+    }
+    
+    // Send command to Cozmo through WebSocket
+    function sendToCozmo(type, content) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'robot_command',
+                data: {
+                    command: type,
+                    content: content
+                }
+            }));
+            console.log('Sending to Cozmo:', type, content);
+        } else {
+            console.error('WebSocket connection not available for robot command');
+        }
+    }
+    
+    // Format message with markdown-like syntax
+    function formatMessage(content) {
+        let formatted = content.replace(/\n/g, '<br>');
+        
+        // Format code blocks
+        formatted = formatted.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
+        
+        // Format inline code
+        formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Format bold text
+        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        
+        // Format italic text
+        formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        
+        return formatted;
+    }
+    
+    // Format timestamp
+    function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Scroll chat to bottom
+    function scrollToBottom() {
+        const messages = document.getElementById('chat-messages');
+        messages.scrollTop = messages.scrollHeight;
+    }
+    
+    // Voice input button
+    $('#start-voice').on('click', function() {
+        if (!isRecording) {
+            startVoiceRecording();
+        } else {
+            stopVoiceRecording();
+        }
+    });
+    
+    // Start voice recording
+    function startVoiceRecording() {
+        // This is a placeholder for actual voice recording functionality
+        // In a real implementation, you would use the Web Speech API or similar
+        isRecording = true;
+        $('#start-voice').addClass('recording');
+        
+        // Placeholder for showing recording state
+        $('#chat-input-text').attr('placeholder', 'Listening...');
+        
+        // In a real implementation, you would start recording here
+        // For now, we'll just simulate it with a timeout
+        setTimeout(function() {
+            stopVoiceRecording();
+            $('#chat-input-text').val('This is a simulated voice input.');
+        }, 2000);
+    }
+    
+    // Stop voice recording
+    function stopVoiceRecording() {
+        isRecording = false;
+        $('#start-voice').removeClass('recording');
+        $('#chat-input-text').attr('placeholder', 'Type your message...');
+        
+        // In a real implementation, you would stop recording and process the audio here
+    }
+    
+    // Check auth token on page load
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+    }
+});
+</script>
+
+{{ template "footer.html" . }}

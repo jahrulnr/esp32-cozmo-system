@@ -106,6 +106,7 @@ int FileManager::getSize(const String& path) {
 
 std::vector<FileManager::FileInfo> FileManager::listFiles(const String& path) {
     std::vector<FileInfo> files;
+    std::vector<FileInfo> directories;
     
     if (!_initialized) {
         return files;
@@ -120,16 +121,45 @@ std::vector<FileManager::FileInfo> FileManager::listFiles(const String& path) {
     File file = root.openNextFile();
     while (file) {
         FileInfo info;
-        info.name = file.name();
+        info.name = file.path();
         info.size = file.size();
         info.isDirectory = file.isDirectory();
-        files.push_back(info);
+        
+        // Sort into directories and files
+        if (info.isDirectory) {
+            directories.push_back(info);
+        } else {
+            files.push_back(info);
+        }
         
         file = root.openNextFile();
     }
     
     root.close();
-    return files;
+    
+    // Sort directories alphabetically
+    std::sort(directories.begin(), directories.end(), 
+              [](const FileInfo& a, const FileInfo& b) { 
+                  return a.name.compareTo(b.name) < 0; 
+              });
+              
+    // Sort files alphabetically
+    std::sort(files.begin(), files.end(), 
+              [](const FileInfo& a, const FileInfo& b) { 
+                  return a.name.compareTo(b.name) < 0; 
+              });
+    
+    // Combine directories followed by files
+    std::vector<FileInfo> result;
+    result.reserve(directories.size() + files.size());
+    
+    // Add directories first
+    result.insert(result.end(), directories.begin(), directories.end());
+    
+    // Then add files
+    result.insert(result.end(), files.begin(), files.end());
+    
+    return result;
 }
 
 bool FileManager::createDir(const String& path) {

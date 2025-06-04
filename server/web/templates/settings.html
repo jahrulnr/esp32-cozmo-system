@@ -1,0 +1,227 @@
+{{ template "header.html" . }}
+
+<div class="settings-container">
+    <div class="settings-header">
+        <h1>Settings</h1>
+    </div>
+
+    <div class="settings-content">
+        <div class="settings-section">
+            <h2>General Settings</h2>
+            <form id="general-settings-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" value="{{ .username }}" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="theme">Theme</label>
+                    <select id="theme" name="theme">
+                        <option value="github-dark" selected>GitHub Dark</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Save General Settings</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="settings-section">
+            <h2>Robot Settings</h2>
+            <form id="robot-settings-form">
+                <div class="form-group">
+                    <label for="motor-speed">Motor Speed</label>
+                    <div class="range-slider">
+                        <input type="range" id="motor-speed" name="motorSpeed" min="0" max="100" value="50">
+                        <span class="range-value">50%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="volume">Speaker Volume</label>
+                    <div class="range-slider">
+                        <input type="range" id="volume" name="volume" min="0" max="100" value="70">
+                        <span class="range-value">70%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="brightness">Screen Brightness</label>
+                    <div class="range-slider">
+                        <input type="range" id="brightness" name="brightness" min="0" max="100" value="80">
+                        <span class="range-value">80%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Save Robot Settings</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="settings-section">
+            <h2>Chat Settings</h2>
+            <form id="chat-settings-form">
+                <div class="form-group">
+                    <label for="chat-model">ChatGPT Model</label>
+                    <select id="chat-model" name="chatModel">
+                        <option value="gpt-4.1-nano-2025-04-14" selected>GPT-4.1 Nano</option>
+                        <option value="gpt-4.1-preview">GPT-4.1 Preview</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="system-prompt">System Prompt</label>
+                    <textarea id="system-prompt" name="systemPrompt" rows="4">You are an AI assistant for the Cozmo robot. You can help control the robot and answer questions about it.</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="voice-enabled">Enable Voice Output</label>
+                    <label class="switch">
+                        <input type="checkbox" id="voice-enabled" name="voiceEnabled">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Save Chat Settings</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="settings-section">
+            <h2>Security</h2>
+            <form id="security-form">
+                <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="password" id="current-password" name="currentPassword">
+                </div>
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" name="newPassword">
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" name="confirmPassword">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Update range slider values
+    $('.range-slider input[type="range"]').on('input', function() {
+        $(this).next('.range-value').text($(this).val() + '%');
+    });
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'github-dark';
+    $('#theme').val(savedTheme);
+    $('body').removeClass().addClass('theme-' + savedTheme);
+    
+    // Load voice enabled setting
+    const voiceEnabled = localStorage.getItem('voice-enabled') === 'true';
+    $('#voice-enabled').prop('checked', voiceEnabled);
+    
+    // Save general settings
+    $('#general-settings-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const theme = $('#theme').val();
+        
+        // Save theme to local storage
+        localStorage.setItem('theme', theme);
+        
+        // Apply theme
+        $('body').removeClass().addClass('theme-' + theme);
+        
+        // Show success message
+        showMessage('General settings saved successfully!', 'success');
+    });
+    
+    // Save robot settings
+    $('#robot-settings-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const motorSpeed = $('#motor-speed').val();
+        const volume = $('#volume').val();
+        const brightness = $('#brightness').val();
+        
+        // This would typically send a request to the server
+        // For now, just show a success message
+        showMessage('Robot settings saved successfully!', 'success');
+        
+        // In a real implementation, you would send a WebSocket message to update the robot settings
+    });
+    
+    // Save chat settings
+    $('#chat-settings-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const chatModel = $('#chat-model').val();
+        const systemPrompt = $('#system-prompt').val();
+        const voiceEnabled = $('#voice-enabled').is(':checked');
+        
+        // Save voice enabled setting to local storage
+        localStorage.setItem('voice-enabled', voiceEnabled);
+        
+        // This would typically send a request to the server
+        // For now, just show a success message
+        showMessage('Chat settings saved successfully!', 'success');
+    });
+    
+    // Change password
+    $('#security-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const currentPassword = $('#current-password').val();
+        const newPassword = $('#new-password').val();
+        const confirmPassword = $('#confirm-password').val();
+        
+        // Validate passwords
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showMessage('Please fill in all password fields', 'error');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            showMessage('New passwords do not match', 'error');
+            return;
+        }
+        
+        // This would typically send a request to the server
+        // For now, just show a success message
+        showMessage('Password changed successfully!', 'success');
+        
+        // Clear form
+        $('#security-form')[0].reset();
+    });
+    
+    // Show message function
+    function showMessage(message, type) {
+        const messageElement = $(`<div class="message-toast ${type}">${message}</div>`);
+        $('body').append(messageElement);
+        
+        // Show message
+        setTimeout(function() {
+            messageElement.addClass('show');
+        }, 10);
+        
+        // Hide message after 3 seconds
+        setTimeout(function() {
+            messageElement.removeClass('show');
+            setTimeout(function() {
+                messageElement.remove();
+            }, 300);
+        }, 3000);
+    }
+    
+    // Check auth token on page load
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+    }
+});
+</script>
+
+{{ template "footer.html" . }}

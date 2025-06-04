@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <SPIFFS.h>
 #include <vector>
+#include <algorithm>
 
 namespace Utils {
 

@@ -2,6 +2,21 @@
 
 This project implements a versatile ESP32-CAM-based robot platform with live video streaming, servo head/hand control, motor drive capabilities, and system monitoring. It inherits key features from the ESP32-CAM project and adds improved memory management and stability enhancements.
 
+## Dashboard Interface
+
+The system features a responsive, professional dashboard interface for IoT device control and monitoring. Built with a modern, GitHub-inspired dark theme.
+
+### Dashboard Features
+
+- **Camera:** Binary-based live streaming for memory efficiency, snapshot capture, and camera settings
+- **Gyro & Accelerometer:** Real-time sensor data visualization with 3D visualization
+- **Joystick Controls:** Interactive 2D joysticks for servo and motor control
+- **Chat Card:** Built-in communication system for controlling via text commands
+- **WiFi Manager:** WiFi network scanning and connection management
+- **Debug Console:** Real-time logging and command execution
+- **File Manager:** Upload, download, and manage files on the device
+- **Authentication:** Secure login system to protect access
+
 ## Status
 
 **⚠️ WORK IN PROGRESS ⚠️**
@@ -15,9 +30,12 @@ This project is currently under active development. Core features are being port
 - [Software Requirements](#software-requirements)
 - [Architecture](#architecture)
 - [Installation](#installation)
+- [Communication Protocol](#communication-protocol)
 - [Project Structure](#project-structure)
 - [Utility Components](#utility-components)
+- [Web Application](#web-application)
 - [Safe GPIO Configuration](#safe-gpio-pins-for-esp32-cam)
+- [Documentation](#documentation)
 - [License](#license)
 
 ## Features
@@ -27,6 +45,21 @@ This project is currently under active development. Core features are being port
   - Optimized SPI RAM Allocator for ArduinoJson 7.x compatibility
   - Efficient buffer management to prevent memory-related crashes
   - PSRAM utilization for large data structures
+- **Modern Web Dashboard**
+  - Responsive UI with GitHub-inspired dark theme
+  - Single-page application design
+  - WebSocket-based real-time communication with binary streaming for camera efficiency
+  - Mobile-friendly interface with collapsible sidebar
+- **Authentication System**
+  - Secure login mechanism for dashboard access
+  - Session management for up to 5 concurrent users
+- **File Management**
+  - List, upload, download, and delete files
+  - Support for both text and binary file transfers
+- **Communication**
+  - Real-time WebSocket communication
+  - Standardized Data Transfer Object (DTO) format
+  - Binary protocol for efficient camera streaming
 
 ### Planned Features (In Development)
 The following features are planned to be ported from the ESP32-CAM project:
@@ -78,6 +111,10 @@ lib/
 ```
 app/
 ├── app.ino         # Main application entry point
+├── websocket.cpp   # WebSocket event handling
+├── camera.cpp      # Camera initialization and control
+├── wifi.cpp        # WiFi connection management
+├── webserver.cpp   # Web server setup
 └── tasks.cpp       # FreeRTOS task definitions
 ```
 
@@ -119,6 +156,47 @@ include/
    # Or use the PlatformIO IDE build/upload buttons
    ```
 
+## Communication Protocol
+
+The system uses WebSockets for real-time bidirectional communication between the robot and clients.
+
+### Authentication
+
+All WebSocket commands except `login` require authentication:
+
+```json
+{
+  "type": "login",
+  "data": {
+    "username": "admin",
+    "password": "admin"
+  }
+}
+```
+
+### Message Format
+
+All WebSocket messages follow a standardized Data Transfer Object (DTO) format:
+
+```json
+{
+  "type": "command_type",
+  "data": {
+    // Command-specific properties
+  }
+}
+```
+
+### Key Command Types
+
+- **Motor Control**: `motor_command` - Control robot movement
+- **Camera Control**: `camera_command` - Start/stop streaming, change resolution
+- **System Status**: `system_status` - Request system information
+- **File Operations**: `list_files`, `upload_file`, `delete_file` - Manage files
+- **WiFi Management**: `get_wifi_networks`, `connect_wifi` - Configure WiFi
+
+See the [`docs/DTO_FORMAT.md`](docs/DTO_FORMAT.md) file for complete communication protocol details.
+
 ## Project Structure
 
 ```
@@ -126,6 +204,10 @@ cozmo-system/
 ├── app/                  # Main application code
 ├── cert/                 # SSL certificates
 ├── data/                 # Web interface assets
+│   ├── config/           # Configuration files
+│   ├── css/              # Stylesheets
+│   └── js/               # JavaScript files
+├── docs/                 # Documentation
 ├── include/              # Global header files
 └── lib/                  # Module libraries
     ├── Communication/    # WiFi, WebServer, WebSocket handlers
@@ -148,11 +230,31 @@ A custom memory allocator for ArduinoJson that uses external SPI RAM:
 #include <ArduinoJson.h>
 
 // Create a JSON document in external SPI RAM (4KB capacity)
-Utils::SpiJsonDocument<4096> doc;
+Utils::SpiJsonDocument doc;
 
 // Use like a regular JsonDocument
 doc["name"] = "Cozmo";
 doc["sensors"]["camera"] = "OV2640";
+```
+
+### FileManager
+
+A utility for managing files on the SPIFFS file system:
+
+```cpp
+#include "Utils/FileManager.h"
+
+Utils::FileManager fileManager;
+if (fileManager.init()) {
+  // List files in a directory
+  std::vector<Utils::FileManager::FileInfo> files = fileManager.listFiles("/");
+  
+  // Write a file
+  fileManager.writeFile("/config/settings.json", jsonString);
+  
+  // Delete a file
+  fileManager.deleteFile("/logs/old.log");
+}
 ```
 
 ### I2CManager
@@ -188,11 +290,31 @@ str1 = str2 + " Robot";     // Concatenation
 str1 += "!";                // Append
 ```
 
+## Web Application
+
+The dashboard interface is served from the `data/` directory and includes:
+
+- **Real-time monitoring** of system status
+- **Interactive controls** for robot movement
+- **Camera streaming** with adjustable settings
+- **File management interface** for uploading/downloading files
+- **WiFi configuration** for connectivity management
+
 ## Safe GPIO Pins for ESP32-CAM
 
 - **GPIO 0, 2, 4, 12, 13, 14, 15**: Safe for PWM, I2C, and other functions.
 - **GPIO 16**: Not safe, as it is used for PSRAM.
 - **GPIO 1 (UOT), 3 (UOR)**: Safe if not in debug/serial mode. These pins are used for the serial monitor.
+
+## Documentation
+
+Detailed documentation is available in the `docs/` directory:
+
+- **[DOCUMENTATION.md](docs/DOCUMENTATION.md)**: Complete system documentation
+- **[DTO_FORMAT.md](docs/DTO_FORMAT.md)**: WebSocket communication protocol
+- **[MOTORS_SENSORS_DOCS.md](docs/MOTORS_SENSORS_DOCS.md)**: Motors and sensors documentation
+- **[SCREEN_FACE_DOCS.md](docs/SCREEN_FACE_DOCS.md)**: Display and face animation system
+- **[UTILS_I2C_DOCS.md](docs/UTILS_I2C_DOCS.md)**: Utility classes and I2C management
 
 ## License
 

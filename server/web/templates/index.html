@@ -1,0 +1,38 @@
+{{ template "header.html" . }}
+
+<div class="welcome-section">
+    <h1>Welcome to Cozmo Web Interface</h1>
+    <p>Control your Cozmo robot and interact with advanced features.</p>
+    <div class="action-buttons">
+        <a href="/login" class="btn btn-primary">Login</a>
+        <a href="#about" class="btn btn-secondary">Learn More</a>
+    </div>
+</div>
+
+<div id="about" class="about-section">
+    <h2>About Cozmo Web Interface</h2>
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3>Robot Control</h3>
+            <p>Control your Cozmo robot remotely with an intuitive interface</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💬</div>
+            <h3>ChatGPT Integration</h3>
+            <p>Talk to your Cozmo using advanced GPT-4.1 nano language model</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎤</div>
+            <h3>Voice Commands</h3>
+            <p>Control Cozmo with voice commands using speech recognition</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Real-time Dashboard</h3>
+            <p>Monitor Cozmo's status and sensor data in real-time</p>
+        </div>
+    </div>
+</div>
+
+{{ template "footer.html" . }}

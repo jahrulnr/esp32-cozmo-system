@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <map>
 #include <WiFi.h>
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
@@ -21,6 +22,12 @@ public:
      * @return true if initialization was successful, false otherwise
      */
     bool init(const String& path = "/ws", AsyncWebServer* server = nullptr);
+    
+    /**
+     * Check if there are any connected clients
+     * @return true if there are any connected clients, false otherwise
+     */
+    bool hasClients();
 
     /**
      * Start the WebSocket server (not needed with AsyncWebSocket)
@@ -102,12 +109,34 @@ public:
      */
     static Utils::SpiJsonDocument parseJsonMessage(uint8_t* data, size_t len);
 
+    /**
+     * Check if a client is subscribed to camera frames
+     * @param clientId The client ID to check
+     * @return true if the client wants camera frames, false otherwise
+     */
+    bool clientWantsCameraFrames(int clientId);
+    
+    /**
+     * Set whether a client wants to receive camera frames
+     * @param clientId The client ID
+     * @param wantsCameraFrames Whether the client wants camera frames
+     */
+    void setCameraSubscription(int clientId, bool wantsCameraFrames);
+    
+    /**
+     * Check if there are any clients subscribed to camera frames
+     * @return true if there are any clients that want camera frames, false otherwise
+     */
+    bool hasClientsForCameraFrames();
+
 private:
     AsyncWebServer* _server;
     AsyncWebSocket* _webSocket;
     bool _initialized;
     bool _ownsServer;
-    SemaphoreHandle_t _mux;
+    
+    // Client subscriptions for camera frames
+    std::map<int, bool> _clientWantsCameraFrames;
 
     // Event handler function
     std::function<void(AsyncWebSocket* server, AsyncWebSocketClient* client,

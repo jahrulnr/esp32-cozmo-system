@@ -15,6 +15,13 @@ public:
         String bssid;
         int32_t channel;
     };
+    
+    struct WiFiConfig {
+        String ssid;
+        String password;
+        String apSsid;
+        String apPassword;
+    };
 
     WiFiManager();
     ~WiFiManager();
@@ -76,10 +83,37 @@ public:
      * @return RSSI value in dBm
      */
     int32_t getRSSI() const;
+    
+    /**
+     * Load WiFi configuration from SPIFFS
+     * @return true if configuration was loaded successfully, false otherwise
+     */
+    bool loadConfig();
+    
+    /**
+     * Save WiFi configuration to SPIFFS
+     * @param config The WiFi configuration to save
+     * @return true if configuration was saved successfully, false otherwise
+     */
+    bool saveConfig(const WiFiConfig& config);
+    
+    /**
+     * Get the current WiFi configuration
+     * @return The current WiFi configuration
+     */
+    WiFiConfig getConfig() const;
+    
+    /**
+     * Update the WiFi configuration
+     * @param config The new WiFi configuration
+     * @return true if configuration was updated successfully, false otherwise
+     */
+    bool updateConfig(const WiFiConfig& config);
 
 private:
     bool _initialized;
     bool _isAP;
+    WiFiConfig _config;
 };
 
 } // namespace Communication

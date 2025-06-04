@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <functional>
+#include "../Utils/Sstring.h"
 
 namespace Communication {
 
@@ -53,9 +54,9 @@ public:
     void setTemperature(float temperature);
 
 private:
-    String _apiKey;
-    String _model;
-    String _systemMessage;
+    Utils::Sstring _apiKey;
+    Utils::Sstring _model;
+    Utils::Sstring _systemMessage;
     int _maxTokens;
     float _temperature;
     bool _initialized;

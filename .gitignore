@@ -4,5 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 
-data/config/wifi.conf
+data/config/wifi.json
 **/Config.h

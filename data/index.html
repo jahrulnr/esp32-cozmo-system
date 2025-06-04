@@ -3,162 +3,625 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robot Control Example</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .status {
-            padding: 8px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        .status-connected {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .status-disconnected {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .control-panel {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .control-section {
-            flex: 1;
-            min-width: 250px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .direction-btn {
-            padding: 15px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .slider-control {
-            width: 100%;
-            margin: 10px 0;
-        }
-        .data-display {
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .log-container {
-            background-color: #f8f9fa;
-            height: 150px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-top: 20px;
-            font-family: monospace;
-        }
-        .log-entry {
-            margin: 5px 0;
-            padding: 3px;
-            border-bottom: 1px solid #eee;
-        }
-        .log-entry.sent {
-            color: #0c5460;
-            background-color: #d1ecf1;
-        }
-        .log-entry.received {
-            color: #383d41;
-            background-color: #e2e3e5;
-        }
-        .log-entry.error {
-            color: #721c24;
-            background-color: #f8d7da;
-        }
-    </style>
+    <title>Cozmo IoT System</title>
+    <link rel="stylesheet" href="css/main.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <h1>Robot Control Interface</h1>
-    
-    <div id="connection-status" class="status status-disconnected">Disconnected</div>
-    
-    <div class="control-panel">
-        <div class="control-section">
-            <h2>Movement Controls</h2>
-            <div class="button-grid">
-                <button class="direction-btn"></button>
-                <button id="forward-btn" class="direction-btn">Forward</button>
-                <button class="direction-btn"></button>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-logo">
+            <i class="fas fa-robot mr-2"></i> Cozmo IoT System
+        </div>
+        <div class="login-form">
+            <h2>Sign In</h2>
+            <p class="mb-4">Login to access the IoT control panel</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <div id="login-error" class="console-error mb-4"></div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" class="app-container hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Cozmo IoT</h1>
+            </div>
+            <nav class="sidebar-menu">
+                <a class="menu-item active" data-target="dashboard-section">
+                    <span class="menu-icon"><i class="fas fa-gauge-high"></i></span>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+                <a class="menu-item" data-target="camera-section">
+                    <span class="menu-icon"><i class="fas fa-camera"></i></span>
+                    <span class="menu-text">Camera</span>
+                </a>
+                <a class="menu-item" data-target="control-section">
+                    <span class="menu-icon"><i class="fas fa-gamepad"></i></span>
+                    <span class="menu-text">Controls</span>
+                </a>
+                <a class="menu-item" data-target="sensors-section">
+                    <span class="menu-icon"><i class="fas fa-compass"></i></span>
+                    <span class="menu-text">Sensors</span>
+                </a>
+                <a class="menu-item" data-target="chat-section">
+                    <span class="menu-icon"><i class="fas fa-message"></i></span>
+                    <span class="menu-text">Chat</span>
+                </a>
+                <a class="menu-item" data-target="wifi-section">
+                    <span class="menu-icon"><i class="fas fa-wifi"></i></span>
+                    <span class="menu-text">WiFi</span>
+                </a>
+                <a class="menu-item" data-target="files-section">
+                    <span class="menu-icon"><i class="fas fa-folder"></i></span>
+                    <span class="menu-text">Files</span>
+                </a>
+                <a class="menu-item" data-target="debug-section">
+                    <span class="menu-icon"><i class="fas fa-bug"></i></span>
+                    <span class="menu-text">Debug</span>
+                </a>
+                <a class="menu-item" data-target="settings-section">
+                    <span class="menu-icon"><i class="fas fa-gear"></i></span>
+                    <span class="menu-text">Settings</span>
+                </a>
+                <a class="menu-item" id="logout-btn">
+                    <span class="menu-icon"><i class="fas fa-sign-out-alt"></i></span>
+                    <span class="menu-text">Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <button id="mobile-menu-toggle" class="btn mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <div class="connection-status">
+                        <span class="badge badge-success">Connected</span>
+                    </div>
+                </div>
                 
-                <button id="left-btn" class="direction-btn">Left</button>
-                <button id="stop-btn" class="direction-btn">Stop</button>
-                <button id="right-btn" class="direction-btn">Right</button>
+                <div class="grid">
+                    <!-- Status Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">System Status</h2>
+                            <button class="btn btn-sm">Refresh</button>
+                        </div>
+                        <div class="sensor-grid">
+                            <div>
+                                <div>WiFi: <span class="sensor-value" id="wifi-status">-</span></div>
+                            </div>
+                            <div>
+                                <div>Battery: <span class="sensor-value" id="battery-status">-</span></div>
+                            </div>
+                            <div>
+                                <div>Memory: <span class="sensor-value" id="memory-status">-</span></div>
+                            </div>
+                            <div>
+                                <div>CPU:  <span class="sensor-value" id="cpu-status">-</span></div>
+                            </div>
+                            <div>
+                                <div>Temperature:  <span class="sensor-value" id="temperature-status">-</span></div>
+                            </div>
+                            <div>
+                                <div>Uptime:  <span class="sensor-value" id="uptime-status">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Camera Preview -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Camera Preview</h2>
+                        </div>
+                        <div class="camera-container">
+                            <img id="camera-feed" class="camera-feed" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9ImcxODciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzE2MWIyMiIgb2Zmc2V0PSIwIi8+PHN0b3Agc3RvcC1jb2xvcj0iIzBkMTExNyIgb2Zmc2V0PSIxIi8+CjwvbGluZWFyR3JhZGllbnQ+CjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZzE4NykiIC8+Cjwvc3ZnPg==" alt="Camera Offline">
+                        </div>
+                    </div>
+                </div>
                 
-                <button class="direction-btn"></button>
-                <button id="backward-btn" class="direction-btn">Backward</button>
-                <button class="direction-btn"></button>
-            </div>
-        </div>
-        
-        <div class="control-section">
-            <h2>Head Position</h2>
-            <div>
-                <label for="pan-slider">Pan: <span id="pan-value">0</span>°</label>
-                <input id="pan-slider" class="slider-control" type="range" min="-90" max="90" value="0">
-            </div>
-            <div>
-                <label for="tilt-slider">Tilt: <span id="tilt-value">0</span>°</label>
-                <input id="tilt-slider" class="slider-control" type="range" min="-45" max="45" value="0">
-            </div>
-        </div>
+                <!-- Quick Controls -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Controls</h2>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="camera-toggle" class="btn" data-active="false">Start Camera</button>
+                        <button class="btn">Reset Motors</button>
+                        <button class="btn btn-danger">Emergency Stop</button>
+                    </div>
+                </div>
+                
+                <!-- Recent Logs -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Logs</h2>
+                        <button id="clear-recent-logs" class="btn btn-sm">Clear</button>
+                    </div>
+                    <div class="console-container" style="max-height: 200px;">
+                        <div class="console-line console-info">[10:23:15] System started</div>
+                        <div class="console-line console-success">[10:23:16] WiFi connected to Network</div>
+                        <div class="console-line console-info">[10:23:18] Camera initialized</div>
+                        <div class="console-line console-warning">[10:24:05] Battery level below 30%</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Camera Section -->
+            <section id="camera-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>Camera Control</h1>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Live Feed</h2>
+                        <div class="flex gap-2">
+                            <button id="camera-toggle-main" class="btn" data-active="false">Start Camera</button>
+                            <button id="camera-snapshot" class="btn">Take Snapshot</button>
+                        </div>
+                    </div>
+                    <div class="camera-container" style="height: 480px;">
+                        <img id="camera-feed-main" class="camera-feed" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9ImcxODciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzE2MWIyMiIgb2Zmc2V0PSIwIi8+PHN0b3Agc3RvcC1jb2xvcj0iIzBkMTExNyIgb2Zmc2V0PSIxIi8+CjwvbGluZWFyR3JhZGllbnQ+CjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZzE4NykiIC8+Cjwvc3ZnPg==" alt="Camera Offline">
+                        <div class="camera-controls">
+                            <button class="btn" id="camera-zoom-in"><i class="fas fa-plus"></i></button>
+                            <button class="btn" id="camera-zoom-out"><i class="fas fa-minus"></i></button>
+                            <select class="form-control" id="camera-resolution">
+                                <option value="vga">VGA (640x480)</option>
+                                <option value="hd">HD (1280x720)</option>
+                                <option value="full-hd">Full HD (1920x1080)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Camera Settings</h2>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Brightness</label>
+                        <input type="range" class="form-range" min="0" max="100" value="50" id="camera-brightness">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contrast</label>
+                        <input type="range" class="form-range" min="0" max="100" value="50" id="camera-contrast">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Saturation</label>
+                        <input type="range" class="form-range" min="0" max="100" value="50" id="camera-saturation">
+                    </div>
+                    <div class="form-group">
+                        <div class="flex justify-between items-center">
+                            <label class="form-label" style="margin: 0;">Flash</label>
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" id="camera-flash">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Control Section -->
+            <section id="control-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>Controls</h1>
+                </div>
+                
+                <div class="grid">
+                    <!-- Servo Control -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Servo Control</h2>
+                        </div>
+                        <p>Use the joystick to control the servo positions</p>
+                        <div class="joystick-container">
+                            <div id="servo-joystick" class="joystick-inner">
+                                <i class="fas fa-arrows-up-down-left-right"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div>X: <span id="servo-x">0</span>°</div>
+                            <div>Y: <span id="servo-y">0</span>°</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Motor Control -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Motor Control</h2>
+                        </div>
+                        <p>Use the joystick to control the motor speed and direction</p>
+                        <div class="joystick-container">
+                            <div id="motor-joystick" class="joystick-inner">
+                                <i class="fas fa-arrows-up-down-left-right"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div>Speed: <span id="motor-speed">0</span>%</div>
+                            <div>Direction: <span id="motor-direction">0</span>°</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preset Controls -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Presets</h2>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Movement Style</label>
+                        <select class="form-control" id="movement-preset">
+                            <option value="direct">Direct Control</option>
+                            <option value="smooth">Smooth Motion</option>
+                            <option value="precise">Precise Control</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn" id="preset-forward">Forward</button>
+                        <button class="btn" id="preset-backward">Backward</button>
+                        <button class="btn" id="preset-left">Turn Left</button>
+                        <button class="btn" id="preset-right">Turn Right</button>
+                        <button class="btn btn-danger" id="preset-stop">Stop</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sensors Section -->
+            <section id="sensors-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>Sensors</h1>
+                </div>
+                
+                <div class="grid">
+                    <!-- Gyroscope -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Gyroscope</h2>
+                        </div>
+                        <div class="gyro-visualization">
+                            <div id="gyro-indicator" class="gyro-indicator"></div>
+                        </div>
+                        <div class="sensor-grid mt-4">
+                            <div>
+                                <div>X-axis</div>
+                                <div class="sensor-value" id="gyro-x">0.00</div>
+                            </div>
+                            <div>
+                                <div>Y-axis</div>
+                                <div class="sensor-value" id="gyro-y">0.00</div>
+                            </div>
+                            <div>
+                                <div>Z-axis</div>
+                                <div class="sensor-value" id="gyro-z">0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Accelerometer -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Accelerometer</h2>
+                        </div>
+                        <div class="sensor-grid">
+                            <div>
+                                <div>X-axis</div>
+                                <div class="sensor-value" id="accel-x">0.00</div>
+                            </div>
+                            <div>
+                                <div>Y-axis</div>
+                                <div class="sensor-value" id="accel-y">0.00</div>
+                            </div>
+                            <div>
+                                <div>Z-axis</div>
+                                <div class="sensor-value" id="accel-z">0.00</div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <canvas id="accel-chart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Other Sensors -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Other Sensors</h2>
+                    </div>
+                    <div class="sensor-grid">
+                        <div>
+                            <div>Temperature</div>
+                            <div class="sensor-value" id="temperature">25.3°C</div>
+                        </div>
+                        <div>
+                            <div>Humidity</div>
+                            <div class="sensor-value" id="humidity">48%</div>
+                        </div>
+                        <div>
+                            <div>Pressure</div>
+                            <div class="sensor-value" id="pressure">1013 hPa</div>
+                        </div>
+                        <div>
+                            <div>Light</div>
+                            <div class="sensor-value" id="light">345 lux</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section id="chat-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>Chat</h1>
+                </div>
+                
+                <div class="card" style="height: calc(100vh - 120px);">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="chat-message message-incoming">
+                                <div class="message-header">
+                                    <span class="message-sender">System</span>
+                                    <span class="message-time">10:23:15</span>
+                                </div>
+                                <div class="message-content">Welcome to Cozmo IoT System</div>
+                            </div>
+                            <div class="chat-message message-outgoing">
+                                <div class="message-header">
+                                    <span class="message-sender">User</span>
+                                    <span class="message-time">10:23:18</span>
+                                </div>
+                                <div class="message-content">Hello, is the system online?</div>
+                            </div>
+                            <div class="chat-message message-incoming">
+                                <div class="message-header">
+                                    <span class="message-sender">System</span>
+                                    <span class="message-time">10:23:19</span>
+                                </div>
+                                <div class="message-content">Yes, all systems operational. Battery at 82%</div>
+                            </div>
+                        </div>
+                        <form id="chat-form" class="chat-input-container">
+                            <input type="text" class="form-control chat-input" id="chat-input" placeholder="Type your message...">
+                            <button type="submit" class="btn btn-primary chat-send">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WiFi Section -->
+            <section id="wifi-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>WiFi Manager</h1>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Available Networks</h2>
+                        <button id="refresh-wifi" class="btn btn-sm">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="wifi-list" class="wifi-list">
+                        <div class="wifi-item">
+                            <div class="wifi-name">Loading networks...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Current Connection</h2>
+                    </div>
+                    <div class="sensor-grid">
+                        <div>
+                            <div>SSID</div>
+                            <div class="sensor-value" id="wifi-current-ssid">MyNetwork</div>
+                        </div>
+                        <div>
+                            <div>IP Address</div>
+                            <div class="sensor-value" id="wifi-ip">192.168.1.105</div>
+                        </div>
+                        <div>
+                            <div>Signal Strength</div>
+                            <div class="sensor-value" id="wifi-strength">-58 dBm</div>
+                        </div>
+                        <div>
+                            <div>MAC Address</div>
+                            <div class="sensor-value" id="wifi-mac">AB:CD:EF:12:34:56</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Files Section -->
+            <section id="files-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>File Manager</h1>
+                </div>
+                
+                <div class="card">
+                    <div class="file-header">
+                        <div id="breadcrumb" class="breadcrumb">
+                            <span class="breadcrumb-item">Root</span>
+                        </div>
+                        <div class="file-actions">
+                            <input type="file" id="file-upload" style="display: none;">
+                            <button id="upload-file-btn" class="btn btn-sm btn-primary">
+                                <i class="fas fa-upload"></i> Upload
+                            </button>
+                            <button id="create-folder-btn" class="btn btn-sm">
+                                <i class="fas fa-folder-plus"></i> New Folder
+                            </button>
+                            <button id="refresh-btn" class="btn btn-sm">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="file-list" class="file-list">
+                        <div class="file-item">
+                            <i class="file-icon fas fa-folder"></i>
+                            <div class="file-name">Loading files...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Storage Information</h2>
+                    </div>
+                    <div class="sensor-grid">
+                        <div>
+                            <div>Total Space</div>
+                            <div class="sensor-value" id="storage-total">4.0 MB</div>
+                        </div>
+                        <div>
+                            <div>Used Space</div>
+                            <div class="sensor-value" id="storage-used">1.8 MB</div>
+                        </div>
+                        <div>
+                            <div>Free Space</div>
+                            <div class="sensor-value" id="storage-free">2.2 MB</div>
+                        </div>
+                        <div>
+                            <div>Usage</div>
+                            <div class="sensor-value" id="storage-percent">45%</div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="progress" style="height: 10px; background-color: var(--color-border); border-radius: 5px; overflow: hidden;">
+                            <div style="width: 45%; height: 100%; background-color: var(--color-accent);"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Debug Section -->
+            <section id="debug-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>Debug Console</h1>
+                    <div class="flex gap-2">
+                        <button id="clear-console" class="btn">Clear</button>
+                        <select id="log-level" class="form-control">
+                            <option value="all">All Levels</option>
+                            <option value="info">Info & Above</option>
+                            <option value="warning">Warning & Above</option>
+                            <option value="error">Errors Only</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="card" style="height: calc(100vh - 180px);">
+                    <div id="console-output" class="console-container" style="height: 100%;">
+                        <div class="console-line console-info">[System] Console initialized</div>
+                        <div class="console-line console-info">[WiFi] Starting connection...</div>
+                        <div class="console-line console-success">[WiFi] Connected to network 'MyNetwork'</div>
+                        <div class="console-line console-info">[Server] WebSocket server started on port 81</div>
+                        <div class="console-line console-warning">[Camera] Low light conditions detected</div>
+                    </div>
+                </div>
+                
+                <div class="flex mt-4">
+                    <input type="text" id="debug-command" class="form-control" placeholder="Enter debug command...">
+                    <button id="send-command" class="btn btn-primary" style="margin-left: 8px;">Send</button>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="content-section hidden">
+                <div class="page-header">
+                    <h1>Settings</h1>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">System Settings</h2>
+                    </div>
+                    
+                    <form id="settings-form">
+                        <div class="form-group">
+                            <label class="form-label">Device Name</label>
+                            <input type="text" class="form-control" id="device-name" value="Cozmo-IoT-001">
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="flex justify-between items-center">
+                                <label class="form-label" style="margin: 0;">Auto-start on boot</label>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="auto-start" checked>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="flex justify-between items-center">
+                                <label class="form-label" style="margin: 0;">Power Saving Mode</label>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="power-saving">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Log Level</label>
+                            <select class="form-control" id="system-log-level">
+                                <option value="debug">Debug</option>
+                                <option value="info" selected>Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Update Interval (ms)</label>
+                            <input type="number" class="form-control" id="update-interval" value="500" min="100" max="5000">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                        <button type="button" class="btn" id="reset-settings">Reset to Default</button>
+                    </form>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">System Administration</h2>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Firmware Version</label>
+                        <div class="sensor-value">1.2.5</div>
+                    </div>
+                    
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn" id="check-updates">Check for Updates</button>
+                        <button class="btn btn-primary" id="update-firmware">Update Firmware</button>
+                        <button class="btn btn-danger" id="factory-reset">Factory Reset</button>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
-    
-    <div class="data-display">
-        <h2>Sensor Data</h2>
-        <div>
-            <strong>Gyroscope:</strong> 
-            X: <span id="gyro-x">0.00</span>°/s, 
-            Y: <span id="gyro-y">0.00</span>°/s, 
-            Z: <span id="gyro-z">0.00</span>°/s
-        </div>
-        <div style="margin-top: 10px;">
-            <strong>Accelerometer:</strong> 
-            X: <span id="accel-x">0.00</span>g, 
-            Y: <span id="accel-y">0.00</span>g, 
-            Z: <span id="accel-z">0.00</span>g, 
-            Magnitude: <span id="accel-magnitude">0.00</span>g
-            
-            <div style="width: 100%; height: 20px; background: linear-gradient(to right, #c8e6c9 0%, #ffcc80 50%, #ef9a9a 100%); position: relative; border-radius: 4px; margin-top: 8px;">
-                <div id="magnitude-pointer" style="position: absolute; top: -5px; width: 8px; height: 30px; background-color: #000; margin-left: -4px; transition: left 0.2s ease-out; left: 50%;"></div>
-            </div>
-        </div>
-    </div>
-    
-    <div>
-        <h2>Camera Feed</h2>
-        <img id="camera-feed" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAGQAQMAAADpvnrjAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAADlJREFUeNrtwTEBAAAAwiD7p14MH2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAx4IAAAEmTsWpAAAAAElFTkSuQmCC" 
-            alt="Camera Feed" width="640" height="480">
-    </div>
-    
-    <div style="margin-top: 20px; text-align: center;">
-        <a href="/sensor-monitor.html" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
-            Open Detailed Sensor Monitor
-        </a>
-    </div>
-    
-    <div>
-        <h2>WebSocket Communication Log</h2>
-        <div id="ws-log" class="log-container"></div>
-    </div>
-    <script src="/js/main.js"></script>
+
+    <script src="js/main.js"></script>
 </body>
 </html>

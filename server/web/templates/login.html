@@ -1,0 +1,137 @@
+{{ template "header.html" . }}
+<div class="auth-container">
+    <div class="auth-form">
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Login</button>
+            <button class="auth-tab" data-tab="register">Register</button>
+        </div>
+
+        <div class="tab-content" id="login-tab">
+            <h2>Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+                <div class="form-error" id="login-error"></div>
+            </form>
+        </div>
+
+        <div class="tab-content hidden" id="register-tab">
+            <h2>Register</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" name="confirmPassword" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+                <div class="form-error" id="register-error"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Tab switching
+    $('.auth-tab').on('click', function() {
+        $('.auth-tab').removeClass('active');
+        $(this).addClass('active');
+        
+        const tabId = $(this).data('tab');
+        $('.tab-content').addClass('hidden');
+        $(`#${tabId}-tab`).removeClass('hidden');
+    });
+
+    // Login form submission
+    $('#login-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const username = $('#login-username').val();
+        const password = $('#login-password').val();
+        
+        $.ajax({
+            url: '/login',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                username: username,
+                password: password
+            }),
+            success: function(response) {
+                // Store token in local storage
+                localStorage.setItem('auth_token', response.token);
+                localStorage.setItem('username', response.user.username);
+                
+                // Redirect to dashboard
+                window.location.href = '/dashboard';
+            },
+            error: function(xhr) {
+                let errorMessage = 'Login failed';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+                $('#login-error').text(errorMessage).show();
+            }
+        });
+    });
+
+    // Register form submission
+    $('#register-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const username = $('#register-username').val();
+        const password = $('#register-password').val();
+        const confirmPassword = $('#register-confirm-password').val();
+        
+        // Check if passwords match
+        if (password !== confirmPassword) {
+            $('#register-error').text('Passwords do not match').show();
+            return;
+        }
+        
+        $.ajax({
+            url: '/register',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                username: username,
+                password: password
+            }),
+            success: function(response) {
+                // Store token in local storage
+                localStorage.setItem('auth_token', response.token);
+                localStorage.setItem('username', response.user.username);
+                
+                // Redirect to dashboard
+                window.location.href = '/dashboard';
+            },
+            error: function(xhr) {
+                let errorMessage = 'Registration failed';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+                $('#register-error').text(errorMessage).show();
+            }
+        });
+    });
+});
+</script>
+{{ template "footer.html" . }}

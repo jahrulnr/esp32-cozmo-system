@@ -2,7 +2,7 @@
 
 namespace Communication {
 
-WebSocketHandler::WebSocketHandler() : _server(nullptr), _webSocket(nullptr), _initialized(false), _ownsServer(false), _mux(xSemaphoreCreateMutex()) {
+WebSocketHandler::WebSocketHandler() : _server(nullptr), _webSocket(nullptr), _initialized(false), _ownsServer(false) {
 }
 
 WebSocketHandler::~WebSocketHandler() {
@@ -61,7 +61,6 @@ void WebSocketHandler::sendText(int clientId, const String& message) {
         return;
     }
     
-    if (xSemaphoreTake(_mux, pdMS_TO_TICKS(1000)) == pdFALSE) return;
     if (clientId < 0) {
         _webSocket->textAll(message);
     } else {
@@ -70,8 +69,6 @@ void WebSocketHandler::sendText(int clientId, const String& message) {
             client->text(message);
         }
     }
-    vTaskDelay(pdMS_TO_TICKS(10));
-    xSemaphoreGive(_mux);
 }
 
 void WebSocketHandler::sendJsonMessage(int clientId, const String& type, const JsonVariant& data) {
@@ -91,12 +88,11 @@ void WebSocketHandler::sendJsonMessage(int clientId, const String& type, const S
 
 void WebSocketHandler::sendError(int clientId, int code, const String& message) {
     Utils::SpiJsonDocument doc;
-    JsonObject data = doc["data"];
-    data["code"] = code;
-    data["message"] = message;
+    doc["type"] = "error";
+    doc["data"]["code"] = code;
+    doc["data"]["message"] = message;
     
     String jsonString;
-    doc["type"] = "error";
     serializeJson(doc, jsonString);
     
     sendText(clientId, jsonString);
@@ -104,31 +100,34 @@ void WebSocketHandler::sendError(int clientId, int code, const String& message) 
 
 void WebSocketHandler::sendOk(int clientId, const String& message) {
     Utils::SpiJsonDocument doc;
-    JsonObject data = doc["data"];
-    data["message"] = message;
     
     String jsonString;
     doc["type"] = "ok";
+    doc["data"]["message"] = message;
     serializeJson(doc, jsonString);
     
     sendText(clientId, jsonString);
 }
 
 void WebSocketHandler::sendBinary(int clientId, const uint8_t* data, size_t length) {
-    if (!_initialized || !_webSocket) {
+    if (!_initialized || !_webSocket || !data || length == 0) {
         return;
     }
     
-    if (xSemaphoreTake(_mux, pdMS_TO_TICKS(1000)) == pdFALSE) return;
     if (clientId < 0) {
         _webSocket->binaryAll(data, length);
     } else {
+        // Send to specific client
         AsyncWebSocketClient* client = _webSocket->client(clientId);
-        if (client) {
+        if (client && client->status() == WS_CONNECTED) {
             client->binary((const char*)data, length);
         }
     }
-    xSemaphoreGive(_mux);
+    
+    // For large binary frames, give the ESP some time to breathe
+    if (length > 10000) {
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
 }
 
 void WebSocketHandler::onEvent(std::function<void(AsyncWebSocket* server, AsyncWebSocketClient* client, 
@@ -167,6 +166,38 @@ Utils::SpiJsonDocument WebSocketHandler::parseJsonMessage(uint8_t* data, size_t 
     }
     
     return doc;
+}
+
+bool WebSocketHandler::hasClients() {
+    if (!_initialized || !_webSocket) {
+        return false;
+    }
+    
+    return _webSocket->count() > 0;
+}
+
+bool WebSocketHandler::clientWantsCameraFrames(int clientId) {
+    if (clientId < 0) return false;
+    return _clientWantsCameraFrames.count(clientId) > 0 && _clientWantsCameraFrames[clientId];
+}
+
+void WebSocketHandler::setCameraSubscription(int clientId, bool wantsCameraFrames) {
+    if (clientId < 0) return;
+    _clientWantsCameraFrames[clientId] = wantsCameraFrames;
+}
+
+bool WebSocketHandler::hasClientsForCameraFrames() {
+    if (_clientWantsCameraFrames.empty()) {
+        return true;  // Default behavior: if no specific subscriptions, assume all clients want frames
+    }
+    
+    for (const auto& pair : _clientWantsCameraFrames) {
+        if (pair.second) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 } // namespace Communication

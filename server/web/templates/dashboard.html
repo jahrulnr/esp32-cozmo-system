@@ -1,0 +1,369 @@
+{{ template "header.html" . }}
+
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <div class="dashboard-status">
+            <div class="status-indicator" id="cozmo-status">
+                <span class="status-label">Cozmo Status:</span>
+                <span class="status-value disconnected">Disconnected</span>
+            </div>
+            <button class="btn btn-primary" id="connect-cozmo">Connect</button>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>Camera Feed</h3>
+            </div>
+            <div class="card-content">
+                <div class="camera-feed">
+                    <img id="camera-feed" src="/static/images/camera-placeholder.png" alt="Camera Feed">
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-sm" id="toggle-camera">Start Camera</button>
+                    <button class="btn btn-sm" id="capture-image">Capture Image</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>Motion Controls</h3>
+            </div>
+            <div class="card-content">
+                <div class="control-pad">
+                    <button class="control-btn up" id="move-forward">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 5l7 7H5z"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn left" id="turn-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M7 12l7-7v14z"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn right" id="turn-right">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M17 12l-7 7V5z"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn down" id="move-backward">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 19l-7-7h14z"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn center" id="stop">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M6 6h12v12H6z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-sm" id="lift-up">Lift Up</button>
+                    <button class="btn btn-sm" id="lift-down">Lift Down</button>
+                    <button class="btn btn-sm" id="head-up">Head Up</button>
+                    <button class="btn btn-sm" id="head-down">Head Down</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>Sensor Data</h3>
+            </div>
+            <div class="card-content">
+                <div class="sensor-data">
+                    <div class="sensor-item">
+                        <span class="sensor-label">Battery:</span>
+                        <span class="sensor-value" id="battery-level">Unknown</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">Temperature:</span>
+                        <span class="sensor-value" id="temperature">Unknown</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">Gyro:</span>
+                        <span class="sensor-value" id="gyro">Unknown</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">Cliff Sensor:</span>
+                        <span class="sensor-value" id="cliff-sensor">Unknown</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>Quick Actions</h3>
+            </div>
+            <div class="card-content">
+                <div class="quick-actions">
+                    <button class="btn btn-action" id="say-hello">Say Hello</button>
+                    <button class="btn btn-action" id="dance">Dance</button>
+                    <button class="btn btn-action" id="pickup-cube">Pick Up Cube</button>
+                    <button class="btn btn-action" id="play-animation">Play Animation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    let socket;
+    let isConnected = false;
+    
+    // Connect to WebSocket
+    $('#connect-cozmo').on('click', function() {
+        if (isConnected) {
+            // Disconnect
+            socket.close();
+            isConnected = false;
+            $('#cozmo-status .status-value').removeClass('connected').addClass('disconnected').text('Disconnected');
+            $(this).text('Connect');
+        } else {
+            // Connect
+            connectWebSocket();
+        }
+    });
+    
+    function connectWebSocket() {
+        // Get auth token
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        // Connect to WebSocket
+        socket = new WebSocket(`ws://${window.location.host}/ws`);
+        
+        socket.onopen = function() {
+            isConnected = true;
+            $('#cozmo-status .status-value').removeClass('disconnected').addClass('connected').text('Connected');
+            $('#connect-cozmo').text('Disconnect');
+            
+            // Send authentication message
+            socket.send(JSON.stringify({
+                type: 'auth',
+                content: token
+            }));
+        };
+        
+        socket.onclose = function() {
+            isConnected = false;
+            $('#cozmo-status .status-value').removeClass('connected').addClass('disconnected').text('Disconnected');
+            $('#connect-cozmo').text('Connect');
+        };
+        
+        socket.onmessage = function(event) {
+            const message = JSON.parse(event.data);
+            
+            // Handle different message types
+            switch (message.type) {
+                case 'camera':
+                    // Update camera feed
+                    $('#camera-feed').attr('src', message.content);
+                    break;
+                case 'sensors':
+                    // Update sensor data
+                    const sensors = JSON.parse(message.content);
+                    $('#battery-level').text(sensors.battery + '%');
+                    $('#temperature').text(sensors.temperature + '°C');
+                    $('#gyro').text(`X: ${sensors.gyro.x}, Y: ${sensors.gyro.y}, Z: ${sensors.gyro.z}`);
+                    $('#cliff-sensor').text(sensors.cliffDetected ? 'Cliff Detected' : 'Clear');
+                    break;
+                default:
+                    console.log('Unknown message type:', message.type);
+            }
+        };
+        
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            $('#cozmo-status .status-value').removeClass('connected').addClass('disconnected').text('Error');
+        };
+    }
+    
+    // Control buttons
+    $('#move-forward').on('mousedown', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'move_forward_start'
+            }));
+        }
+    }).on('mouseup mouseleave', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'move_forward_stop'
+            }));
+        }
+    });
+    
+    $('#move-backward').on('mousedown', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'move_backward_start'
+            }));
+        }
+    }).on('mouseup mouseleave', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'move_backward_stop'
+            }));
+        }
+    });
+    
+    $('#turn-left').on('mousedown', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'turn_left_start'
+            }));
+        }
+    }).on('mouseup mouseleave', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'turn_left_stop'
+            }));
+        }
+    });
+    
+    $('#turn-right').on('mousedown', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'turn_right_start'
+            }));
+        }
+    }).on('mouseup mouseleave', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'turn_right_stop'
+            }));
+        }
+    });
+    
+    $('#stop').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'stop'
+            }));
+        }
+    });
+    
+    // Arm and head controls
+    $('#lift-up').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'lift_up'
+            }));
+        }
+    });
+    
+    $('#lift-down').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'lift_down'
+            }));
+        }
+    });
+    
+    $('#head-up').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'head_up'
+            }));
+        }
+    });
+    
+    $('#head-down').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'control',
+                content: 'head_down'
+            }));
+        }
+    });
+    
+    // Quick actions
+    $('#say-hello').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'action',
+                content: 'say_hello'
+            }));
+        }
+    });
+    
+    $('#dance').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'action',
+                content: 'dance'
+            }));
+        }
+    });
+    
+    $('#pickup-cube').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'action',
+                content: 'pickup_cube'
+            }));
+        }
+    });
+    
+    $('#play-animation').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'action',
+                content: 'play_animation'
+            }));
+        }
+    });
+    
+    // Camera controls
+    $('#toggle-camera').on('click', function() {
+        if (isConnected) {
+            const isActive = $(this).hasClass('active');
+            socket.send(JSON.stringify({
+                type: 'camera',
+                content: isActive ? 'stop' : 'start'
+            }));
+            $(this).toggleClass('active');
+            $(this).text(isActive ? 'Start Camera' : 'Stop Camera');
+        }
+    });
+    
+    $('#capture-image').on('click', function() {
+        if (isConnected) {
+            socket.send(JSON.stringify({
+                type: 'camera',
+                content: 'capture'
+            }));
+        }
+    });
+    
+    // Check auth token on page load
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+    }
+});
+</script>
+
+{{ template "footer.html" . }}

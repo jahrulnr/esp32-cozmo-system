@@ -1,30 +1,6 @@
 #include <Arduino.h>
-#include <Config.h>
+#include "init.h"
 
-// Include core libraries
-#include <AsyncWebSocket.h>
-#include <ESPAsyncWebServer.h>
-#include "../lib/Sensors/Camera.h"
-#include "../lib/Sensors/Gyro.h"
-#include "../lib/Motors/MotorControl.h"
-#include "../lib/Motors/ServoControl.h"
-#include "../lib/Communication/WiFiManager.h"
-#include "../lib/Communication/WebSocketHandler.h"
-#include "../lib/Screen/Screen.h"
-#include "../lib/Utils/Logger.h"
-#include "../lib/Utils/SpiAllocatorUtils.h"
-
-// External component instances (defined in app.ino)
-extern Sensors::Camera* camera;
-extern Sensors::Gyro* gyro;
-extern Motors::MotorControl* motors;
-extern Motors::ServoControl* servos;
-extern Communication::WiFiManager* wifiManager;
-extern Communication::WebSocketHandler* webSocket;
-extern Screen::Screen* screen;
-extern Utils::Logger* logger;
-
-// Task handles
 TaskHandle_t cameraStreamTaskHandle = NULL;
 TaskHandle_t sensorMonitorTaskHandle = NULL;
 
@@ -35,64 +11,36 @@ void sensorMonitorTask(void* parameter);
 /**
  * Initialize all background tasks
  */
-void initTasks() {
+void setupTasks() {
     logger->info("Initializing tasks...");
     
     // Create camera streaming task
-    xTaskCreatePinnedToCore(
-        cameraStreamTask,        // Task function
-        "CameraStream",          // Task name
-        8192,                    // Stack size
-        NULL,                    // Parameters
-        1,                       // Priority
-        &cameraStreamTaskHandle, // Task handle
-        1                        // Core (1 = second core)
-    );
+    if (camera) {
+        xTaskCreate(
+            cameraStreamTask,        // Task function
+            "CameraStream",          // Task name
+            40 * 1024,               // Stack size
+            NULL,                    // Parameters
+            1,                       // Priority
+            &cameraStreamTaskHandle  // Task handle
+        );
+        
+        logger->info("Camera streaming task initialized");
+    } else {
+        logger->warning("Camera not initialized, skipping camera stream task");
+    }
     
     // Create sensor monitoring task
-    xTaskCreatePinnedToCore(
+    xTaskCreate(
         sensorMonitorTask,         // Task function
         "SensorMonitor",           // Task name
         4096,                      // Stack size
         NULL,                      // Parameters
         1,                         // Priority
-        &sensorMonitorTaskHandle,  // Task handle
-        1                          // Core (1 = second core)
+        &sensorMonitorTaskHandle   // Task handle
     );
     
     logger->info("Tasks initialized");
-}
-
-/**
- * Camera streaming task
- * Captures frames from the camera and streams them via WebSocket
- */
-void cameraStreamTask(void* parameter) {
-    // Check if camera and WebSocket are initialized
-    if (!camera || !webSocket) {
-        logger->error("Camera streaming task failed: components not initialized");
-        vTaskDelete(NULL);
-        return;
-    }
-    
-    logger->info("Camera streaming task started");
-    
-    // Stream frames forever
-    while (true) {
-        // Get a frame from the camera
-        camera_fb_t* fb = camera->captureFrame();
-        
-        if (fb) {
-            // Send the frame to all connected clients
-            webSocket->sendBinary(-1, fb->buf, fb->len);
-            
-            // Return the frame buffer to the camera
-            camera->returnFrame(fb);
-        }
-        
-        // Short delay to prevent watchdog triggering
-        vTaskDelay(1000 / CAMERA_FPS / portTICK_PERIOD_MS);
-    }
 }
 
 /**
@@ -127,12 +75,12 @@ void sensorMonitorTask(void* parameter) {
             jsonData["accel"]["y"] = String(gyro->getAccelY());
             jsonData["accel"]["z"] = String(gyro->getAccelZ());
             jsonData["accel"]["magnitude"] = String(gyro->getAccelMagnitude());
-        }
         
-        // Send the data to all connected clients
-        String data;
-        serializeJson(jsonData, data);
-        webSocket->sendJsonMessage(-1, "sensor_data", data);
+            // Send the data to all connected clients
+            String data;
+            serializeJson(jsonData, data);
+            webSocket->sendJsonMessage(-1, "sensor_data", data);
+        }
         
         // Delay before next reading
         vTaskDelay(pdMS_TO_TICKS(300));

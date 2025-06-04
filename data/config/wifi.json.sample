@@ -1,0 +1,6 @@
+{
+  "ssid": "Your_WiFi_SSID",
+  "password": "Your_WiFi_Password",
+  "ap_ssid": "CozmoRobot",
+  "ap_password": "CozmoPass"
+}
