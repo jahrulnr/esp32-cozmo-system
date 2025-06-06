@@ -36,7 +36,10 @@ bool Sstring::ensureCapacity(size_t minCap) {
     // Allocate new buffer
     char* newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, MALLOC_CAP_SPIRAM));
     if (!newBuf) {
-        return false; // Failed to allocate
+        newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, MALLOC_CAP_INTERNAL));
+    }
+    if (!newBuf) {
+        newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, MALLOC_CAP_DEFAULT));
     }
     
     // Copy existing content if any

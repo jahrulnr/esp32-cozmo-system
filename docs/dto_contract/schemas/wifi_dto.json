@@ -1,0 +1,240 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WiFi DTO Schema",
+  "description": "Schema for WiFi management messages in Cozmo-System",
+  
+  "definitions": {
+    "baseDTO": {
+      "type": "object",
+      "required": ["version", "type", "data"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "DTO protocol version"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of message"
+        },
+        "data": {
+          "type": "object",
+          "description": "Message payload"
+        }
+      }
+    },
+    
+    "wifiNetworkScanRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["wifi_scan"] },
+            "data": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    
+    "wifiNetworkList": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["wifi_networks"] },
+            "data": {
+              "type": "object",
+              "required": ["networks"],
+              "properties": {
+                "networks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["ssid", "rssi", "encryption"],
+                    "properties": {
+                      "ssid": {
+                        "type": "string",
+                        "description": "Network SSID"
+                      },
+                      "rssi": {
+                        "type": "integer",
+                        "description": "Signal strength in dBm"
+                      },
+                      "encryption": {
+                        "type": "string",
+                        "enum": ["OPEN", "WEP", "WPA", "WPA2", "WPA3", "WPA2_ENTERPRISE"],
+                        "description": "Network encryption type"
+                      },
+                      "channel": {
+                        "type": "integer",
+                        "description": "WiFi channel"
+                      },
+                      "bssid": {
+                        "type": "string",
+                        "description": "Base station MAC address (BSSID)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "wifiConnectRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["wifi_connect"] },
+            "data": {
+              "type": "object",
+              "required": ["ssid", "password"],
+              "properties": {
+                "ssid": {
+                  "type": "string",
+                  "description": "Network SSID to connect to"
+                },
+                "password": {
+                  "type": "string",
+                  "description": "Network password"
+                },
+                "save": {
+                  "type": "boolean",
+                  "description": "Whether to save this network to persistent storage"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "wifiConnectResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["wifi_connect_result"] },
+            "data": {
+              "type": "object",
+              "required": ["success"],
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether connection was successful"
+                },
+                "ssid": {
+                  "type": "string",
+                  "description": "SSID of the network"
+                },
+                "ip": {
+                  "type": "string",
+                  "description": "Assigned IP address"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Error message if connection failed"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "wifiDisconnectRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["wifi_disconnect"] },
+            "data": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    
+    "wifiStatusRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["wifi_status_request"] },
+            "data": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    
+    "wifiStatus": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["wifi_status"] },
+            "data": {
+              "type": "object",
+              "required": ["connected", "ssid", "ip", "rssi"],
+              "properties": {
+                "connected": {
+                  "type": "boolean",
+                  "description": "Whether device is connected to WiFi"
+                },
+                "ssid": {
+                  "type": "string",
+                  "description": "SSID of the connected network"
+                },
+                "ip": {
+                  "type": "string",
+                  "description": "Assigned IP address"
+                },
+                "gateway": {
+                  "type": "string",
+                  "description": "Gateway IP address"
+                },
+                "subnet": {
+                  "type": "string",
+                  "description": "Subnet mask"
+                },
+                "dns": {
+                  "type": "string",
+                  "description": "DNS server address"
+                },
+                "mac": {
+                  "type": "string",
+                  "description": "MAC address of the WiFi interface"
+                },
+                "rssi": {
+                  "type": "integer",
+                  "description": "Signal strength in dBm"
+                },
+                "channel": {
+                  "type": "integer",
+                  "description": "WiFi channel"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  
+  "oneOf": [
+    { "$ref": "#/definitions/wifiNetworkScanRequest" },
+    { "$ref": "#/definitions/wifiNetworkList" },
+    { "$ref": "#/definitions/wifiConnectRequest" },
+    { "$ref": "#/definitions/wifiConnectResponse" },
+    { "$ref": "#/definitions/wifiDisconnectRequest" },
+    { "$ref": "#/definitions/wifiStatusRequest" },
+    { "$ref": "#/definitions/wifiStatus" }
+  ]
+}

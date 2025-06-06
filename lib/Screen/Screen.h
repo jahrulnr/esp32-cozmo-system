@@ -25,6 +25,7 @@ public:
      * Clear the screen
      */
     void clear();
+    void mutexClear();
 
     /**
      * Draw text at a specific position

@@ -1,10 +1,10 @@
 # WebSocket Data Transfer Object (DTO) Format
 
-This document outlines the standardized format for all WebSocket communications between the robot and clients.
+> **PERHATIAN**: Format DTO yang didokumentasikan di sini adalah referensi untuk implementasi saat ini. Untuk format baru yang akan digunakan dalam integrasi server Go dan mikrokontroler, silakan merujuk ke [Kontrak DTO](/docs/dto_contract/README.md).
 
 ## Message Format
 
-All messages follow this JSON format:
+Semua pesan mengikuti format JSON ini:
 
 ```json
 {
@@ -217,3 +217,23 @@ When adding new command types, follow these guidelines:
 2. Document the new type and its data structure in this file
 3. Include appropriate validation in the implementation
 4. Make sure it is properly handled in both the client and server code
+
+## New DTO Contract Format (v1.0)
+
+Untuk standardisasi komunikasi antara server Go dan mikrokontroler ESP32-CAM, kami telah mengembangkan format DTO baru yang mencakup versioning:
+
+```json
+{
+  "version": "1.0",
+  "type": "command_type",
+  "data": {
+    // Command-specific payload
+  }
+}
+```
+
+Format baru ini akan menggantikan format lama secara bertahap. Dokumentasi lengkap tersedia di:
+- [Dokumentasi Kontrak DTO](/docs/dto_contract/README.md)
+- [Skema JSON](/docs/dto_contract/schemas/)
+- [Contoh Pesan](/docs/dto_contract/examples/)
+- [Panduan Implementasi](/docs/dto_contract/IMPLEMENTATION.md)

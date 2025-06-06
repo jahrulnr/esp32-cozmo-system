@@ -1,4 +1,5 @@
 #include "Screen.h"
+#include "../../include/Config.h"
 #include "../Utils/I2CManager.h"
 
 namespace Screen {
@@ -15,6 +16,10 @@ Screen::~Screen() {
 }
 
 bool Screen::init(int sda, int scl) {
+    #if SCREEN_ENABLED == false
+    return false;
+    #else
+
     _u8g2 = new U8G2_SSD1306_128X64_NONAME_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
     Utils::I2CManager::getInstance().initBus("base", sda, scl);
     
@@ -58,18 +63,26 @@ bool Screen::init(int sda, int scl) {
     
     _initialized = true;
     return true;
+    #endif
 }
 
 void Screen::clear() {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
     
     _u8g2->clearBuffer();
 }
 
+void Screen::mutexClear(){
+    if (_lock()) {
+        clear();
+        _unlock();
+    }
+}
+
 void Screen::drawText(int x, int y, const String& text, const uint8_t* font) {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
     
@@ -82,7 +95,7 @@ void Screen::drawText(int x, int y, const String& text, const uint8_t* font) {
 }
 
 void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
     
@@ -98,7 +111,7 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
 }
 
 void Screen::drawLine(int x1, int y1, int x2, int y2) {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
     
@@ -106,7 +119,7 @@ void Screen::drawLine(int x1, int y1, int x2, int y2) {
 }
 
 void Screen::drawRect(int x, int y, int width, int height, bool fill) {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
     
@@ -118,7 +131,7 @@ void Screen::drawRect(int x, int y, int width, int height, bool fill) {
 }
 
 void Screen::drawCircle(int x, int y, int radius, bool fill) {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
     
@@ -130,7 +143,7 @@ void Screen::drawCircle(int x, int y, int radius, bool fill) {
 }
 
 void Screen::update() {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
 
@@ -152,7 +165,7 @@ void Screen::mutexUpdate() {
 }
 
 void Screen::updateFace() {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
 
@@ -169,7 +182,7 @@ void Screen::mutexUpdateFace() {
 }
 
 void Screen::setFont(const uint8_t* font) {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
     
@@ -177,7 +190,7 @@ void Screen::setFont(const uint8_t* font) {
 }
 
 int Screen::getWidth() const {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return 0;
     }
     
@@ -185,7 +198,7 @@ int Screen::getWidth() const {
 }
 
 int Screen::getHeight() const {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return 0;
     }
     
@@ -204,7 +217,7 @@ void Screen::autoFace(bool exp) {
 }
 
 bool Screen::_lock() {
-    if (!_initialized || !_u8g2) {
+    if (_initialized == false || _u8g2 == nullptr) {
         return false;
     }
 

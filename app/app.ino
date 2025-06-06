@@ -57,7 +57,7 @@ void loop() {
   }
   
   if (millis() - timer > 5000){
-    screen->clear();
+    screen->mutexClear();
     screen->drawCenteredText(40, "hello");
     screen->mutexUpdate();
     timer = millis();

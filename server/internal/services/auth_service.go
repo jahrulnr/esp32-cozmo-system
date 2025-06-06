@@ -23,7 +23,7 @@ func NewAuthService(cfg config.AuthConfig) *AuthService {
 	users["admin"] = models.User{
 		ID:       "1",
 		Username: "admin",
-		Password: "admin123", // In a real app, this would be hashed
+		Password: "admin", // In a real app, this would be hashed
 	}
 
 	return &AuthService{

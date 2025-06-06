@@ -13,6 +13,9 @@ Camera::~Camera() {
 }
 
 bool Camera::init() {
+    #if CAMERA_ENABLED == false
+    return false;
+    #else
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
     config.ledc_timer = LEDC_TIMER_0;
@@ -57,6 +60,7 @@ bool Camera::init() {
     
     _initialized = true;
     return true;
+    #endif
 }
 
 camera_fb_t* Camera::captureFrame() {

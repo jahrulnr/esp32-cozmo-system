@@ -2,7 +2,13 @@
 
 ## Overview
 
-The Utils directory contains core utility components for the Cozmo-System project that provide essential functionality across the system. These utilities include logging, I2C management, file management, and memory optimization tools.
+The Utils directory contains core utility components for the Cozmo-System project that provide essential functionality across the system. ThThe I2CScanner class provides comprehensive utilities for detecting I2C devices on a bus, identifying common components, and diagnosing connection issues. It is designed to simplify the process of identifying and troubleshooting I2C peripherals during both development and production stages of your project.
+
+For detailed troubleshooting information, refer to the dedicated [I2C Troubleshooting Guide](./I2C_TROUBLESHOOTING.md).
+
+For information about specific compatible devices, see the [I2C Compatible Devices](./I2C_COMPATIBLE_DEVICES.md) reference.
+
+### Features utilities include logging, I2C management, file management, and memory optimization tools.
 
 ## Table of Contents
 
@@ -191,7 +197,7 @@ All operations on an I2C bus are protected by a mutex to prevent concurrent acce
 
 ## I2CScanner
 
-The `I2CScanner` class provides utilities for detecting I2C devices on a bus and diagnosing connection issues.
+The `I2CScanner` class provides utilities for detecting I2C devices on a bus and diagnosing connection issues. It is designed to simplify the process of identifying and troubleshooting I2C peripherals during development and production.
 
 ### Features
 
@@ -199,6 +205,10 @@ The `I2CScanner` class provides utilities for detecting I2C devices on a bus and
 - Comprehensive bus scanning with address reporting
 - Device presence checking
 - Custom I2C bus initialization and scanning
+- Address resolution to identify common I2C devices automatically
+- Detailed diagnostic information for connection troubleshooting
+- Support for multiple I2C buses concurrently
+- Non-blocking scanning modes for use during runtime
 
 ### API Reference
 
@@ -221,6 +231,26 @@ public:
     // Check if a specific I2C device is present
     static bool devicePresent(uint8_t address, 
                              TwoWire& wire = Wire);
+                             
+    // Identify a device by its address and signature
+    static String identifyDevice(uint8_t address, TwoWire& wire = Wire);
+    
+    // Enhanced scan with device identification
+    static void advancedScan(TwoWire& wire = Wire);
+    
+    // Non-blocking scan operations
+    static void beginAsyncScan(TwoWire& wire = Wire);
+    static bool isAsyncScanComplete();
+    static std::vector<uint8_t> getAsyncScanResults();
+    
+    // Get detailed diagnostic information for a device
+    static bool testDeviceConnection(uint8_t address, 
+                                   TwoWire& wire = Wire,
+                                   bool printOutput = true);
+                                   
+    // Diagnose common I2C issues
+    static void diagnoseConnectionIssues(uint8_t address,
+                                       TwoWire& wire = Wire);
 };
 }
 ```
@@ -243,7 +273,17 @@ void setup() {
     // Check for a specific device
     if (Utils::I2CScanner::devicePresent(0x68)) {
         Serial.println("MPU6050 found!");
+        
+        // Get device identification
+        String deviceType = Utils::I2CScanner::identifyDevice(0x68);
+        Serial.printf("Device identified as: %s\n", deviceType.c_str());
+        
+        // Test connection quality
+        Utils::I2CScanner::testDeviceConnection(0x68);
     }
+    
+    // Run advanced scan with more detailed information
+    Utils::I2CScanner::advancedScan();
 }
 ```
 
@@ -252,6 +292,211 @@ void setup() {
 The I2CScanner is designed as a utility class with all static methods, requiring no instantiation. It provides a simple interface for scanning I2C buses and detecting devices, useful during development and debugging phases.
 
 The scan method systematically checks each address on the bus for a response, reporting any detected devices and building a map of the I2C bus topology.
+
+### Advanced Features
+
+#### Device Identification
+
+The `identifyDevice` method attempts to recognize common I2C devices by their address and signature registers. It works by querying identification registers specific to each device type and comparing the results against a database of known device signatures.
+
+```cpp
+// Identify a device by its I2C address and signature registers
+static String identifyDevice(uint8_t address, TwoWire& wire = Wire);
+```
+
+This function can identify many common devices including:
+- MPU6050/9250 (0x68-0x69): Accelerometer and gyroscope sensors
+- SSD1306/1309 (0x3C-0x3D): OLED display controllers
+- BMP280/BME280 (0x76-0x77): Pressure and environmental sensors
+- ADS1115/1015 (0x48-0x4B): Analog-to-digital converters
+- PCA9685 (0x40): PWM/Servo controller
+- DS3231/DS1307 (0x68): Real-time clock modules
+- VL53L0X (0x29): Time-of-flight distance sensor
+- APDS9960 (0x39): Gesture, proximity, RGB, and ambient light sensor
+- MCP23017 (0x20-0x27): 16-bit I/O port expander
+- And many more
+
+The identification algorithm:
+1. First checks if the device responds to the given address
+2. Attempts to read from device-specific identification registers
+3. Compares results with known signatures in the internal database
+4. Returns the device name if a match is found, otherwise "Unknown device"
+
+The device database can be extended by the application for custom or specialized devices.
+
+Example usage:
+```cpp
+if (Utils::I2CScanner::devicePresent(0x76)) {
+    String deviceName = Utils::I2CScanner::identifyDevice(0x76);
+    Serial.printf("Device at 0x76: %s\n", deviceName.c_str());
+}
+```
+
+#### Advanced Bus Scanning
+
+The advanced scanner performs a comprehensive scan with detailed device information and connection quality metrics:
+
+```cpp
+// Advanced scan with device identification and connection quality metrics
+static void advancedScan(TwoWire& wire = Wire);
+```
+
+This method:
+1. Scans the entire I2C address space (1-127)
+2. Measures response times for each device
+3. Attempts to identify each device found
+4. Tests connection quality and reliability
+5. Outputs a formatted table with comprehensive information
+
+The tabular output includes:
+- I2C address (hex)
+- Response time (microseconds)
+- Identified device type
+- Connection quality indicator
+- Recommended actions (if issues detected)
+
+Example output:
+```
+I2C Bus Analysis Report:
+Address | Response (µs) | Device            | Status          | Notes
+---------------------------------------------------------------------
+0x3C    | 132          | SSD1306 OLED      | Good            | -
+0x68    | 245          | MPU6050 IMU       | Good            | -
+0x76    | 1853         | BME280 Sensor     | Warning (slow)  | Consider lower frequency
+0x48    | 56           | ADS1115 ADC       | Good            | -
+0x50    | 789          | AT24C32 EEPROM    | Marginal        | Check pull-ups
+0x57    | ERROR        | Unknown           | Not responding  | Check wiring
+```
+
+Connection quality is evaluated based on:
+- Response time (latency)
+- Consistency of responses in repeated queries
+- Success rate for basic register operations
+- Stability across multiple transactions
+
+#### Non-blocking Scanning
+
+The non-blocking scanning feature allows I2C bus diagnostics to be performed during runtime without interrupting the main application flow. This is especially useful for:
+- Runtime device hot-plug detection
+- Background health monitoring
+- Dynamic device discovery
+- Safety monitoring during critical operations
+
+```cpp
+// Begin a non-blocking scan process in the background
+static void beginAsyncScan(TwoWire& wire = Wire);
+
+// Check if async scan is complete
+static bool isAsyncScanComplete();
+
+// Get scan results when complete (vector of found addresses)
+static std::vector<uint8_t> getAsyncScanResults();
+```
+
+Example usage:
+```cpp
+// Start a scan in the background
+Utils::I2CScanner::beginAsyncScan();
+
+// Continue with other operations...
+doSomethingElse();
+
+// Later, in your loop:
+if (Utils::I2CScanner::isAsyncScanComplete()) {
+    auto devices = Utils::I2CScanner::getAsyncScanResults();
+    Serial.printf("Found %d devices\n", devices.size());
+    
+    // Process each found device
+    for (auto address : devices) {
+        String deviceName = Utils::I2CScanner::identifyDevice(address);
+        Serial.printf("Device at 0x%02X: %s\n", address, deviceName.c_str());
+    }
+}
+```
+
+Implementation notes:
+- The asynchronous scan runs in small increments to avoid blocking
+- It uses a static state machine to track progress
+- Multiple calls to `beginAsyncScan()` while a scan is in progress will be ignored
+- For ESP32, the scan leverages the multi-core architecture for true parallelism
+- For single-core devices, the scan divides work into small chunks across multiple loop cycles
+
+#### Connection Testing and Diagnostics
+
+The I2CScanner provides advanced tools for testing and diagnosing I2C connection issues:
+
+```cpp
+// Test the quality of connection to a specific device
+static bool testDeviceConnection(uint8_t address, TwoWire& wire = Wire, bool printOutput = true);
+
+// Provide comprehensive diagnostics for connection issues
+static void diagnoseConnectionIssues(uint8_t address, TwoWire& wire = Wire);
+```
+
+The connection testing functionality:
+- Measures response time (latency)
+- Performs repeated transactions to test reliability
+- Executes standard and stressed I2C operations
+- Evaluates connection quality
+- Provides specific recommendations for improvement
+
+Example usage:
+```cpp
+// Test connection to an MPU6050 at address 0x68
+if (Utils::I2CScanner::devicePresent(0x68)) {
+    // Basic connection test
+    bool connectionOk = Utils::I2CScanner::testDeviceConnection(0x68);
+    
+    if (!connectionOk) {
+        // If issues detected, run comprehensive diagnostics
+        Utils::I2CScanner::diagnoseConnectionIssues(0x68);
+    }
+}
+```
+
+Example output from connection test:
+```
+Testing connection to device at 0x68:
+- Device responds: Yes
+- Response time: 245µs (Good)
+- Read test: Success
+- Write test: Success
+- Stress test: 99/100 successful transactions (Good)
+- Connection quality: Good
+```
+
+Example output from diagnostic function:
+```
+I2C Connection Diagnostics for device at 0x68:
+- Basic connectivity test: PASSED
+- Device identified as: MPU6050/MPU9250
+- Response time: 954µs (Warning: higher than expected)
+- Register read test: PASSED
+- Register write test: PASSED
+- Stability test: 82/100 successful (Warning: unstable connection)
+
+Potential issues:
+- Long or noisy I2C lines
+- Weak pull-up resistors
+- Bus capacitance too high
+- Power supply instability
+
+Recommendations:
+- Reduce I2C bus frequency (try 100kHz instead of 400kHz)
+- Check power supply quality at the device
+- Verify pull-up resistor values (recommended: 2.2kΩ to 4.7kΩ)
+- Shorten I2C lines or use shielded cables
+- Add bypass capacitor (0.1µF) near the device
+```
+
+The diagnostics function performs deep analysis of the I2C connection by:
+1. Testing basic connectivity
+2. Identifying the specific device type
+3. Evaluating response time and latency
+4. Testing register read/write operations
+5. Performing a stress test with multiple transactions
+6. Analyzing error patterns to identify specific issues
+7. Providing targeted recommendations based on the observed symptoms
 
 ---
 

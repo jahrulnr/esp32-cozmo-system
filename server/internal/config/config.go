@@ -61,11 +61,11 @@ func Load() (*Config, error) {
 			AssetsFilePath: getEnv("ASSETS_FILES_PATH", "./web/assets"),
 		},
 		Auth: AuthConfig{
-			JWTSecret:            getEnv("JWT_SECRET", "your-very-secret-key-change-in-production"),
+			JWTSecret:            getEnv("JWT_SECRET", "secret"),
 			TokenExpirationHours: getEnvAsInt("TOKEN_EXPIRATION_HOURS", 24),
 		},
 		OpenAI: OpenAIConfig{
-			APIKey:    getEnv("OPENAI_API_KEY", "api"),
+			APIKey:    getEnv("OPENAI_API_KEY", "openapi_key"),
 			Model:     getEnv("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14"),
 			MaxTokens: getEnvAsInt("OPENAI_MAX_TOKENS", 4096),
 		},

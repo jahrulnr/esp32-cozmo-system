@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "System DTO Schema",
+  "description": "Schema for system-related messages in Cozmo-System",
+  
+  "definitions": {
+    "baseDTO": {
+      "type": "object",
+      "required": ["version", "type", "data"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "DTO protocol version"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of message"
+        },
+        "data": {
+          "type": "object",
+          "description": "Message payload"
+        }
+      }
+    },
+    
+    "systemStatusRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["system_status_request"] },
+            "data": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    
+    "systemStatusResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["system_status"] },
+            "data": {
+              "type": "object",
+              "required": ["uptime", "freeHeap", "cpuFreq", "sdkVersion", "ipAddress"],
+              "properties": {
+                "uptime": {
+                  "type": "integer",
+                  "description": "System uptime in seconds"
+                },
+                "freeHeap": {
+                  "type": "integer",
+                  "description": "Free heap memory in bytes"
+                },
+                "totalHeap": {
+                  "type": "integer",
+                  "description": "Total heap memory in bytes"
+                },
+                "freePsram": {
+                  "type": "integer",
+                  "description": "Free PSRAM in bytes"
+                },
+                "totalPsram": {
+                  "type": "integer",
+                  "description": "Total PSRAM in bytes"
+                },
+                "cpuFreq": {
+                  "type": "integer",
+                  "description": "CPU frequency in MHz"
+                },
+                "cpuTemp": {
+                  "type": "number",
+                  "description": "CPU temperature in °C"
+                },
+                "sdkVersion": {
+                  "type": "string",
+                  "description": "ESP-IDF SDK version"
+                },
+                "firmwareVersion": {
+                  "type": "string",
+                  "description": "Firmware version"
+                },
+                "ipAddress": {
+                  "type": "string",
+                  "description": "IP address of the device"
+                },
+                "macAddress": {
+                  "type": "string",
+                  "description": "MAC address of the device"
+                },
+                "rssi": {
+                  "type": "integer",
+                  "description": "WiFi signal strength (RSSI)"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "systemRebootRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["system_reboot"] },
+            "data": {
+              "type": "object",
+              "properties": {
+                "delay": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Delay before reboot in milliseconds"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "systemResetRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["system_reset"] },
+            "data": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["wifi", "settings", "factory", "emergency"],
+                  "description": "Type of reset to perform"
+                },
+                "confirm": {
+                  "type": "boolean",
+                  "description": "Confirmation flag for destructive operations"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "systemLogMessage": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["system_log"] },
+            "data": {
+              "type": "object",
+              "required": ["level", "message", "timestamp"],
+              "properties": {
+                "level": {
+                  "type": "string",
+                  "enum": ["debug", "info", "warning", "error", "critical"],
+                  "description": "Log level"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Log message text"
+                },
+                "timestamp": {
+                  "type": "integer",
+                  "description": "Unix timestamp in milliseconds when log was generated"
+                },
+                "component": {
+                  "type": "string",
+                  "description": "System component that generated the log"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  
+  "oneOf": [
+    { "$ref": "#/definitions/systemStatusRequest" },
+    { "$ref": "#/definitions/systemStatusResponse" },
+    { "$ref": "#/definitions/systemRebootRequest" },
+    { "$ref": "#/definitions/systemResetRequest" },
+    { "$ref": "#/definitions/systemLogMessage" }
+  ]
+}

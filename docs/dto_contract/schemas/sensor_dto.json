@@ -1,0 +1,223 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sensor DTO Schema",
+  "description": "Schema for sensor-related messages in Cozmo-System",
+  
+  "definitions": {
+    "baseDTO": {
+      "type": "object",
+      "required": ["version", "type", "data"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "DTO protocol version"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of message"
+        },
+        "data": {
+          "type": "object",
+          "description": "Message payload"
+        }
+      }
+    },
+    
+    "sensorDataRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_request"] },
+            "data": {
+              "type": "object",
+              "properties": {
+                "sensors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["gyro", "accel", "temperature", "battery", "all"]
+                  },
+                  "description": "List of requested sensor readings"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "gyroData": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_gyro"] },
+            "data": {
+              "type": "object",
+              "required": ["x", "y", "z", "timestamp"],
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "description": "X-axis rotation (degrees/second)"
+                },
+                "y": {
+                  "type": "number",
+                  "description": "Y-axis rotation (degrees/second)"
+                },
+                "z": {
+                  "type": "number",
+                  "description": "Z-axis rotation (degrees/second)"
+                },
+                "timestamp": {
+                  "type": "integer",
+                  "description": "Unix timestamp in milliseconds when data was captured"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "accelData": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_accel"] },
+            "data": {
+              "type": "object",
+              "required": ["x", "y", "z", "timestamp"],
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "description": "X-axis acceleration (g)"
+                },
+                "y": {
+                  "type": "number",
+                  "description": "Y-axis acceleration (g)"
+                },
+                "z": {
+                  "type": "number",
+                  "description": "Z-axis acceleration (g)"
+                },
+                "timestamp": {
+                  "type": "integer",
+                  "description": "Unix timestamp in milliseconds when data was captured"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "temperatureData": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_temperature"] },
+            "data": {
+              "type": "object",
+              "required": ["cpu", "timestamp"],
+              "properties": {
+                "cpu": {
+                  "type": "number",
+                  "description": "CPU temperature (°C)"
+                },
+                "ambient": {
+                  "type": "number",
+                  "description": "Ambient temperature if available (°C)"
+                },
+                "timestamp": {
+                  "type": "integer",
+                  "description": "Unix timestamp in milliseconds when data was captured"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "batteryData": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_battery"] },
+            "data": {
+              "type": "object",
+              "required": ["level", "timestamp"],
+              "properties": {
+                "level": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Battery level percentage (0-100)"
+                },
+                "voltage": {
+                  "type": "number",
+                  "description": "Battery voltage"
+                },
+                "charging": {
+                  "type": "boolean",
+                  "description": "Whether the battery is charging"
+                },
+                "timestamp": {
+                  "type": "integer",
+                  "description": "Unix timestamp in milliseconds when data was captured"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "sensorUpdatesControl": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_updates_control"] },
+            "data": {
+              "type": "object",
+              "required": ["enabled"],
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Whether to enable continuous sensor updates"
+                },
+                "interval": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "description": "Update interval in milliseconds"
+                },
+                "sensors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["gyro", "accel", "temperature", "battery", "all"]
+                  },
+                  "description": "List of sensors to continuously monitor"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  
+  "oneOf": [
+    { "$ref": "#/definitions/sensorDataRequest" },
+    { "$ref": "#/definitions/gyroData" },
+    { "$ref": "#/definitions/accelData" },
+    { "$ref": "#/definitions/temperatureData" },
+    { "$ref": "#/definitions/batteryData" },
+    { "$ref": "#/definitions/sensorUpdatesControl" }
+  ]
+}

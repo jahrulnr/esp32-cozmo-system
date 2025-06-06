@@ -2,14 +2,26 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <vector>
 
 namespace Utils {
 
 /**
- * @brief A utility class for scanning I2C buses and detecting devices
+ * @brief A comprehensive utility for I2C bus scanning, device detection and diagnostics
  * 
- * This class provides static methods for scanning I2C buses and detecting devices
- * with helpful output for debugging I2C connections.
+ * The I2CScanner provides tools for working with I2C devices including:
+ * - Bus scanning to find connected devices
+ * - Device identification by address and register signatures 
+ * - Connection testing and quality assessment
+ * - Diagnostic tools for troubleshooting I2C issues
+ * - Non-blocking scanning for runtime diagnostics
+ * - Multi-bus support for complex systems
+ * 
+ * All methods are static and can be called without instantiation:
+ * `Utils::I2CScanner::scan();`
+ * 
+ * @note This class is designed to work with ESP32 and other Arduino-compatible platforms
+ * that use the TwoWire library for I2C communication.
  */
 class I2CScanner {
 public:

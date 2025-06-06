@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Authentication DTO Schema",
+  "description": "Schema for authentication-related messages in Cozmo-System",
+  
+  "definitions": {
+    "baseDTO": {
+      "type": "object",
+      "required": ["version", "type", "data"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "DTO protocol version"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of message"
+        },
+        "data": {
+          "type": "object",
+          "description": "Message payload"
+        }
+      }
+    },
+    
+    "loginRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["auth_login"] },
+            "data": {
+              "type": "object",
+              "required": ["username", "password"],
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "User's login name"
+                },
+                "password": {
+                  "type": "string",
+                  "description": "User's password"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "loginResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["auth_login_response"] },
+            "data": {
+              "type": "object",
+              "required": ["success"],
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether login was successful"
+                },
+                "token": {
+                  "type": "string",
+                  "description": "Authentication token (if success = true)"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Error message (if success = false)"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "logoutRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["auth_logout"] },
+            "data": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    
+    "logoutResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["auth_logout_response"] },
+            "data": {
+              "type": "object",
+              "required": ["success"],
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether logout was successful"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  
+  "oneOf": [
+    { "$ref": "#/definitions/loginRequest" },
+    { "$ref": "#/definitions/loginResponse" },
+    { "$ref": "#/definitions/logoutRequest" },
+    { "$ref": "#/definitions/logoutResponse" }
+  ]
+}

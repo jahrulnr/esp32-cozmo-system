@@ -2,9 +2,9 @@
 #include "init.h"
 
 void setupScreen() {
+  screen = new Screen::Screen();
   if (SCREEN_ENABLED) {
     logger->info("Setting up screen...");
-    screen = new Screen::Screen();
     if (screen->init(SCREEN_SDA_PIN, SCREEN_SCL_PIN)) {
       screen->clear();
       screen->drawCenteredText(20, "Cozmo System");
