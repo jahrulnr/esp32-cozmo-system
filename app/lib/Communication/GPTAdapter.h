@@ -21,6 +21,12 @@ public:
      * @return true if initialization was successful, false otherwise
      */
     bool init(const String& apiKey);
+    
+    /**
+     * Check if the adapter is initialized
+     * @return true if initialized, false otherwise
+     */
+    bool isInitialized() const { return _initialized; }
 
     /**
      * Send a prompt to the GPT service
@@ -28,6 +34,7 @@ public:
      * @param callback Callback function for the response
      */
     void sendPrompt(const String& prompt, ResponseCallback callback);
+    void sendPrompt(const String& prompt, const String& additionalCommand, ResponseCallback callback);
 
     /**
      * Set the model to use

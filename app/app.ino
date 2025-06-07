@@ -1,11 +1,14 @@
 #include <Arduino.h>
 #include <soc/soc.h>
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
-#include "init.h"
+#include "app.h"
 
 Sensors::Camera* camera = nullptr;
 Sensors::OrientationSensor* orientation = nullptr;
 Sensors::DistanceSensor* distanceSensor = nullptr;
+Sensors::CliffDetector* cliffLeftDetector = nullptr;
+Sensors::CliffDetector* cliffRightDetector = nullptr;
+Sensors::TemperatureSensor* temperatureSensor = nullptr;
 Motors::MotorControl* motors = nullptr;
 Motors::ServoControl* servos = nullptr;
 Communication::WiFiManager* wifiManager = nullptr;
@@ -34,6 +37,7 @@ void setup() {
   logger->info("Logger initialized");
   
   // Initialize components
+  setupPins();
   setupScreen();
   setupWiFi();
   setupCamera();
@@ -41,6 +45,8 @@ void setup() {
   setupServos();
   setupOrientation();
   setupDistanceSensor();
+  setupCliffDetector();
+  setupTemperatureSensor();
   setupWebServer();
   setupWebSocket();
   setupGPT();
@@ -59,12 +65,12 @@ void setup() {
   setupTasks();
 }
 
-long timer = millis();
 void loop() {
   if (healthCheck)
     healthCheck->update();
+
   if (screen)
-    screen->mutexUpdate();
+      screen->mutexUpdate();
 
   vTaskDelay(pdMS_TO_TICKS(33));
 }

@@ -10,6 +10,8 @@
 #include "lib/Sensors/Camera.h"
 #include "lib/Sensors/OrientationSensor.h"
 #include "lib/Sensors/DistanceSensor.h"
+#include "lib/Sensors/CliffDetector.h"
+#include "lib/Sensors/TemperatureSensor.h"
 #include "lib/Motors/MotorControl.h"
 #include "lib/Motors/ServoControl.h"
 #include "lib/Communication/WiFiManager.h"
@@ -25,11 +27,31 @@
 #include "lib/Utils/I2CManager.h"
 #include "lib/Utils/Sstring.h"
 #include "lib/Utils/CommandMapper.h"
+#include "lib/Automation/Automation.h"
+
+struct gptRequest
+{
+	String prompt;
+	Communication::GPTAdapter::ResponseCallback callback;
+	bool saveToLog;  // Flag to indicate if this interaction should be logged
+};
+
+// Automation pattern structure
+struct AutomationPattern {
+    String name;
+    int moveSteps[10];      // 0=forward, 1=backward, 2=left turn, 3=right turn
+    int durations[10];      // duration for each move in ms
+    int stepCount;          // number of steps in pattern
+};
 
 // Component instances
 extern Sensors::Camera* camera;
 extern Sensors::OrientationSensor* orientation;
 extern Sensors::DistanceSensor* distanceSensor;
+extern Sensors::CliffDetector* cliffLeftDetector;
+extern Sensors::CliffDetector* cliffRightDetector;
+extern Automation::TemplateManager* templateManager;
+extern Sensors::TemperatureSensor* temperatureSensor;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
 extern Communication::WiFiManager* wifiManager;
@@ -51,6 +73,7 @@ extern TaskHandle_t gptTaskHandle;
 
 // Function prototypes
 void automationTask(void* parameter);
+void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void resetMap();
@@ -63,6 +86,7 @@ String getGPTLearningData();
 bool clearGPTLearningData();
 
 // Forward declarations
+void setupPins();
 void setupCamera();
 void startCameraStreaming();
 void stopCameraStreaming();
@@ -71,6 +95,10 @@ void setupMotors();
 void setupServos();
 void setupOrientation();
 void setupDistanceSensor();
+void setupCliffDetector();
+void setupTemperatureSensor();
+void checkTemperature();
+bool cliffDetected();
 void setupScreen();
 void setupWiFi();
 bool isApOnlyMode();
@@ -83,5 +111,12 @@ void setupCommandMapper();
 String processTextCommands(const String& text);
 void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 
                          AwsEventType type, void* arg, uint8_t* data, size_t len);
+
+// automation
+AutomationPattern createAutomationFromGPT(const String& gptResponse);
+bool loadOfflineNavigationPattern(AutomationPattern& pattern);
+bool loadAutomationPattern(const String& filePath, AutomationPattern& pattern);
+bool saveDefaultAutomation();
+bool saveLearningAutomation(AutomationPattern& pattern);
 
 #endif

@@ -1,4 +1,28 @@
 // Main JavaScript for IoT Dashboard
+
+// DOM Elements
+const loginPage = document.getElementById('login-page');
+const mainApp = document.getElementById('main-app');
+const consoleOutput = document.getElementById('console-output');
+const recentLogs = document.getElementById('recent-logs');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebar = document.getElementById('sidebar');
+const menuItems = document.querySelectorAll('.menu-item');
+const contentSections = document.querySelectorAll('.content-section');
+const loginForm = document.getElementById('login-form');
+const chatForm = document.getElementById('chat-form');
+const chatMessages = document.getElementById('chat-messages');
+const wifiList = document.getElementById('wifi-list');
+const fileList = document.getElementById('file-list');
+const breadcrumb = document.getElementById('breadcrumb');
+const printTime = document.querySelectorAll('.print-time');
+    
+// Variables for frame processing
+let frameHeader = null;
+let frameQueue = [];
+const MAX_FRAME_QUEUE = 2; // Limit queued frames to avoid memory issues
+let processingFrame = false;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Configuration
     const wsUri = `ws://${window.location.hostname}/ws`;
@@ -16,20 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastSendTimeMotor = 0;
     const sendThrottle = 100; // Send position updates every 100ms
 
-    // DOM Elements
-    const loginPage = document.getElementById('login-page');
-    const mainApp = document.getElementById('main-app');
-    const consoleOutput = document.getElementById('console-output');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const menuItems = document.querySelectorAll('.menu-item');
-    const contentSections = document.querySelectorAll('.content-section');
-    const loginForm = document.getElementById('login-form');
-    const chatForm = document.getElementById('chat-form');
-    const chatMessages = document.getElementById('chat-messages');
-    const wifiList = document.getElementById('wifi-list');
-    const fileList = document.getElementById('file-list');
-    const breadcrumb = document.getElementById('breadcrumb');
+    printTime.forEach((el, key) => {
+        const now = new Date();
+        el.textContent = now.getHours() +":"+ now.getMinutes() +":"+ now.getSeconds();
+    });
     
     // Connect WebSocket
     function connectWebSocket() {
@@ -56,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Fetch initial data
-                sendCommand('get_status');
                 fetchWifiNetworks();
                 fetchFiles('/');
                 fetchStorageInfo();
@@ -211,12 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
             logToConsole(`Error parsing message: ${e.message}`, 'error');
         }
     }
-    
-    // Variables for frame processing
-    let frameHeader = null;
-    let frameQueue = [];
-    const MAX_FRAME_QUEUE = 2; // Limit queued frames to avoid memory issues
-    let processingFrame = false;
 
     // Handle binary messages (camera frames)
     function handleBinaryMessage(data) {
@@ -338,7 +345,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const timestamp = new Date().toTimeString().split(' ')[0];
         line.textContent = `[${timestamp}] ${message}`;
         
+        recentLogs.innerHTML += line.outerHTML;
         consoleOutput.appendChild(line);
+        recentLogs.scrollTop = recentLogs.scrollHeight;
         consoleOutput.scrollTop = consoleOutput.scrollHeight;
     }
 
@@ -566,6 +575,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+
+        if (data.temperature) {
+            const temperatureData = data.temperature.value + data.temperature.unit;
+            const temperatureContainer = document.getElementById("temperature-status")
+            if(temperatureContainer)
+                temperatureContainer.textContent = temperatureData;
+            const temperatureSensor = document.getElementById("temperature")
+            if(temperatureSensor)
+                temperatureSensor.textContent = temperatureData;
+        }
+
+        if (data.cliff) {
+            const cliffSensor = document.getElementById("cliff-detector")
+            const cliffContainer = document.createElement("span");
+            cliffContainer.append("Left: " + (data.cliff.left ? "true":"false"));
+            cliffContainer.append(document.createElement("br"))
+            cliffContainer.append("Right: " + (data.cliff.right ? "true":"false"));
+            if(cliffSensor)
+                cliffSensor.innerHTML = cliffContainer.outerHTML;
+        }
         
         // Only update joystick displays from sensor data if we have a specific flag
         // This prevents sensor updates from overriding manual joystick positioning
@@ -619,22 +648,39 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Get the current sweep angle based on animation time
         // HC-SR04 has ~30 degrees field of view, so we use -15 to +15 degrees
+        
+        // Get the sweep element for manual positioning
         const sweepElement = document.querySelector('.radar-sweep');
         
-        // Calculate the current animation position (0 to 1) based on time
-        // The sweep animation takes 2 seconds to complete one cycle (1s each way)
+        // Use both the current gyro Z rotation and a time-based animation
         const animationPosition = (Date.now() % 2000) / 2000;
-        // Convert to an angle between -15 and +15 degrees
-        let sweepAngle = 0;
         
-        // Animation goes from -15 to +15 and back to -15 (saw-tooth pattern)
+        // Base animation angle (-15 to +15 degrees)
+        let baseAngle = 0;
         if (animationPosition < 0.5) {
-            // Going from -15 to +15 in the first half of the animation
-            sweepAngle = -15 + (animationPosition * 2) * 30;
+            baseAngle = -15 + (animationPosition * 2) * 30;
         } else {
-            // Going from +15 back to -15 in the second half
-            sweepAngle = 15 - ((animationPosition - 0.5) * 2) * 30;
+            baseAngle = 15 - ((animationPosition - 0.5) * 2) * 30;
         }
+        
+        // Combine base animation with gyro Z value for responsive radar
+        // Scale down gyro value to make it more subtle (gyro data can be quite large)
+        let gyroInfluence = targetGyroData.z / 30;
+        // Limit the influence to a reasonable range (-20 to +20 degrees)
+        gyroInfluence = Math.min(20, Math.max(-20, gyroInfluence));
+        
+        // Update the currentRadarAngle global variable to track the current position
+        currentRadarAngle = gyroInfluence;
+        
+        // Calculate final sweep angle by combining base animation and gyro
+        // Weight the gyro influence more heavily (60% gyro, 40% animation)
+        const sweepAngle = (baseAngle * 0.4) + (gyroInfluence * 1.5);
+        
+        // // Update the radar-sweep element directly to override the CSS animation
+        // if (sweepElement) {
+        //     sweepElement.style.transform = `rotate(${sweepAngle}deg)`;
+        //     sweepElement.style.animation = "none"; // Disable default CSS animation
+        // }
         
         // Convert degrees to radians for the math calculations
         const angle = sweepAngle * (Math.PI / 180);
@@ -644,8 +690,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // x ranges from 0% to 100% (leftmost to rightmost)
         // y ranges from 0% to 50% (bottom to top semicircle center)
         const radius = scale * 50; // Scale to 0-50% of radar size
-        const x = 50 + Math.sin(angle) * radius; // Sine for x because 0 degrees is up
-        const y = 50 - Math.cos(angle) * radius; // Cosine (negative) for y because 0 degrees is up
+        
+        // Add extra movement to the pin based on gyro data
+        // This makes the pin follow the gyroscope movement more naturally
+        const gyroFactor = 1.3; // Increase the gyro influence on pin position
+        const pinAngle = angle + (currentRadarAngle * (Math.PI / 180) * gyroFactor);
+        
+        const x = 50 + Math.sin(pinAngle) * radius; // Sine for x because 0 degrees is up
+        const y = 50 - Math.cos(pinAngle) * radius; // Cosine (negative) for y because 0 degrees is up
         
         // Update the position of the pin
         radarPin.style.left = x + '%';
@@ -685,13 +737,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateStatus(data) {
+
         // Update system status indicators
         const elements = {
             'wifi-status': data.ip || 'Unknown',
             'battery-status': data.battery || 'Unknown',
             'memory-status': data.memory || 'Unknown',
             'cpu-status': data.cpu || 'Unknown',
-            'temperature-status': data.temperature || 'Unknown',
+            'temperature-status': (data.temperature || '-127') + "C",
             'uptime-status': data.uptime || 'Unknown'
         };
         
@@ -706,6 +759,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let gyroAnimation;
     let targetGyroData = { x: 0, y: 0, z: 0 };
     let lastGyroUpdateTime = 0;
+    // Current gyro Z value for the radar sweep
+    let currentRadarAngle = 0;
     
     // 3D visualization of accelerometer data using canvas
     let accelCanvas, accelCtx, accelData = { x: 0, y: 0, z: 0 };
@@ -1072,6 +1127,11 @@ document.addEventListener('DOMContentLoaded', () => {
             z: gyro.z || 0
         };
         
+        // Also update the currentRadarAngle for direct access
+        // Scale and limit the influence for consistent calculations
+        let gyroInfluence = (gyro.z || 0) / 30; 
+        currentRadarAngle = Math.min(20, Math.max(-20, gyroInfluence));
+        
         // Set last update timestamp
         lastGyroUpdateTime = Date.now();
         
@@ -1110,13 +1170,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateStorageInfo(data) {
         // Format sizes in a human-readable format
         function formatSize(bytes) {
+            var result = "";
+            var unit = "";
             if (bytes < 1024) {
-                return bytes + ' B';
+                result = bytes
+                unit = ' B';
             } else if (bytes < 1024 * 1024) {
-                return (bytes / 1024) + ' KB';
+                result = (bytes / 1024)
+                unit = ' KB';
             } else {
-                return (bytes / (1024 * 1024)) + ' MB';
+                result = (bytes / (1024 * 1024))
+                unit = ' MB';
             }
+
+            return toFixed(result, 2) + unit;
         }
         
         // Update storage information values
@@ -1124,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'storage-total': formatSize(data.total),
             'storage-used': formatSize(data.used),
             'storage-free': formatSize(data.free),
-            'storage-percent': data.percent + '%'
+            'storage-percent': toFixed(data.percent, 2) + '%'
         };
         
         Object.entries(elements).forEach(([id, value]) => {
@@ -1458,7 +1525,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (imageTypes.includes(fileType)) {
             // Display as image - create data URL
-            const base64Content = btoa(unescape(encodeURIComponent(data.content)));
+            // Use decodeURIComponent instead of the deprecated unescape
+            const base64Content = btoa(decodeURIComponent(encodeURIComponent(data.content)));
             const imgSrc = `data:image/${fileType === 'jpg' ? 'jpeg' : fileType};base64,${base64Content}`;
             
             // Show image container, hide content container
@@ -1818,27 +1886,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Initialize
-    initJoysticks();
-    initGyroCanvas();
-    initAccelCanvas();
-    
-    // Request initial distance data after a delay to ensure WebSocket is connected
-    setTimeout(() => {
-        if (document.getElementById('distance-value')) {
-            sendJsonMessage('distance_request', {});
-            console.log('Initial distance measurement requested');
-        }
-    }, 2000);
-    
-    // Set up automatic regular distance updates
-    setInterval(() => {
-        if (document.getElementById('distance-value') && 
-            document.getElementById('sensors-section').style.display !== 'none') {
-            sendJsonMessage('distance_request', {});
-        }
-    }, 1000);
-    
     // Add window resize listener to reposition joysticks
     window.addEventListener('resize', resetJoysticks);
     
@@ -2114,4 +2161,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const fixed = Math.pow(10, fix);
         return Math.round(value * fixed) / fixed;
     }
+    
+    // Initialize
+    initJoysticks();
+    initGyroCanvas();
+    initAccelCanvas();
+    
+    // Request initial distance data after a delay to ensure WebSocket is connected
+    setTimeout(() => {
+        if (document.getElementById('distance-value')) {
+            sendJsonMessage('distance_request', {});
+            console.log('Initial distance measurement requested');
+        }
+    }, 2000);
+    
+    // Set up automatic regular distance updates
+    setInterval(() => {
+        if (document.getElementById('distance-value') && 
+            document.getElementById('sensors-section').style.display !== 'none') {
+            sendJsonMessage('distance_request', {});
+        }
+
+        if (connected) {
+            sendCommand('get_status');
+        }
+    }, 1000);
 });

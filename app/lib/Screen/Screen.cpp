@@ -55,7 +55,7 @@ bool Screen::init(int sda, int scl) {
     _face->Behavior.SetEmotion(eEmotions::Awe, 1.0);
     _face->Behavior.Timer.SetIntervalMillis(10000);
 
-    _face->Blink.Timer.SetIntervalMillis(5000);
+    _face->Blink.Timer.SetIntervalMillis(3000);
     _face->Look.Timer.SetIntervalMillis(1000);
     
     clear();
@@ -73,6 +73,7 @@ void Screen::clear() {
     }
     
     _u8g2->clearBuffer();
+    _u8g2->sendBuffer();
 }
 
 void Screen::mutexClear(){
@@ -227,12 +228,13 @@ void Screen::update() {
     }
 
     if (_holdFace) {
-        _u8g2->sendBuffer();
         if (_holdTimer == 0) {
+            clear();
             _holdTimer = millis() + 3000; // Set timer to 3 seconds from now
             // Log when text display starts
             _logger->debug("Text display started, will hold for 3s until " + String(_holdTimer));
         }
+        _u8g2->sendBuffer();
     } else {
         updateFace();
     }
@@ -298,7 +300,7 @@ Face *Screen::getFace() {
 }
 
 void Screen::autoFace(bool exp) {
-  _face->RandomBehavior = 
+//   _face->RandomBehavior = 
   _face->RandomBlink = 
 //   _face->RandomLook = 
     exp;

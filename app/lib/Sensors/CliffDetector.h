@@ -28,7 +28,7 @@ public:
      * Check if a cliff is detected on the side
      * @return true if a cliff is detected, false otherwise
      */
-    bool isCliffDetected() const;
+    bool isCliffDetected();
 
     /**
      * Calibrate the cliff detector

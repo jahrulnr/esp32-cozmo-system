@@ -98,7 +98,7 @@ The project follows a modular architecture that separates concerns and enhances 
 ### Component Organization
 
 ```
-lib/
+app/lib/
 ├── Communication/  # Network and communication services
 ├── Motors/         # Motor and servo controls
 ├── Screen/         # Display and UI components
@@ -110,6 +110,7 @@ lib/
 
 ```
 app/
+├── lib/            # Component Organization
 ├── app.ino         # Main application entry point
 ├── websocket.cpp   # WebSocket event handling
 ├── camera.cpp      # Camera initialization and control

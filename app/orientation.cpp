@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "init.h"
+#include "app.h"
 
 void setupOrientation() {
   if (ORIENTATION_ENABLED) {

@@ -31,7 +31,7 @@ The Cozmo-System follows a modular architecture that separates concerns into dis
 ### Component Organization
 
 ```
-lib/
+app/lib/
 ├── Communication/  # Network and communication services
 ├── Motors/         # Motor and servo controls
 ├── Screen/         # Display and UI components
@@ -43,6 +43,7 @@ lib/
 
 ```
 app/
+├── lib/            # Component Organization
 ├── app.ino         # Main application entry point
 └── tasks.cpp       # FreeRTOS task definitions
 ```

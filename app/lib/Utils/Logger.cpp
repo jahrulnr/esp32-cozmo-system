@@ -218,14 +218,14 @@ void Logger::logTask(void* parameter) {
             if (logger->_webSocket && logger->_webSocket->hasClients()) {
                 // Create a batch message JSON structure
                 Utils::SpiJsonDocument batchData;
-                JsonArray logs = batchData.createNestedArray("logs");
                 
                 for (LogMessage* logMsg : logBatch) {
-                    JsonObject log = logs.createNestedObject();
+                    JsonObject log = batchData["logs"].add<JsonObject>();
                     log["message"] = logMsg->message;
                     log["level"] = logger->logLevelToLowerString(logMsg->level);
                     log["timestamp"] = logMsg->timestamp;
                 }
+                batchData.shrinkToFit();
                 
                 // Send as a batch_log_message type for better frontend handling
                 logger->_webSocket->sendJsonMessage(-1, "batch_log_messages", batchData);

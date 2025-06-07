@@ -9,6 +9,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
+    <!-- Elegant Loading Screen -->
+    <div id="loading-screen" style="position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(135deg,#181b22 0%,#0d1117 100%);display:flex;align-items:center;justify-content:center;transition:opacity 0.4s;">
+      <div style="text-align:center;">
+        <div style="margin-bottom:24px;">
+          <i class="fas fa-robot" style="font-size:3rem;color:#fff;"></i>
+        </div>
+        <div style="display:inline-block;width:48px;height:48px;">
+          <div style="box-sizing:border-box;display:block;width:48px;height:48px;border:6px solid #fff;border-radius:50%;border-top:6px solid #3498db;animation:spin 1s linear infinite;"></div>
+        </div>
+        <div style="margin-top:18px;color:#fff;font-size:1.2rem;letter-spacing:0.05em;">Loading Cozmo IoT...</div>
+      </div>
+      <style>
+        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+      </style>
+    </div>
+    <!-- End Loading Screen -->
+
     <!-- Login Page -->
     <div id="login-page" class="login-container">
         <div class="login-logo">
@@ -125,7 +142,7 @@
                                 <div>Temperature:  <span class="sensor-value" id="temperature-status">-</span></div>
                             </div>
                             <div>
-                                <div>Uptime:  <span class="sensor-value" id="uptime-status">-</span></div>
+                                <div>Uptime:  <span class="sensor-value" id="uptime-status">-</span>s</div>
                             </div>
                         </div>
                     </div>
@@ -159,12 +176,7 @@
                         <h2 class="card-title">Recent Logs</h2>
                         <button id="clear-recent-logs" class="btn btn-sm">Clear</button>
                     </div>
-                    <div class="console-container" style="max-height: 200px;">
-                        <div class="console-line console-info">[10:23:15] System started</div>
-                        <div class="console-line console-success">[10:23:16] WiFi connected to Network</div>
-                        <div class="console-line console-info">[10:23:18] Camera initialized</div>
-                        <div class="console-line console-warning">[10:24:05] Battery level below 30%</div>
-                    </div>
+                    <div id="recent-logs" class="console-container" style="max-height: 200px;"></div>
                 </div>
             </section>
 
@@ -380,16 +392,8 @@
                             <div class="sensor-value" id="temperature">25.3°C</div>
                         </div>
                         <div>
-                            <div>Humidity</div>
-                            <div class="sensor-value" id="humidity">48%</div>
-                        </div>
-                        <div>
-                            <div>Pressure</div>
-                            <div class="sensor-value" id="pressure">1013 hPa</div>
-                        </div>
-                        <div>
-                            <div>Light</div>
-                            <div class="sensor-value" id="light">345 lux</div>
+                            <div>Cliff Detector</div>
+                            <div class="sensor-value" id="cliff-detector">48%</div>
                         </div>
                     </div>
                 </div>
@@ -407,23 +411,9 @@
                             <div class="chat-message message-incoming">
                                 <div class="message-header">
                                     <span class="message-sender">System</span>
-                                    <span class="message-time">10:23:15</span>
+                                    <span class="message-time print-time"></span>
                                 </div>
                                 <div class="message-content">Welcome to Cozmo IoT System</div>
-                            </div>
-                            <div class="chat-message message-outgoing">
-                                <div class="message-header">
-                                    <span class="message-sender">User</span>
-                                    <span class="message-time">10:23:18</span>
-                                </div>
-                                <div class="message-content">Hello, is the system online?</div>
-                            </div>
-                            <div class="chat-message message-incoming">
-                                <div class="message-header">
-                                    <span class="message-sender">System</span>
-                                    <span class="message-time">10:23:19</span>
-                                </div>
-                                <div class="message-content">Yes, all systems operational. Battery at 82%</div>
                             </div>
                         </div>
                         <form id="chat-form" class="chat-input-container">
@@ -574,13 +564,7 @@
                 </div>
                 
                 <div class="card" style="height: calc(100vh - 180px);">
-                    <div id="console-output" class="console-container" style="height: 100%;">
-                        <div class="console-line console-info">[System] Console initialized</div>
-                        <div class="console-line console-info">[WiFi] Starting connection...</div>
-                        <div class="console-line console-success">[WiFi] Connected to network 'MyNetwork'</div>
-                        <div class="console-line console-info">[Server] WebSocket server started on port 81</div>
-                        <div class="console-line console-warning">[Camera] Low light conditions detected</div>
-                    </div>
+                    <div id="console-output" class="console-container" style="height: 100%;"></div>
                 </div>
                 
                 <div class="flex mt-4">
@@ -666,5 +650,20 @@
 
     <script src="js/joy.js"></script>
     <script src="js/main.js"></script>
+    <script>
+      // Remove loading screen after CSS and JS are loaded
+      function removeLoadingScreen() {
+        var el = document.getElementById('loading-screen');
+        if (el) {
+          el.style.opacity = '0';
+          setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+        }
+      }
+      // Wait for DOM, CSS, and JS
+      window.addEventListener('DOMContentLoaded', function() {
+        // Wait a tick to ensure CSS/JS are parsed
+        setTimeout(removeLoadingScreen, 100);
+      });
+    </script>
 </body>
 </html>

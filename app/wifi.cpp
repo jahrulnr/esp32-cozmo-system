@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "init.h"
+#include "app.h"
 
 // Global flag to track if we're running in AP-only mode
 bool g_isApOnlyMode = false;

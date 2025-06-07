@@ -83,6 +83,10 @@ bool GPTAdapter::init(const String& apiKey) {
 }
 
 void GPTAdapter::sendPrompt(const String& prompt, ResponseCallback callback) {
+    sendPrompt(prompt, "", callback);
+}
+
+void GPTAdapter::sendPrompt(const String& prompt, const String& additionalCommand, ResponseCallback callback) {
     if (!_initialized) {
         if (callback) {
             callback("Error: GPT adapter not initialized");
@@ -102,8 +106,10 @@ void GPTAdapter::sendPrompt(const String& prompt, ResponseCallback callback) {
     doc["max_tokens"] = _maxTokens;
     
     // System message
+    Utils::Sstring msg = _systemMessage;
+    msg.replace("--*additional command*--", additionalCommand);
     doc["messages"][0]["role"] = "system";
-    doc["messages"][0]["content"] = _systemMessage;
+    doc["messages"][0]["content"] = msg;
     
     // User message
     doc["messages"][1]["role"] = "user";

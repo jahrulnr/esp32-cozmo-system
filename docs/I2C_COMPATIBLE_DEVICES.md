@@ -243,7 +243,7 @@ _Support Levels: Full = Fully tested and supported; Partial = Basic functionalit
 #define I2C_SCL_PIN 15
 #define I2C_FREQUENCY 400000
 
-// In init.h
+// In app.h
 void initI2C() {
   Utils::I2CManager& i2cManager = Utils::I2CManager::getInstance();
   i2cManager.initBus("main", I2C_SDA_PIN, I2C_SCL_PIN, I2C_FREQUENCY);

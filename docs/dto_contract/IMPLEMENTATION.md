@@ -265,7 +265,7 @@ public:
 ```cpp
 // app/websocket.cpp
 
-#include "init.h"
+#include "app.h"
 #include "Communication/DTOParser.h"
 #include "Utils/SpiAllocator.h"
 
