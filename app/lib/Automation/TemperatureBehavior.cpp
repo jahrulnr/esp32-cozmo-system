@@ -77,7 +77,9 @@ void executeTemperatureBehavior() {
     // Show temperature in display if applicable
     if (screen && text.length() > 0) {
         // Display temperature message
+        screen->clear();
         screen->drawCenteredText(20, text);
+        screen->update();
         
         // Give time for the user to see the message
         delay(2000);
