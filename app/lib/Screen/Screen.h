@@ -1,16 +1,19 @@
-#pragma once
+#ifndef SCREEN_H
+#define SCREEN_H
 
 #include <Arduino.h>
-#include <U8g2lib.h>
 #include <Wire.h>
+#include <U8g2lib.h>
 #include "Face/Face.h"
-#include "../../include/Config.h"
+#include "Config.h"
+#include "lib/Utils/Logger.h"
+#include "lib/Utils/I2CManager.h"
 
 namespace Screen {
 
 class Screen {
 public:
-    Screen();
+    Screen(Utils::Logger *logger);
     ~Screen();
 
     /**
@@ -107,9 +110,13 @@ private:
     SemaphoreHandle_t _mux;
     Face *_face;
     bool _holdFace;
+    long _holdTimer;
+    Utils::Logger *_logger;
 
     bool _lock();
     void _unlock();
 };
 
 } // namespace Utils
+
+#endif

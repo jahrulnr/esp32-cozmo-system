@@ -2,7 +2,7 @@
 #include "init.h"
 
 void setupScreen() {
-  screen = new Screen::Screen();
+  screen = new Screen::Screen(logger);
   if (SCREEN_ENABLED) {
     logger->info("Setting up screen...");
     if (screen->init(SCREEN_SDA_PIN, SCREEN_SCL_PIN)) {

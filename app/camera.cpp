@@ -3,8 +3,8 @@
 
 void setupCamera() {
   if (CAMERA_ENABLED) {
-    logger->info("Setting up camera...");
     camera = new Sensors::Camera();
+    logger->info("Setting up camera...");
     if (camera->init()) {
       camera->setResolution(CAMERA_FRAME_SIZE);
       logger->info("Camera initialized successfully");
@@ -54,6 +54,7 @@ void cameraStreamTask(void* parameter) {
         if (logger) {
             logger->error("Camera streaming task failed: components not initialized");
         }
+        cameraStreamTaskHandle = nullptr;
         vTaskDelete(NULL);
         return;
     }
@@ -76,14 +77,14 @@ void cameraStreamTask(void* parameter) {
           
           if (fb) {
               // Create a small JSON header with metadata
-              // Utils::SpiJsonDocument header;
-              // header["width"] = fb->width;
-              // header["height"] = fb->height;
-              // header["format"] = fb->format;
-              // header["size"] = fb->len;
+              Utils::SpiJsonDocument header;
+              header["width"] = fb->width;
+              header["height"] = fb->height;
+              header["format"] = fb->format;
+              header["size"] = fb->len;
               
-              // // First send the metadata as JSON text frame
-              // webSocket->sendJsonMessage(-1, "camera_frame_header", header);
+              // First send the metadata as JSON text frame with DTO v1.0 format
+              webSocket->sendJsonMessage(-1, "camera_frame_header", header);
               
               // Then send the binary frame data
               webSocket->sendBinary(-1, fb->buf, fb->len);

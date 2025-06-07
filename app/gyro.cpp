@@ -1,16 +1,18 @@
 #include <Arduino.h>
 #include "init.h"
 
-void setupGyro() {
-  if (GYRO_ENABLED) {
+void setupOrientation() {
+  if (ORIENTATION_ENABLED) {
     logger->info("Setting up gyroscope...");
-    gyro = new Sensors::Gyro();
-    if (gyro->init(GYRO_SDA_PIN, GYRO_SCL_PIN)) {
-      gyro->calibrate();
+    orientation = new Sensors::OrientationSensor();
+    if (orientation->init(ORIENTATION_SDA_PIN, ORIENTATION_SCL_PIN)) {
+      orientation->calibrate();
+      orientation->setGyroRange(Sensors::GYRO_RANGE_2000_DEG);
+      orientation->setAccelRange(Sensors::ACCEL_RANGE_16G);
       logger->info("Gyroscope initialized successfully");
     } else {
       logger->error("Gyroscope initialization failed");
-      gyro = nullptr;
+      orientation = nullptr;
     }
   }
 }

@@ -309,30 +309,18 @@ body {
 
 /* Joystick */
 .joystick-container {
-  width: 100%;
-  aspect-ratio: 1/1;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
   position: relative;
+  background-color: transparent;
   border-radius: 50%;
-  background: linear-gradient(145deg, #111822, #0c131b);
-  box-shadow: inset 2px 2px 5px #090f15,
-              inset -2px -2px 5px #151f2b;
 }
 
-.joystick-inner {
-  position: absolute;
-  width: 40%;
-  height: 40%;
-  left: 30%;
-  top: 30%;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #1e2834, #171f29);
-  cursor: move;
-  box-shadow: 2px 2px 10px #0a0f15,
-              -2px -2px 10px #1c2837;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-accent);
+/* Style for the canvas elements created by joy.js */
+.joystick-container canvas {
+  cursor: pointer;
+  background-color: transparent;
 }
 
 /* Camera */
@@ -460,21 +448,24 @@ body {
   margin-top: 4px;
 }
 
-.gyro-visualization {
+.gyro-visualization, .accel-visualization {
   width: 100%;
   aspect-ratio: 1/1;
   position: relative;
   margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  min-height: 300px;
 }
 
-.gyro-indicator {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 2px solid var(--color-accent);
+#gyro-canvas, #accel-canvas {
   border-radius: 6px;
-  transform-style: preserve-3d;
-  transition: transform 0.1s ease;
+  background-color: rgba(30, 40, 50, 0.8);
+  box-shadow: var(--shadow);
+  max-width: 100%;
+  height: auto;
 }
 
 /* File Manager */
@@ -482,20 +473,21 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   overflow: hidden;
+  padding: 1rem;
 }
 
 .file-header {
-  background-color: var(--header-bg);
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .breadcrumb {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .breadcrumb-item {
@@ -503,8 +495,12 @@ body {
   cursor: pointer;
 }
 
+.breadcrumb-item:hover {
+  text-decoration: underline;
+}
+
 .breadcrumb-separator {
-  margin: 0 8px;
+  margin: 0 0.5rem;
   color: var(--color-text-secondary);
 }
 
@@ -516,9 +512,8 @@ body {
 .file-item {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   border-bottom: 1px solid var(--color-border);
-  cursor: pointer;
 }
 
 .file-item:hover {
@@ -526,17 +521,73 @@ body {
 }
 
 .file-icon {
-  margin-right: 12px;
-  width: 18px;
+  margin-right: 1rem;
+  color: var(--color-text-secondary);
 }
 
 .file-name {
-  flex-grow: 1;
+  flex: 1;
 }
 
 .file-actions {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
+}
+
+/* File Viewer */
+.file-viewer-content {
+  background-color: var(--bg-sidebar);
+  color: var(--color-text-primary);
+  padding: 1rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font-family: 'Courier New', monospace;
+  max-height: 60vh;
+  overflow-y: auto;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.file-viewer-image {
+  max-width: 100%;
+  max-height: 60vh;
+  margin: 0 auto;
+  display: block;
+  border-radius: 4px;
+}
+
+#file-viewer-container {
+  transition: all 0.3s ease;
+}
+
+#close-file-viewer {
+  color: var(--color-danger);
+}
+
+/* Syntax Highlighting for common file types */
+.syntax-html {
+  color: #e06c75;
+}
+
+.syntax-comment {
+  color: #5c6370;
+  font-style: italic;
+}
+
+.syntax-keyword {
+  color: #c678dd;
+}
+
+.syntax-string {
+  color: #98c379;
+}
+
+.syntax-number {
+  color: #d19a66;
+}
+
+.syntax-function {
+  color: #61afef;
 }
 
 /* Login */
@@ -634,6 +685,226 @@ body {
 .badge-info {
   background-color: rgba(88, 166, 255, 0.2);
   color: var(--color-info);
+}
+
+/* Distance Sensor Radar Styles */
+.distance-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.distance-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sensor-value-large {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--color-accent);
+}
+
+.sensor-unit {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.sensor-status {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.9rem;
+}
+
+.radar-visualization {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+}
+
+#radar-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 0 0;
+  background-color: rgba(27, 31, 35, 0.8);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  transform: translateY(25%); /* Move the semicircle down */
+  border-bottom: none;
+}
+
+/* Field of view indicator overlay */
+#radar-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse 30deg at 50% 100%,
+    rgba(88, 166, 255, 0.1) 0%,
+    rgba(88, 166, 255, 0.05) 30%,
+    transparent 30.5%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.radar-circle {
+  position: absolute;
+  border-radius: 50% 50% 0 0;
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  transform: scale(0);
+}
+
+.circle-1 { transform: scale(0.25); }
+.circle-2 { transform: scale(0.5); }
+.circle-3 { transform: scale(0.75); }
+.circle-4 { transform: scale(1); }
+
+.radar-sweep {
+  position: absolute;
+  width: 50%;
+  height: 2px;
+  background-color: rgba(88, 166, 255, 0.7);
+  top: 50%;
+  left: 50%;
+  transform-origin: left center;
+  animation: sweep 2s infinite;
+  box-shadow: 0 0 10px rgba(88, 166, 255, 0.7);
+}
+
+@keyframes sweep {
+  0% { transform: rotate(-15deg); }
+  50% { transform: rotate(15deg); }
+  100% { transform: rotate(-15deg); }
+}
+
+.radar-pin {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-danger);
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.5s ease;
+  box-shadow: 0 0 10px var(--color-danger);
+  opacity: 0;
+}
+
+.radar-pin.visible {
+  opacity: 1;
+}
+
+.radar-pin.obstacle {
+  background-color: var(--color-danger);
+  box-shadow: 0 0 15px var(--color-danger);
+}
+
+.radar-pin.no-obstacle {
+  background-color: var(--color-success);
+  box-shadow: 0 0 10px var(--color-success);
+}
+
+.distance-marker {
+  position: absolute;
+  color: rgba(88, 166, 255, 0.7);
+  font-size: 0.7rem;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  pointer-events: none;
+}
+
+.marker-1 {
+  top: 87.5%; /* 100% - (100% * 0.25) / 2 */
+}
+
+.marker-2 {
+  top: 75%; /* 100% - (100% * 0.5) / 2 */
+}
+
+.marker-3 {
+  top: 62.5%; /* 100% - (100% * 0.75) / 2 */
+}
+
+.marker-4 {
+  top: 50%; /* 100% - (100% * 1) / 2 */
+}
+
+.angle-marker {
+  position: absolute;
+  color: rgba(88, 166, 255, 0.7);
+  font-size: 0.7rem;
+  top: 95%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.left-angle {
+  left: 35%;
+}
+
+.right-angle {
+  left: 65%;
+}
+
+.field-of-view-indicator {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(
+    ellipse 30deg at bottom,
+    rgba(88, 166, 255, 0.15) 0%,
+    rgba(88, 166, 255, 0.05) 80%,
+    transparent 81%
+  );
+  transform-origin: bottom left;
+  transform: rotate(-15deg);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  border-radius: 50% 50% 0 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.field-of-view-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse 30deg at bottom,
+    rgba(88, 166, 255, 0.15) 0%,
+    rgba(88, 166, 255, 0.05) 80%,
+    transparent 81%
+  );
+  transform-origin: bottom left;
+  transform: rotate(30deg);
+}
+
+.sensor-info {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
 }
 
 /* Responsive */

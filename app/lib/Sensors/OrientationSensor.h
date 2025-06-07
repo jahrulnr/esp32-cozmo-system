@@ -2,17 +2,33 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-#include "../Utils/I2CManager.h"
+#include "lib/Utils/I2CManager.h"
 
 namespace Sensors {
+
+// Gyroscope sensitivity range options
+enum GyroRange {
+    GYRO_RANGE_250_DEG = 0x00,  // ±250°/s (default)
+    GYRO_RANGE_500_DEG = 0x08,  // ±500°/s
+    GYRO_RANGE_1000_DEG = 0x10, // ±1000°/s
+    GYRO_RANGE_2000_DEG = 0x18  // ±2000°/s
+};
+
+// Accelerometer sensitivity range options
+enum AccelRange {
+    ACCEL_RANGE_2G = 0x00,  // ±2g (default)
+    ACCEL_RANGE_4G = 0x08,  // ±4g
+    ACCEL_RANGE_8G = 0x10,  // ±8g
+    ACCEL_RANGE_16G = 0x18  // ±16g
+};
 
 /**
  * Gyroscope and accelerometer sensor class for motion detection and orientation
  */
-class Gyro {
+class OrientationSensor {
 public:
-    Gyro();
-    ~Gyro();
+    OrientationSensor();
+    ~OrientationSensor();
 
     /**
      * Initialize the gyroscope and accelerometer
@@ -75,6 +91,32 @@ public:
      */
     bool calibrate();
 
+    /**
+     * Set gyroscope sensitivity range
+     * @param range The desired gyroscope range (GYRO_RANGE_250_DEG, GYRO_RANGE_500_DEG, GYRO_RANGE_1000_DEG, or GYRO_RANGE_2000_DEG)
+     * @return true if setting the range was successful, false otherwise
+     */
+    bool setGyroRange(GyroRange range);
+
+    /**
+     * Set accelerometer sensitivity range
+     * @param range The desired accelerometer range (ACCEL_RANGE_2G, ACCEL_RANGE_4G, ACCEL_RANGE_8G, or ACCEL_RANGE_16G)
+     * @return true if setting the range was successful, false otherwise
+     */
+    bool setAccelRange(AccelRange range);
+
+    /**
+     * Get current gyroscope range setting
+     * @return Current gyroscope range
+     */
+    GyroRange getGyroRange() const;
+
+    /**
+     * Get current accelerometer range setting
+     * @return Current accelerometer range
+     */
+    AccelRange getAccelRange() const;
+
 private:
     float _x, _y, _z;  // Current gyroscope readings (degrees per second)
     float _accelX, _accelY, _accelZ;  // Current accelerometer readings (g)
@@ -82,6 +124,15 @@ private:
     float _accelOffsetX, _accelOffsetY, _accelOffsetZ;  // Accel calibration offsets
     bool _initialized;
     TwoWire* _wire;
+    GyroRange _gyroRange;  // Current gyroscope range
+    AccelRange _accelRange;  // Current accelerometer range
+    float _gyroScale;  // Current gyroscope scaling factor
+    float _accelScale;  // Current accelerometer scaling factor
+
+    /**
+     * Update scaling factors based on current range settings
+     */
+    void updateScalingFactors();
 };
 
 } // namespace Sensors

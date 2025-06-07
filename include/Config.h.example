@@ -27,14 +27,14 @@
 #define DEFAULT_HAND_ANGLE 90
 
 // Gyroscope configuration
-#define GYRO_ENABLED true
-#define GYRO_SDA_PIN 13
-#define GYRO_SCL_PIN 15
+#define ORIENTATION_ENABLED true
+#define ORIENTATION_SDA_PIN 13
+#define ORIENTATION_SCL_PIN 15
 
 // Screen configuration
 #define SCREEN_ENABLED true
-#define SCREEN_SDA_PIN GYRO_SDA_PIN
-#define SCREEN_SCL_PIN GYRO_SCL_PIN
+#define SCREEN_SDA_PIN ORIENTATION_SDA_PIN
+#define SCREEN_SCL_PIN ORIENTATION_SCL_PIN
 
 // WiFi configuration
 #define WIFI_ENABLED true
@@ -64,3 +64,9 @@
 // Miscellaneous
 #define SERIAL_BAUD_RATE 115200
 #define DEBUG_ENABLED true
+
+// Ultrasonic distance sensor configuration
+#define ULTRASONIC_ENABLED true
+#define ULTRASONIC_TRIGGER_PIN 4   // GPIO4 for trigger pin
+#define ULTRASONIC_ECHO_PIN 13     // GPIO13 for echo pin
+#define ULTRASONIC_MAX_DISTANCE 400 // Maximum measurement distance in cm

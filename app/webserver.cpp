@@ -26,9 +26,12 @@ void setupWebServer() {
       // API endpoints
       webServer->on("/api/status", HTTP_GET, [](AsyncWebServerRequest *request) {
         Utils::SpiJsonDocument doc;
-        doc["status"] = "online";
-        doc["wifi"] = wifiManager && wifiManager->isConnected() ? "connected" : "disconnected";
-        doc["camera"] = camera ? "active" : "inactive";
+        // Use the new DTO contract format
+        doc["version"] = "1.0";
+        doc["type"] = "system_status_response";
+        doc["data"]["status"] = "online";
+        doc["data"]["wifi"] = wifiManager && wifiManager->isConnected() ? "connected" : "disconnected";
+        doc["data"]["camera"] = camera ? "active" : "inactive";
         
         String response;
         serializeJson(doc, response);
@@ -91,7 +94,7 @@ void setupWebServer() {
           
           if (!uploadFile) {
             logger->error("Failed to open file for writing: " + fullPath);
-            request->send(500, "application/json", "{\"type\":\"error\",\"data\":{\"code\":500,\"message\":\"Failed to create file\"}}");
+            request->send(500, "application/json", "{\"version\":\"1.0\",\"type\":\"error\",\"data\":{\"code\":500,\"message\":\"Failed to create file\"}}");
             return;
           }
         }
@@ -106,8 +109,9 @@ void setupWebServer() {
           if (uploadFile) {
             logger->info("Upload complete: " + String(uploadFile.name()) + " (" + String(uploadFile.size()) + " bytes)");
             
-            // Send success response following the DTO format
+            // Send success response following the new DTO contract format
             Utils::SpiJsonDocument responseDoc;
+            responseDoc["version"] = "1.0";
             responseDoc["type"] = "ok";
             responseDoc["data"]["message"] = "File uploaded successfully";
             responseDoc["data"]["filename"] = filename;
@@ -118,7 +122,7 @@ void setupWebServer() {
             serializeJson(responseDoc, response);
             request->send(200, "application/json", response);
           } else {
-            request->send(500, "application/json", "{\"type\":\"error\",\"data\":{\"code\":500,\"message\":\"Upload failed\"}}");
+            request->send(500, "application/json", "{\"version\":\"1.0\",\"type\":\"error\",\"data\":{\"code\":500,\"message\":\"Upload failed\"}}");
           }
         }
       }

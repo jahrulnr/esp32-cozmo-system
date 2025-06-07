@@ -1,6 +1,6 @@
 #include "GPTAdapter.h"
 #include <HTTPClient.h>
-#include "../Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocatorUtils.h"
 
 namespace Communication {
 

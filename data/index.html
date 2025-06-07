@@ -236,11 +236,7 @@
                             <h2 class="card-title">Servo Control</h2>
                         </div>
                         <p>Use the joystick to control the servo positions</p>
-                        <div class="joystick-container">
-                            <div id="servo-joystick" class="joystick-inner">
-                                <i class="fas fa-arrows-up-down-left-right"></i>
-                            </div>
-                        </div>
+                        <div id="servo-joystick-container" class="joystick-container"></div>
                         <div class="mt-4">
                             <div>X: <span id="servo-x">0</span>°</div>
                             <div>Y: <span id="servo-y">0</span>°</div>
@@ -253,14 +249,10 @@
                             <h2 class="card-title">Motor Control</h2>
                         </div>
                         <p>Use the joystick to control the motor speed and direction</p>
-                        <div class="joystick-container">
-                            <div id="motor-joystick" class="joystick-inner">
-                                <i class="fas fa-arrows-up-down-left-right"></i>
-                            </div>
-                        </div>
+                        <div id="motor-joystick-container" class="joystick-container"></div>
                         <div class="mt-4">
-                            <div>Speed: <span id="motor-speed">0</span>%</div>
-                            <div>Direction: <span id="motor-direction">0</span>°</div>
+                            <div>Speed: <span id="motor-speed">0</span></div>
+                            <div>Direction: <span id="motor-direction">0</span></div>
                         </div>
                     </div>
                 </div>
@@ -300,10 +292,7 @@
                         <div class="card-header">
                             <h2 class="card-title">Gyroscope</h2>
                         </div>
-                        <div class="gyro-visualization">
-                            <div id="gyro-indicator" class="gyro-indicator"></div>
-                        </div>
-                        <div class="sensor-grid mt-4">
+                        <div class="sensor-grid">
                             <div>
                                 <div>X-axis</div>
                                 <div class="sensor-value" id="gyro-x">0.00</div>
@@ -316,6 +305,9 @@
                                 <div>Z-axis</div>
                                 <div class="sensor-value" id="gyro-z">0.00</div>
                             </div>
+                        </div>
+                        <div class="gyro-visualization mt-4">
+                            <canvas id="gyro-canvas" width="300" height="300"></canvas>
                         </div>
                     </div>
                     
@@ -338,8 +330,41 @@
                                 <div class="sensor-value" id="accel-z">0.00</div>
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <canvas id="accel-chart" height="200"></canvas>
+                        <div class="accel-visualization mt-4">
+                            <canvas id="accel-canvas" width="300" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Distance Sensor Radar -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Distance Sensor</h2>
+                        <button id="distance-request" class="btn">Refresh</button>
+                    </div>
+                    <div class="distance-container">
+                        <div class="distance-display">
+                            <div class="sensor-value-large" id="distance-value">0.00</div>
+                            <div class="sensor-unit">cm</div>
+                            <div class="sensor-status" id="obstacle-status">No Obstacle</div>
+                        </div>
+                        <div class="radar-visualization">
+                            <div id="radar-container">
+                                <div class="radar-circle circle-1"></div>
+                                <div class="radar-circle circle-2"></div>
+                                <div class="radar-circle circle-3"></div>
+                                <div class="radar-circle circle-4"></div>
+                                <div class="distance-marker marker-1">10cm</div>
+                                <div class="distance-marker marker-2">50cm</div>
+                                <div class="distance-marker marker-3">200cm</div>
+                                <div class="distance-marker marker-4">400cm</div>
+                                <div class="angle-marker left-angle">-15°</div>
+                                <div class="angle-marker right-angle">15°</div>
+                                <div class="field-of-view-indicator"></div>
+                                <div class="radar-sweep"></div>
+                                <div id="radar-pin" class="radar-pin"></div>
+                            </div>
+                            <div class="sensor-info">HC-SR04 Field of View: ~30°</div>
                         </div>
                     </div>
                 </div>
@@ -497,21 +522,38 @@
                         </div>
                         <div>
                             <div>Used Space</div>
-                            <div class="sensor-value" id="storage-used">1.8 MB</div>
+                            <div class="sensor-value" id="storage-used">1.2 MB</div>
                         </div>
                         <div>
                             <div>Free Space</div>
-                            <div class="sensor-value" id="storage-free">2.2 MB</div>
+                            <div class="sensor-value" id="storage-free">2.8 MB</div>
                         </div>
                         <div>
-                            <div>Usage</div>
-                            <div class="sensor-value" id="storage-percent">45%</div>
+                            <div>Used Percent</div>
+                            <div class="sensor-value" id="storage-percent">30%</div>
                         </div>
                     </div>
                     <div class="mt-4">
-                        <div class="progress" style="height: 10px; background-color: var(--color-border); border-radius: 5px; overflow: hidden;">
-                            <div style="width: 45%; height: 100%; background-color: var(--color-accent);"></div>
+                        <div class="progress">
+                            <div style="width: 30%"></div>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- File Viewer -->
+                <div class="card mt-4" id="file-viewer-container" style="display: none;">
+                    <div class="card-header">
+                        <h2 class="card-title">File Viewer: <span id="file-viewer-name"></span></h2>
+                        <button id="close-file-viewer" class="btn">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                    <!-- For code files -->
+                    <pre id="file-viewer-content" class="file-viewer-content"></pre>
+                    
+                    <!-- For images -->
+                    <div id="file-viewer-image-container" style="display: none;">
+                        <img id="file-viewer-image" class="file-viewer-image" alt="Preview">
                     </div>
                 </div>
             </section>
@@ -622,6 +664,7 @@
         </main>
     </div>
 
+    <script src="js/joy.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

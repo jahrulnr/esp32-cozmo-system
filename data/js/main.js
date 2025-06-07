@@ -8,6 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let connected = false;
     const reconnectTime = 3000; // 3 seconds
     const AUTH_TOKEN_KEY = 'cozmo_auth_token'; // Key for storing auth token in localStorage
+    
+    // Variables for joystick controls
+    let joystickInitialized = false;
+    let servoJoystickObj, motorJoystickObj;
+    let lastSendTimeServo = 0;
+    let lastSendTimeMotor = 0;
+    const sendThrottle = 100; // Send position updates every 100ms
 
     // DOM Elements
     const loginPage = document.getElementById('login-page');
@@ -89,10 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Send Command to server using DTO format
+    // Send Command to server using the new DTO contract format (v1.0)
     function sendJsonMessage(type, data = {}) {
         if (websocket && websocket.readyState === WebSocket.OPEN) {
             const message = JSON.stringify({
+                version: "1.0",
                 type: type,
                 data: data
             });
@@ -110,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function sendCommandToRobot(robotId, command, data = {}) {
         if (websocket && websocket.readyState === WebSocket.OPEN) {
             const message = {
+                version: "1.0",
                 type: 'command_to_robot',
                 data: {
                     robot_id: robotId,
@@ -136,7 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const msg = JSON.parse(evt.data);
             console.log('Received:', msg);
 
-            // Handle DTO format messages
+            // Check for version field to determine format
+            if (msg.version === "1.0") {
+                // New DTO contract format
+                console.log("Received v1.0 DTO format message");
+            }
+
+            // Handle DTO format messages (works with both old and new format)
             if (msg.type === 'login_response') {
                 handleLoginResponse(msg);
             } else if (msg.type === 'system_status') {
@@ -157,6 +172,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 addChatMessage(msg.data, false);
             } else if (msg.type === 'log_message') {
                 logToConsole(msg.data.message, msg.data.level);
+            } else if (msg.type === 'batch_log_messages') {
+                if (Array.isArray(msg.data.logs)) {
+                    // Process batch of log messages
+                    msg.data.logs.forEach(log => {
+                        logToConsole(log.message, log.level);
+                    });
+                }
             } else if (msg.type === 'error') {
                 handleError(msg);
             } else if (msg.type === 'ok') {
@@ -165,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateMotorStatus(msg.data);
             } else if (msg.type === 'storage_info') {
                 updateStorageInfo(msg.data);
+            } else if (msg.type === 'file_content') {
+                displayFileContent(msg.data);
             } else if (msg.type === 'task_list') {
                 handleTaskList(msg.data);
             } else if (msg.type === 'task_control_response') {
@@ -338,104 +362,130 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Joystick controls
+
     function initJoysticks() {
-        const servoJoystick = document.getElementById('servo-joystick');
-        const motorJoystick = document.getElementById('motor-joystick');
-        
-        setupJoystick(servoJoystick, 'servo');
-        setupJoystick(motorJoystick, 'motor');
+        if (joystickInitialized) return;
+        joystickInitialized = true;
+        // Initialize the servo joystick using the bobboteck library
+        servoJoystickObj = new JoyStick('servo-joystick-container', {
+            title: 'servo-joystick',
+            width: 200, 
+            height: 200,
+            internalFillColor: '#3498db',
+            internalStrokeColor: '#2980b9',
+            externalStrokeColor: '#2c3e50',
+            autoReturnToCenter: true
+        }, servoJoystickCallback);
+
+        // Initialize the motor joystick using the bobboteck library
+        motorJoystickObj = new JoyStick('motor-joystick-container', {
+            title: 'motor-joystick',
+            width: 200,
+            height: 200,
+            internalFillColor: '#2ecc71',
+            internalStrokeColor: '#27ae60',
+            externalStrokeColor: '#2c3e50',
+            autoReturnToCenter: true
+        }, motorJoystickCallback);
     }
-    
-    function setupJoystick(element, type) {
-        if (!element) return;
+
+    // Callback function for the servo joystick
+    function servoJoystickCallback(stickData) {
+        // Update display values on the UI
+        updateJoystickDisplayValues('servo', stickData.x, stickData.y);
         
-        const joystickContainer = element.parentElement;
-        const containerRect = joystickContainer.getBoundingClientRect();
-        const centerX = containerRect.width / 2;
-        const centerY = containerRect.height / 2;
-        const maxDistance = Math.min(centerX, centerY) * 0.8;
-        
-        let isDragging = false;
-        
-        // Center the joystick initially
-        element.style.left = `${centerX - element.clientWidth / 2}px`;
-        element.style.top = `${centerY - element.clientHeight / 2}px`;
-        
-        element.addEventListener('mousedown', startDrag);
-        element.addEventListener('touchstart', startDrag, { passive: false });
-        
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('touchmove', drag, { passive: false });
-        
-        document.addEventListener('mouseup', endDrag);
-        document.addEventListener('touchend', endDrag);
-        
-        function startDrag(e) {
-            e.preventDefault();
-            isDragging = true;
+        // Send to server with throttling
+        const currentTime = Date.now();
+        if (currentTime - lastSendTimeServo >= sendThrottle) {
+            sendJoystickPosition('servo', stickData.x, stickData.y);
+            lastSendTimeServo = currentTime;
         }
+    }
+
+    // Callback function for the motor joystick
+    function motorJoystickCallback(stickData) {
+        // Update display values on the UI
+        updateJoystickDisplayValues('motor', stickData.x, stickData.y);
         
-        function drag(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-            
-            let clientX, clientY;
-            
-            if (e.type === 'touchmove') {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            
-            const rect = joystickContainer.getBoundingClientRect();
-            const x = clientX - rect.left;
-            const y = clientY - rect.top;
-            
-            // Calculate distance from center
-            const deltaX = x - centerX;
-            const deltaY = y - centerY;
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            
-            // Limit to circle
-            const limitDistance = Math.min(distance, maxDistance);
-            const angle = Math.atan2(deltaY, deltaX);
-            
-            const limitedX = centerX + limitDistance * Math.cos(angle);
-            const limitedY = centerY + limitDistance * Math.sin(angle);
-            
-            // Update joystick position
-            element.style.left = `${limitedX - element.clientWidth / 2}px`;
-            element.style.top = `${limitedY - element.clientHeight / 2}px`;
-            
-            // Map coordinates to -100 to 100
-            const normalizedX = (limitedX - centerX) / maxDistance * 100;
-            const normalizedY = (limitedY - centerY) / maxDistance * 100;
-            
-            // Send to server
-            sendJoystickPosition(type, normalizedX, normalizedY);
-        }
-        
-        function endDrag() {
-            if (!isDragging) return;
-            isDragging = false;
-            
-            // Return to center
-            element.style.left = `${centerX - element.clientWidth / 2}px`;
-            element.style.top = `${centerY - element.clientHeight / 2}px`;
-            
-            // Send neutral position
-            sendJoystickPosition(type, 0, 0);
+        // Send to server with throttling
+        const currentTime = Date.now();
+        if (currentTime - lastSendTimeMotor >= sendThrottle) {
+            sendJoystickPosition('motor', stickData.x, stickData.y);
+            lastSendTimeMotor = currentTime;
         }
     }
     
     function sendJoystickPosition(type, x, y) {
+        // Convert string values to numbers if needed (joy.js library returns strings)
+        x = parseFloat(x);
+        y = parseFloat(y);
+        
+        // First validate inputs
+        if (isNaN(x) || isNaN(y)) {
+            console.error(`Invalid joystick position values: X=${x}, Y=${y}`);
+            return;
+        }
+        
+        // Apply a small threshold to avoid sending tiny values that are effectively zero
+        const threshold = 0.5;
+        const xVal = Math.abs(x) < threshold ? 0 : x;
+        const yVal = Math.abs(y) < threshold ? 0 : y;
+        
+        // Round to integers to reduce noise in the values
+        const validX = Math.round(xVal);
+        const validY = Math.round(yVal);
+        
+        console.log(`Sending ${type} joystick position: X=${validX}, Y=${validY}`);
+        
         sendCommand('joystick_update', {
             type: type,
-            x: Math.round(x),
-            y: Math.round(y)
+            x: validX,
+            y: validY
         });
+    }
+    
+    function updateJoystickDisplayValues(type, x, y) {
+        // First validate inputs
+        if (isNaN(x) || isNaN(y)) {
+            console.error(`Invalid joystick display values: X=${x}, Y=${y}`);
+            return;
+        }
+
+        if (typeof x !== 'number' || typeof y !== 'number') {
+            x = 1.0 * x;
+            y = 1.0 * y;
+        }
+        
+        // Apply a small threshold to avoid displaying tiny values that are effectively zero
+        const threshold = 0.5;
+        const xVal = Math.abs(x) < threshold ? 0 : x;
+        const yVal = Math.abs(y) < threshold ? 0 : y;
+        
+        // Round to integers to reduce noise in the display
+        const validX = Math.round(xVal);
+        const validY = Math.round(yVal);
+        
+        console.log(`Updating ${type} joystick: X=${validX}, Y=${validY}`);
+        
+        try {
+            if (type === 'servo') {
+                // Update servo joystick display
+                const servoX = document.getElementById('servo-x');
+                const servoY = document.getElementById('servo-y');
+                
+                if (servoX) servoX.textContent = validX;
+                if (servoY) servoY.textContent = validY;
+            } else if (type === 'motor') {
+                // Update motor joystick display
+                const motorX = document.getElementById('motor-x');
+                const motorY = document.getElementById('motor-y');
+                
+                if (motorX) motorX.textContent = validX;
+                if (motorY) motorY.textContent = validY;
+            }
+        } catch (error) {
+            console.error(`Error updating ${type} joystick display:`, error);
+        }
     }
     
     function updateCameraFrame(data) {
@@ -460,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sensor updates
     function startSensorUpdates() {
-        sendCommand('start_sensor_updates');
+        // nothing
     }
     
     function updateSensors(data) {
@@ -469,9 +519,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const gyroY = document.getElementById('gyro-y');
             const gyroZ = document.getElementById('gyro-z');
             
-            if (gyroX) gyroX.textContent = data.gyro.x;
-            if (gyroY) gyroY.textContent = data.gyro.y;
-            if (gyroZ) gyroZ.textContent = data.gyro.z;
+            if (gyroX) gyroX.textContent = toFixed(data.gyro.x, 2);
+            if (gyroY) gyroY.textContent = toFixed(data.gyro.y, 2);
+            if (gyroZ) gyroZ.textContent = toFixed(data.gyro.z, 2);
             
             updateGyroVisualization(data.gyro);
         }
@@ -481,18 +531,130 @@ document.addEventListener('DOMContentLoaded', () => {
             const accelY = document.getElementById('accel-y');
             const accelZ = document.getElementById('accel-z');
             
-            if (accelX) accelX.textContent = data.accel.x;
-            if (accelY) accelY.textContent = data.accel.y;
-            if (accelZ) accelZ.textContent = data.accel.z;
+            if (accelX) accelX.textContent = toFixed(data.accel.x, 2);
+            if (accelY) accelY.textContent = toFixed(data.accel.y, 2);
+            if (accelZ) accelZ.textContent = toFixed(data.accel.z, 2);
+            
+            updateAccelVisualization(data.accel);
         }
         
-        // Update joystick position displays
-        if (data.servo) {
-            const servoX = document.getElementById('servo-x');
-            const servoY = document.getElementById('servo-y');
+        // Update distance sensor data if available
+        if (data.distance) {
+            const distanceValue = document.getElementById('distance-value');
+            const obstacleStatus = document.getElementById('obstacle-status');
             
-            if (servoX) servoX.textContent = data.servo.x.toFixed(0);
-            if (servoY) servoY.textContent = data.servo.y.toFixed(0);
+            if (distanceValue) {
+                // Check if the distance reading is valid
+                if (data.distance.valid) {
+                    distanceValue.textContent = toFixed(data.distance.value, 1);
+                    updateRadarVisualization(data.distance.value, data.distance.obstacle);
+                } else {
+                    distanceValue.textContent = "N/A";
+                    updateRadarVisualization(-1, false); // Invalid reading
+                }
+            }
+            
+            if (obstacleStatus) {
+                if (data.distance.obstacle) {
+                    obstacleStatus.textContent = "Obstacle Detected!";
+                    obstacleStatus.style.backgroundColor = "rgba(248, 81, 73, 0.2)";
+                    obstacleStatus.style.color = "var(--color-danger)";
+                } else {
+                    obstacleStatus.textContent = "No Obstacle";
+                    obstacleStatus.style.backgroundColor = "rgba(86, 211, 100, 0.2)";
+                    obstacleStatus.style.color = "var(--color-success)";
+                }
+            }
+        }
+        
+        // Only update joystick displays from sensor data if we have a specific flag
+        // This prevents sensor updates from overriding manual joystick positioning
+        if (data.updateJoysticks === true) {
+            // Update joystick position displays
+            if (data.servo) {
+                updateJoystickDisplayValues('servo', data.servo.x, data.servo.y);
+            }
+            
+            // Update motor position displays if available
+            if (data.motor) {
+                updateJoystickDisplayValues('motor', data.motor.x, data.motor.y);
+            }
+        }
+    }
+    
+    // Update the radar visualization with distance data
+    function updateRadarVisualization(distance, isObstacle) {
+        const radarPin = document.getElementById('radar-pin');
+        if (!radarPin) return;
+        
+        // Check if we have a valid distance measurement
+        if (distance < 0) {
+            // Invalid distance reading, hide the pin
+            radarPin.classList.remove('visible');
+            radarPin.classList.remove('obstacle');
+            radarPin.classList.remove('no-obstacle');
+            return;
+        }
+        
+        // Show the pin and update its position based on the distance
+        radarPin.classList.add('visible');
+        
+        // Update the pin style based on obstacle detection
+        if (isObstacle) {
+            radarPin.classList.add('obstacle');
+            radarPin.classList.remove('no-obstacle');
+        } else {
+            radarPin.classList.add('no-obstacle');
+            radarPin.classList.remove('obstacle');
+        }
+        
+        // Calculate the position of the pin on the radar
+        // Max distance is 400cm, but we'll scale it to fit in our radar (which represents a 100% range)
+        const maxDistance = 400; // Maximum distance in cm
+        const normalizedDistance = Math.min(distance / maxDistance, 1.0);
+        
+        // Convert to radar coordinates (from center)
+        // Radar is reversed - closer objects are further from center
+        const scale = 1 - normalizedDistance;
+        
+        // Get the current sweep angle based on animation time
+        // HC-SR04 has ~30 degrees field of view, so we use -15 to +15 degrees
+        const sweepElement = document.querySelector('.radar-sweep');
+        
+        // Calculate the current animation position (0 to 1) based on time
+        // The sweep animation takes 2 seconds to complete one cycle (1s each way)
+        const animationPosition = (Date.now() % 2000) / 2000;
+        // Convert to an angle between -15 and +15 degrees
+        let sweepAngle = 0;
+        
+        // Animation goes from -15 to +15 and back to -15 (saw-tooth pattern)
+        if (animationPosition < 0.5) {
+            // Going from -15 to +15 in the first half of the animation
+            sweepAngle = -15 + (animationPosition * 2) * 30;
+        } else {
+            // Going from +15 back to -15 in the second half
+            sweepAngle = 15 - ((animationPosition - 0.5) * 2) * 30;
+        }
+        
+        // Convert degrees to radians for the math calculations
+        const angle = sweepAngle * (Math.PI / 180);
+        
+        // Calculate x and y positions on the radar (centered at 50%, 50%)
+        // For a top-oriented semicircular radar:
+        // x ranges from 0% to 100% (leftmost to rightmost)
+        // y ranges from 0% to 50% (bottom to top semicircle center)
+        const radius = scale * 50; // Scale to 0-50% of radar size
+        const x = 50 + Math.sin(angle) * radius; // Sine for x because 0 degrees is up
+        const y = 50 - Math.cos(angle) * radius; // Cosine (negative) for y because 0 degrees is up
+        
+        // Update the position of the pin
+        radarPin.style.left = x + '%';
+        radarPin.style.top = y + '%';
+        
+        // Also update text info (if needed)
+        const distanceValue = document.getElementById('distance-value');
+        if (distanceValue) {
+            distanceValue.textContent = distance.toFixed(1);
         }
     }
     
@@ -539,12 +701,408 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // 3D visualization of gyroscope data using canvas
+    let gyroCanvas, gyroCtx, gyroData = { x: 0, y: 0, z: 0 };
+    let gyroAnimation;
+    let targetGyroData = { x: 0, y: 0, z: 0 };
+    let lastGyroUpdateTime = 0;
+    
+    // 3D visualization of accelerometer data using canvas
+    let accelCanvas, accelCtx, accelData = { x: 0, y: 0, z: 0 };
+    let accelAnimation;
+    let targetAccelData = { x: 0, y: 0, z: 0 };
+    let lastAccelUpdateTime = 0;
+    
+    // Interpolation speed factor (higher = faster transitions)
+    const interpolationSpeed = 0.15;
+    
+    function initGyroCanvas() {
+        gyroCanvas = document.getElementById('gyro-canvas');
+        if (!gyroCanvas) return;
+        
+        gyroCtx = gyroCanvas.getContext('2d');
+        
+        // Start the animation loop
+        if (gyroAnimation) cancelAnimationFrame(gyroAnimation);
+        renderGyro();
+    }
+    
+    function renderGyro() {
+        if (!gyroCanvas || !gyroCtx) return;
+        
+        // Get dynamic interpolation factor
+        const factors = calculateInterpolationFactor();
+        
+        // Interpolate between current values and target values using dynamic factor
+        gyroData.x = applyLowPassFilter(gyroData.x, targetGyroData.x, factors.gyro);
+        gyroData.y = applyLowPassFilter(gyroData.y, targetGyroData.y, factors.gyro);
+        gyroData.z = applyLowPassFilter(gyroData.z, targetGyroData.z, factors.gyro);
+        
+        // Clear the canvas
+        gyroCtx.clearRect(0, 0, gyroCanvas.width, gyroCanvas.height);
+        
+        const width = gyroCanvas.width;
+        const height = gyroCanvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const size = Math.min(width, height) * 0.4;
+        
+        // Calculate 3D rotation matrix based on gyro values
+        const angleX = gyroData.x / 50;  // Scale down to make rotation more manageable
+        const angleY = gyroData.y / 50;
+        const angleZ = gyroData.z / 50;
+        
+        // Draw 3D cube representing the gyroscope
+        drawCube(centerX, centerY, size, angleX, angleY, angleZ);
+        
+        // Draw coordinate axes
+        drawAxes(centerX, centerY, size, angleX, angleY, angleZ);
+        
+        // Continue animation loop
+        gyroAnimation = requestAnimationFrame(renderGyro);
+    }
+    
+    function drawAxes(centerX, centerY, size, rotX, rotY, rotZ) {
+        // X-axis (red)
+        drawAxis(centerX, centerY, size, rotX, rotY, rotZ, [1, 0, 0], 'red');
+        
+        // Y-axis (green)
+        drawAxis(centerX, centerY, size, rotX, rotY, rotZ, [0, 1, 0], 'green');
+        
+        // Z-axis (blue)
+        drawAxis(centerX, centerY, size, rotX, rotY, rotZ, [0, 0, 1], 'blue');
+    }
+    
+    function drawAxis(centerX, centerY, size, rotX, rotY, rotZ, vector, color) {
+        const start = rotatePoint([0, 0, 0], rotX, rotY, rotZ);
+        const end = rotatePoint(vector.map(v => v * size * 1.5), rotX, rotY, rotZ);
+        
+        gyroCtx.beginPath();
+        gyroCtx.moveTo(centerX + start[0], centerY + start[1]);
+        gyroCtx.lineTo(centerX + end[0], centerY + end[1]);
+        gyroCtx.strokeStyle = color;
+        gyroCtx.lineWidth = 2;
+        gyroCtx.stroke();
+        
+        // Draw axis label at the end of the axis
+        gyroCtx.fillStyle = color;
+        gyroCtx.font = '14px Arial';
+        const label = color === 'red' ? 'X' : color === 'green' ? 'Y' : 'Z';
+        gyroCtx.fillText(label, centerX + end[0] + 5, centerY + end[1] + 5);
+    }
+    
+    function drawCube(centerX, centerY, size, rotX, rotY, rotZ) {
+        // Define cube vertices (corners)
+        const vertices = [
+            [-1, -1, -1],
+            [1, -1, -1],
+            [1, 1, -1],
+            [-1, 1, -1],
+            [-1, -1, 1],
+            [1, -1, 1],
+            [1, 1, 1],
+            [-1, 1, 1]
+        ].map(v => v.map(coord => coord * size / 2));
+        
+        // Define edges connecting vertices
+        const edges = [
+            [0, 1], [1, 2], [2, 3], [3, 0],  // Bottom face
+            [4, 5], [5, 6], [6, 7], [7, 4],  // Top face
+            [0, 4], [1, 5], [2, 6], [3, 7]   // Connecting edges
+        ];
+        
+        // Define faces for coloring
+        const faces = [
+            [0, 1, 2, 3],  // Bottom face
+            [7, 6, 5, 4],  // Top face
+            [4, 5, 1, 0],  // Front face
+            [5, 6, 2, 1],  // Right face
+            [6, 7, 3, 2],  // Back face
+            [7, 4, 0, 3]   // Left face
+        ];
+        
+        // Colors for faces
+        const faceColors = [
+            'rgba(255, 100, 100, 0.5)',  // Bottom (Red)
+            'rgba(100, 255, 100, 0.5)',  // Top (Green)
+            'rgba(100, 100, 255, 0.5)',  // Front (Blue)
+            'rgba(255, 255, 100, 0.5)',  // Right (Yellow)
+            'rgba(255, 100, 255, 0.5)',  // Back (Magenta)
+            'rgba(100, 255, 255, 0.5)'   // Left (Cyan)
+        ];
+        
+        // Rotate vertices
+        const rotatedVertices = vertices.map(v => rotatePoint(v, rotX, rotY, rotZ));
+        
+        // Calculate z-order of faces for proper depth rendering
+        const faceDepths = faces.map((face, index) => {
+            // Calculate average z-coordinate of face
+            const avgZ = face.reduce((sum, vIdx) => sum + rotatedVertices[vIdx][2], 0) / face.length;
+            return { index, avgZ };
+        }).sort((a, b) => a.avgZ - b.avgZ);
+        
+        // Draw faces in z-order (back to front)
+        faceDepths.forEach(({ index }) => {
+            const face = faces[index];
+            
+            gyroCtx.beginPath();
+            gyroCtx.moveTo(centerX + rotatedVertices[face[0]][0], centerY + rotatedVertices[face[0]][1]);
+            
+            for (let i = 1; i < face.length; i++) {
+                gyroCtx.lineTo(centerX + rotatedVertices[face[i]][0], centerY + rotatedVertices[face[i]][1]);
+            }
+            
+            gyroCtx.closePath();
+            gyroCtx.fillStyle = faceColors[index];
+            gyroCtx.strokeStyle = 'rgba(200, 200, 200, 0.8)';
+            gyroCtx.lineWidth = 1;
+            gyroCtx.fill();
+            gyroCtx.stroke();
+        });
+    }
+    
+    function rotatePoint(point, angleX, angleY, angleZ) {
+        let [x, y, z] = point;
+        
+        // Rotate around X-axis
+        let temp1 = y;
+        let temp2 = z;
+        y = temp1 * Math.cos(angleX) - temp2 * Math.sin(angleX);
+        z = temp1 * Math.sin(angleX) + temp2 * Math.cos(angleX);
+        
+        // Rotate around Y-axis
+        temp1 = x;
+        temp2 = z;
+        x = temp1 * Math.cos(angleY) + temp2 * Math.sin(angleY);
+        z = -temp1 * Math.sin(angleY) + temp2 * Math.cos(angleY);
+        
+        // Rotate around Z-axis
+        temp1 = x;
+        temp2 = y;
+        x = temp1 * Math.cos(angleZ) - temp2 * Math.sin(angleZ);
+        y = temp1 * Math.sin(angleZ) + temp2 * Math.cos(angleZ);
+        
+        return [x, y, z];
+    }
+    
+    function initAccelCanvas() {
+        accelCanvas = document.getElementById('accel-canvas');
+        if (!accelCanvas) return;
+        
+        accelCtx = accelCanvas.getContext('2d');
+        
+        // Start the animation loop
+        if (accelAnimation) cancelAnimationFrame(accelAnimation);
+        renderAccel();
+    }
+    
+    function renderAccel() {
+        if (!accelCanvas || !accelCtx) return;
+        
+        // Get dynamic interpolation factor
+        const factors = calculateInterpolationFactor();
+        
+        // Interpolate between current values and target values using dynamic factor
+        accelData.x = applyLowPassFilter(accelData.x, targetAccelData.x, factors.accel);
+        accelData.y = applyLowPassFilter(accelData.y, targetAccelData.y, factors.accel);
+        accelData.z = applyLowPassFilter(accelData.z, targetAccelData.z, factors.accel);
+        
+        // Clear the canvas
+        accelCtx.clearRect(0, 0, accelCanvas.width, accelCanvas.height);
+        
+        const width = accelCanvas.width;
+        const height = accelCanvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const size = Math.min(width, height) * 0.4;
+        
+        // Draw the gravity vector
+        drawGravityVector(centerX, centerY, size);
+        
+        // Draw coordinate axes
+        drawAccelAxes(centerX, centerY, size);
+        
+        // Continue animation loop
+        accelAnimation = requestAnimationFrame(renderAccel);
+    }
+    
+    function drawGravityVector(centerX, centerY, size) {
+        // Normalize acceleration vector
+        const magnitude = Math.sqrt(
+            accelData.x * accelData.x + 
+            accelData.y * accelData.y + 
+            accelData.z * accelData.z
+        );
+        
+        if (magnitude === 0) return;
+        
+        const scale = size / Math.max(1, magnitude);
+        const normalizedX = accelData.x * scale;
+        const normalizedY = accelData.y * scale;
+        const normalizedZ = accelData.z * scale;
+        
+        // Calculate vector endpoints with perspective
+        const start = [0, 0, 0];
+        const end = [normalizedX, normalizedY, normalizedZ];
+        
+        // Draw the main gravity vector (white with gradient)
+        accelCtx.beginPath();
+        accelCtx.moveTo(centerX, centerY);
+        accelCtx.lineTo(centerX + normalizedX, centerY + normalizedY);
+        
+        // Create a gradient for the vector
+        const gradient = accelCtx.createLinearGradient(
+            centerX, centerY, 
+            centerX + normalizedX, centerY + normalizedY
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(1, 'rgba(0, 200, 255, 1)');
+        
+        accelCtx.strokeStyle = gradient;
+        accelCtx.lineWidth = 4;
+        accelCtx.stroke();
+        
+        // Draw arrow head
+        drawArrowhead(
+            centerX + normalizedX, 
+            centerY + normalizedY, 
+            Math.atan2(normalizedY, normalizedX), 
+            10
+        );
+        
+        // Draw vector magnitude indicator
+        accelCtx.font = '12px Arial';
+        accelCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        accelCtx.fillText(
+            `${magnitude}g`, 
+            centerX + normalizedX + 10, 
+            centerY + normalizedY + 10
+        );
+        
+        // Draw a circle representing Earth's gravity (1g) as reference
+        accelCtx.beginPath();
+        accelCtx.arc(centerX, centerY, size, 0, Math.PI * 2);
+        accelCtx.strokeStyle = 'rgba(100, 100, 100, 0.4)';
+        accelCtx.lineWidth = 1;
+        accelCtx.stroke();
+        
+        // Draw the 3D sphere representing the accelerometer
+        drawSphere(centerX, centerY, size / 5);
+    }
+    
+    function drawSphere(centerX, centerY, radius) {
+        // Create a radial gradient
+        const gradient = accelCtx.createRadialGradient(
+            centerX - radius/3, centerY - radius/3, radius/10,
+            centerX, centerY, radius
+        );
+        
+        gradient.addColorStop(0, 'rgba(100, 200, 255, 1)');
+        gradient.addColorStop(0.8, 'rgba(30, 100, 180, 0.8)');
+        gradient.addColorStop(1, 'rgba(20, 60, 120, 0.5)');
+        
+        // Draw sphere
+        accelCtx.beginPath();
+        accelCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        accelCtx.fillStyle = gradient;
+        accelCtx.fill();
+        
+        // Add highlight to create 3D effect
+        accelCtx.beginPath();
+        accelCtx.arc(centerX - radius/3, centerY - radius/3, radius/3, 0, Math.PI * 2);
+        accelCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        accelCtx.fill();
+    }
+    
+    function drawArrowhead(x, y, angle, size) {
+        accelCtx.save();
+        accelCtx.translate(x, y);
+        accelCtx.rotate(angle);
+        
+        // Draw the arrowhead
+        accelCtx.beginPath();
+        accelCtx.moveTo(0, 0);
+        accelCtx.lineTo(-size, -size/2);
+        accelCtx.lineTo(-size, size/2);
+        accelCtx.closePath();
+        
+        accelCtx.fillStyle = 'rgba(0, 200, 255, 1)';
+        accelCtx.fill();
+        
+        accelCtx.restore();
+    }
+    
+    function drawAccelAxes(centerX, centerY, size) {
+        // X-axis (red)
+        accelCtx.beginPath();
+        accelCtx.moveTo(centerX, centerY);
+        accelCtx.lineTo(centerX + size, centerY);
+        accelCtx.strokeStyle = 'red';
+        accelCtx.lineWidth = 1;
+        accelCtx.stroke();
+        accelCtx.fillStyle = 'red';
+        accelCtx.fillText('X', centerX + size + 5, centerY + 5);
+        
+        // Y-axis (green)
+        accelCtx.beginPath();
+        accelCtx.moveTo(centerX, centerY);
+        accelCtx.lineTo(centerX, centerY - size);
+        accelCtx.strokeStyle = 'green';
+        accelCtx.lineWidth = 1;
+        accelCtx.stroke();
+        accelCtx.fillStyle = 'green';
+        accelCtx.fillText('Y', centerX + 5, centerY - size - 5);
+        
+        // Z-axis (blue) - shown with perspective
+        accelCtx.beginPath();
+        accelCtx.moveTo(centerX, centerY);
+        accelCtx.lineTo(centerX - size/2, centerY + size/2);
+        accelCtx.strokeStyle = 'blue';
+        accelCtx.lineWidth = 1;
+        accelCtx.stroke();
+        accelCtx.fillStyle = 'blue';
+        accelCtx.fillText('Z', centerX - size/2 - 15, centerY + size/2 + 5);
+    }
+    
     function updateGyroVisualization(gyro) {
-        const indicator = document.getElementById('gyro-indicator');
-        if (indicator) {
-            // Simple visualization - rotate based on gyro values
-            const rotation = Math.atan2(gyro.y, gyro.x) * (180 / Math.PI);
-            indicator.style.transform = `rotate(${rotation}deg)`;
+        // Update the target gyro data for the visualization
+        targetGyroData = {
+            x: gyro.x || 0,
+            y: gyro.y || 0,
+            z: gyro.z || 0
+        };
+        
+        // Set last update timestamp
+        lastGyroUpdateTime = Date.now();
+        
+        // Initialize the canvas if not already done
+        if (!gyroCanvas || !gyroCtx) {
+            // If first update, set current values to target to avoid initial animation
+            if (gyroData.x === 0 && gyroData.y === 0 && gyroData.z === 0) {
+                gyroData = {...targetGyroData};
+            }
+            initGyroCanvas();
+        }
+    }
+    
+    function updateAccelVisualization(accel) {
+        // Update the target accel data for the visualization
+        targetAccelData = {
+            x: accel.x || 0,
+            y: accel.y || 0,
+            z: accel.z || 0
+        };
+        
+        // Set last update timestamp
+        lastAccelUpdateTime = Date.now();
+        
+        // Initialize the canvas if not already done
+        if (!accelCanvas || !accelCtx) {
+            // If first update, set current values to target to avoid initial animation
+            if (accelData.x === 0 && accelData.y === 0 && accelData.z === 0) {
+                accelData = {...targetAccelData};
+            }
+            initAccelCanvas();
         }
     }
     
@@ -555,9 +1113,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (bytes < 1024) {
                 return bytes + ' B';
             } else if (bytes < 1024 * 1024) {
-                return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1024) + ' KB';
             } else {
-                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                return (bytes / (1024 * 1024)) + ' MB';
             }
         }
         
@@ -566,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'storage-total': formatSize(data.total),
             'storage-used': formatSize(data.used),
             'storage-free': formatSize(data.free),
-            'storage-percent': data.percent.toFixed(1) + '%'
+            'storage-percent': data.percent + '%'
         };
         
         Object.entries(elements).forEach(([id, value]) => {
@@ -577,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update progress bar
         const progressBar = document.querySelector('#files-section .progress div');
         if (progressBar) {
-            progressBar.style.width = data.percent.toFixed(1) + '%';
+            progressBar.style.width = data.percent + '%';
         }
     }
     
@@ -776,16 +1334,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = isDirectory ? 'fas fa-folder' : 'fas fa-file';
             const fileName = file.name.replace(/\/$/, ''); // Remove trailing slash
             
+            // Get file extension for icon
+            let fileIcon = icon;
+            if (!isDirectory) {
+                const extension = fileName.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension)) {
+                    fileIcon = 'fas fa-file-image';
+                } else if (['txt', 'log', 'md'].includes(extension)) {
+                    fileIcon = 'fas fa-file-alt';
+                } else if (['html', 'htm', 'css', 'js'].includes(extension)) {
+                    fileIcon = 'fas fa-file-code';
+                } else if (['json', 'xml', 'csv'].includes(extension)) {
+                    fileIcon = 'fas fa-file-code';
+                }
+            }
+            
             fileItem.innerHTML = `
-                <i class="file-icon ${icon}"></i>
+                <i class="file-icon ${fileIcon}"></i>
                 <div class="file-name">${fileName}</div>
-                <div class="file-size pe-2">${file.size || ''}</div>
+                <div class="file-size pe-2">${file.size ? formatFileSize(file.size) : ''}</div>
                 <div class="file-actions">
                     ${isDirectory ? 
-                        `<button class="btn btn-sm file-open" data-path="${file.path}">Open</button>` :
-                        `<button class="btn btn-sm file-download" data-path="${file.path}">Download</button>`
+                        `<button class="btn btn-sm file-open" data-path="${fileName}">Open</button>` :
+                        `<button class="btn btn-sm file-view" data-path="${fileName}">View</button>
+                         <button class="btn btn-sm file-download" data-path="${fileName}">Download</button>`
                     }
-                    <button class="btn btn-sm btn-danger file-delete" data-path="${file.path}">Delete</button>
+                    <button class="btn btn-sm btn-danger file-delete" data-path="${fileName}">Delete</button>
                 </div>
             `;
             
@@ -793,7 +1367,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const openBtn = fileItem.querySelector('.file-open');
             if (openBtn) {
                 openBtn.addEventListener('click', () => {
-                    fetchFiles(file.path);
+                    fetchFiles(openBtn.getAttribute('data-path'));
+                });
+            }
+            
+            const viewBtn = fileItem.querySelector('.file-view');
+            if (viewBtn) {
+                viewBtn.addEventListener('click', () => {
+                    readFile(viewBtn.getAttribute('data-path'));
                 });
             }
             
@@ -802,9 +1383,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadBtn.addEventListener('click', () => {
                     // Create download link
                     const link = document.createElement('a');
-                    link.href = `/download?path=${encodeURIComponent(file.path)}`;
+                    link.href = `/download?path=${encodeURIComponent(downloadBtn.getAttribute('data-path'))}`;
                     link.download = fileName;
+                    document.body.appendChild(link);
                     link.click();
+                    document.body.removeChild(link);
                 });
             }
             
@@ -812,11 +1395,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', () => {
                     if (confirm(`Delete ${fileName}?`)) {
-                        sendJsonMessage('delete_file', { path: fileName });
+                        sendJsonMessage('delete_file', { path: deleteBtn.getAttribute('data-path') });
                         logToConsole(`Deleting ${fileName}...`, 'info');
                         // Update storage info after deleting a file
                         setTimeout(() => {
-                            fetchStorageInfo(currentPath);
+                            fetchFiles(currentPath);
+                            fetchStorageInfo();
                         }, 1000);
                     }
                 });
@@ -824,6 +1408,114 @@ document.addEventListener('DOMContentLoaded', () => {
             
             fileList.appendChild(fileItem);
         });
+    }
+    
+    // Format file size for display
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Read file content
+    function readFile(filePath) {
+        sendJsonMessage('read_file', { path: filePath });
+        logToConsole(`Reading file ${filePath}...`, 'info');
+    }
+    
+    // Display file content in the viewer
+    function displayFileContent(data) {
+        if (!data || !data.success) {
+            logToConsole(`Failed to read file: ${data?.message || 'Unknown error'}`, 'error');
+            return;
+        }
+        
+        // Get file name from path
+        const pathParts = data.path.split('/');
+        const fileName = pathParts[pathParts.length - 1];
+        
+        // Set file name in viewer header
+        const fileViewerName = document.getElementById('file-viewer-name');
+        if (fileViewerName) {
+            fileViewerName.textContent = fileName;
+        }
+        
+        const contentContainer = document.getElementById('file-viewer-content');
+        const imageContainer = document.getElementById('file-viewer-image-container');
+        const imageElement = document.getElementById('file-viewer-image');
+        const viewerContainer = document.getElementById('file-viewer-container');
+        
+        if (!contentContainer || !imageContainer || !imageElement || !viewerContainer) {
+            logToConsole('File viewer elements not found', 'error');
+            return;
+        }
+        
+        // Check file type
+        const fileType = data.type?.toLowerCase();
+        const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+        
+        if (imageTypes.includes(fileType)) {
+            // Display as image - create data URL
+            const base64Content = btoa(unescape(encodeURIComponent(data.content)));
+            const imgSrc = `data:image/${fileType === 'jpg' ? 'jpeg' : fileType};base64,${base64Content}`;
+            
+            // Show image container, hide content container
+            contentContainer.style.display = 'none';
+            imageContainer.style.display = 'block';
+            imageElement.src = imgSrc;
+        } else {
+            // Display as text
+            contentContainer.style.display = 'block';
+            imageContainer.style.display = 'none';
+            contentContainer.textContent = data.content;
+            
+            // Apply basic syntax highlighting based on file type
+            if (['js', 'javascript'].includes(fileType)) {
+                applySyntaxHighlighting(contentContainer, 'js');
+            } else if (['html', 'htm'].includes(fileType)) {
+                applySyntaxHighlighting(contentContainer, 'html');
+            } else if (['css'].includes(fileType)) {
+                applySyntaxHighlighting(contentContainer, 'css');
+            } else if (['json'].includes(fileType)) {
+                applySyntaxHighlighting(contentContainer, 'json');
+            }
+        }
+        
+        // Show the viewer
+        viewerContainer.style.display = 'block';
+    }
+    
+    // Very basic syntax highlighting
+    function applySyntaxHighlighting(element, language) {
+        // This is a simplified version - for production, use a proper syntax highlighting library
+        let content = element.textContent;
+        
+        // Replace HTML with highlighted version based on language
+        if (language === 'js') {
+            // Very basic JS highlighting
+            const keywords = ['function', 'return', 'var', 'let', 'const', 'if', 'else', 'for', 'while', 'class', 'import', 'export', 'default'];
+            keywords.forEach(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+                content = content.replace(regex, `<span class="syntax-keyword">${keyword}</span>`);
+            });
+            
+            // Strings
+            content = content.replace(/"[^"]*"/g, match => `<span class="syntax-string">${match}</span>`);
+            content = content.replace(/'[^']*'/g, match => `<span class="syntax-string">${match}</span>`);
+            
+            // Numbers
+            content = content.replace(/\b(\d+)\b/g, '<span class="syntax-number">$1</span>');
+            
+            // Comments
+            content = content.replace(/\/\/[^\n]*/g, match => `<span class="syntax-comment">${match}</span>`);
+        } else if (language === 'html') {
+            // Very basic HTML highlighting
+            content = content.replace(/(&lt;[^&]*&gt;)/g, '<span class="syntax-html">$1</span>');
+        }
+        
+        element.innerHTML = content;
     }
 
     function addChatMessage(messageData, isOutgoing = false) {
@@ -967,9 +1659,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshFiles = document.getElementById('refresh-btn');
     if (refreshFiles) {
         refreshFiles.addEventListener('click', () => {
-            fetchFiles(currentPath || '/');
+            fetchFiles(currentPath);
             fetchStorageInfo();
-        })
+        });
+    }
+    
+    // File viewer controls
+    const closeFileViewerBtn = document.getElementById('close-file-viewer');
+    if (closeFileViewerBtn) {
+        closeFileViewerBtn.addEventListener('click', () => {
+            const viewerContainer = document.getElementById('file-viewer-container');
+            if (viewerContainer) {
+                viewerContainer.style.display = 'none';
+            }
+        });
     }
     
     // Camera controls
@@ -1105,8 +1808,66 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Distance Sensor controls
+    const distanceRequestBtn = document.getElementById('distance-request');
+    if (distanceRequestBtn) {
+        distanceRequestBtn.addEventListener('click', () => {
+            // Send a request to get current distance measurement
+            sendJsonMessage('distance_request', {});
+            console.log('Distance measurement requested');
+        });
+    }
+    
     // Initialize
     initJoysticks();
+    initGyroCanvas();
+    initAccelCanvas();
+    
+    // Request initial distance data after a delay to ensure WebSocket is connected
+    setTimeout(() => {
+        if (document.getElementById('distance-value')) {
+            sendJsonMessage('distance_request', {});
+            console.log('Initial distance measurement requested');
+        }
+    }, 2000);
+    
+    // Set up automatic regular distance updates
+    setInterval(() => {
+        if (document.getElementById('distance-value') && 
+            document.getElementById('sensors-section').style.display !== 'none') {
+            sendJsonMessage('distance_request', {});
+        }
+    }, 1000);
+    
+    // Add window resize listener to reposition joysticks
+    window.addEventListener('resize', resetJoysticks);
+    
+    // Function to reset joysticks position
+    function resetJoysticks() {
+        const servoJoystick = document.getElementById('servo-joystick');
+        const motorJoystick = document.getElementById('motor-joystick');
+        
+        // Reset both joysticks - For absolutely positioned elements with transform: translate(-50%, -50%),
+        // we should just reset to center of container
+        if (servoJoystick) {
+            servoJoystick.style.left = '50%';
+            servoJoystick.style.top = '50%';
+            updateJoystickDisplayValues('servo', 0, 0); // Reset servo display values
+            // Also notify the server
+            sendJoystickPosition('servo', 0, 0);
+        }
+        
+        if (motorJoystick) {
+            motorJoystick.style.left = '50%';
+            motorJoystick.style.top = '50%';
+            updateJoystickDisplayValues('motor', 0, 0); // Reset motor display values
+            // Also notify the server
+            sendJoystickPosition('motor', 0, 0);
+        }
+    }
+    
+    // Call reset after a short delay to ensure elements are fully rendered
+    setTimeout(resetJoysticks, 100);
     
     // Check for saved authentication token before showing login page
     checkSavedAuth();
@@ -1190,6 +1951,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Log the notification to the console
         logToConsole(message, level);
+        
         
         // You could also display a more prominent notification if desired
         // For example, a toast notification or modal dialog
@@ -1320,9 +2082,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Add logout functionality
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
+    // Advanced interpolation function with dynamic speed based on update time
+    function calculateInterpolationFactor() {
+        const now = Date.now();
+        const timeSinceGyroUpdate = now - lastGyroUpdateTime;
+        const timeSinceAccelUpdate = now - lastAccelUpdateTime;
+        
+        // Adjust speed based on time since last update
+        // This helps prevent jitter when updates are delayed
+        const gyroFactor = Math.min(1, Math.max(0.05, interpolationSpeed * (1 - timeSinceGyroUpdate / 1000)));
+        const accelFactor = Math.min(1, Math.max(0.05, interpolationSpeed * (1 - timeSinceAccelUpdate / 1000)));
+        
+        return {
+            gyro: gyroFactor,
+            accel: accelFactor
+        };
+    }
+    
+    // Apply low-pass filter to help reduce noise in sensor data
+    function applyLowPassFilter(current, target, factor = 0.1) {
+        return current * (1 - factor) + target * factor;
+    }
+
+    function toFixed(data, fix){
+        // Convert input to number if it's a string
+        const value = typeof data === 'string' ? parseFloat(data) : data;
+        
+        // Check for NaN and return 0 if invalid
+        if (isNaN(value)) return 0;
+        
+        const fixed = Math.pow(10, fix);
+        return Math.round(value * fixed) / fixed;
     }
 });

@@ -1,0 +1,51 @@
+#pragma once
+
+#include <Arduino.h>
+
+namespace Sensors {
+
+/**
+ * HC-SR04 Ultrasonic Distance Sensor class
+ * 
+ * This class provides an interface to the HC-SR04 ultrasonic sensor
+ * for measuring distances.
+ */
+class DistanceSensor {
+public:
+    DistanceSensor();
+    ~DistanceSensor();
+
+    /**
+     * Initialize the distance sensor
+     * @param triggerPin GPIO pin connected to the TRIG pin of the sensor
+     * @param echoPin GPIO pin connected to the ECHO pin of the sensor
+     * @param maxDistance Maximum distance to measure in centimeters (default: 400cm)
+     * @return true if initialization was successful, false otherwise
+     */
+    bool init(int triggerPin, int echoPin, int maxDistance = 400);
+
+		void setThresHold(float threshold = 20.0);
+
+    /**
+     * Measure the distance
+     * @return Distance in centimeters, or -1 if measurement failed
+     */
+    float measureDistance();
+
+    /**
+     * Check if an obstacle is detected within the specified range
+     * @param threshold Distance threshold in centimeters
+     * @return true if an obstacle is detected within the threshold, false otherwise
+     */
+    bool isObstacleDetected();
+
+private:
+    int _triggerPin;
+    int _echoPin;
+		float _threshold;
+    int _maxDistance;
+    unsigned long _timeout; // Timeout in microseconds
+    bool _initialized;
+};
+
+} // namespace Sensors

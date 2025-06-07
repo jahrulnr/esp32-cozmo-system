@@ -11,6 +11,9 @@
 		"random": "cpp",
 		"string.h": "c",
 		"u8g2.h": "c",
-		"u8x8.h": "c"
+		"u8x8.h": "c",
+		"chrono": "cpp",
+		"functional": "cpp",
+		"vector": "cpp"
 	}
 }

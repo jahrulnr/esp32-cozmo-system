@@ -66,6 +66,7 @@ void WebSocketHandler::sendText(int clientId, const String& message) {
     } else {
         AsyncWebSocketClient* client = _webSocket->client(clientId);
         if (client) {
+            client->setCloseClientOnQueueFull(false);
             client->text(message);
         }
     }
@@ -73,6 +74,7 @@ void WebSocketHandler::sendText(int clientId, const String& message) {
 
 void WebSocketHandler::sendJsonMessage(int clientId, const String& type, const JsonVariant& data) {
     Utils::SpiJsonDocument doc;
+    doc["version"] = "1.0";
     doc["type"] = type;
     doc["data"] = data;
     
@@ -82,12 +84,13 @@ void WebSocketHandler::sendJsonMessage(int clientId, const String& type, const J
 }
 
 void WebSocketHandler::sendJsonMessage(int clientId, const String& type, const String& jsonString) {
-    String message = "{\"type\":\"" + type + "\",\"data\":" + jsonString + "}";
+    String message = "{\"version\":\"1.0\",\"type\":\"" + type + "\",\"data\":" + jsonString + "}";
     sendText(clientId, message);
 }
 
 void WebSocketHandler::sendError(int clientId, int code, const String& message) {
     Utils::SpiJsonDocument doc;
+    doc["version"] = "1.0";
     doc["type"] = "error";
     doc["data"]["code"] = code;
     doc["data"]["message"] = message;
@@ -100,12 +103,12 @@ void WebSocketHandler::sendError(int clientId, int code, const String& message) 
 
 void WebSocketHandler::sendOk(int clientId, const String& message) {
     Utils::SpiJsonDocument doc;
-    
-    String jsonString;
+    doc["version"] = "1.0";
     doc["type"] = "ok";
     doc["data"]["message"] = message;
-    serializeJson(doc, jsonString);
     
+    String jsonString;
+    serializeJson(doc, jsonString);
     sendText(clientId, jsonString);
 }
 
@@ -119,6 +122,7 @@ void WebSocketHandler::sendBinary(int clientId, const uint8_t* data, size_t leng
     } else {
         // Send to specific client
         AsyncWebSocketClient* client = _webSocket->client(clientId);
+        client->setCloseClientOnQueueFull(false);
         if (client && client->status() == WS_CONNECTED) {
             client->binary((const char*)data, length);
         }
@@ -131,7 +135,7 @@ void WebSocketHandler::sendBinary(int clientId, const uint8_t* data, size_t leng
 }
 
 void WebSocketHandler::onEvent(std::function<void(AsyncWebSocket* server, AsyncWebSocketClient* client, 
-                                                AwsEventType type, void* arg, uint8_t* data, size_t len)> callback) {
+    AwsEventType type, void* arg, uint8_t* data, size_t len)> callback) {
     _eventCallback = callback;
 }
 
@@ -142,6 +146,7 @@ IPAddress WebSocketHandler::remoteIP(uint32_t clientId) {
     
     AsyncWebSocketClient* client = _webSocket->client(clientId);
     if (client) {
+        client->setCloseClientOnQueueFull(false);
         return client->remoteIP();
     }
     
@@ -163,6 +168,19 @@ Utils::SpiJsonDocument WebSocketHandler::parseJsonMessage(uint8_t* data, size_t 
         Serial.print("JSON parse failed: ");
         Serial.println(error.c_str());
         return Utils::SpiJsonDocument();
+    }
+    
+    // Check if this is a v1.0 format message with version field
+    if (!doc["version"].isUnbound()) {
+        // It's already in the new format, return it as is
+        return doc;
+    } else if (!doc["type"].isUnbound() && !doc["data"].isUnbound()) {
+        // It's in the old format, convert to new format
+        Utils::SpiJsonDocument newFormatDoc;
+        newFormatDoc["version"] = "1.0";
+        newFormatDoc["type"] = doc["type"];
+        newFormatDoc["data"] = doc["data"];
+        return newFormatDoc;
     }
     
     return doc;

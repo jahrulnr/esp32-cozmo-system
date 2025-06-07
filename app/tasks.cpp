@@ -1,12 +1,9 @@
 #include <Arduino.h>
 #include "init.h"
 
+TaskHandle_t automationTaskHandle = NULL;
 TaskHandle_t cameraStreamTaskHandle = NULL;
 TaskHandle_t sensorMonitorTaskHandle = NULL;
-
-// Function prototypes
-void cameraStreamTask(void* parameter);
-void sensorMonitorTask(void* parameter);
 
 /**
  * Initialize all background tasks
@@ -39,7 +36,16 @@ void setupTasks() {
         1,                         // Priority
         &sensorMonitorTaskHandle   // Task handle
     );
-    
+
+    xTaskCreate(
+        automationTask,         // Task function
+        "Automation",          // Task name
+        4096,                   // Stack size
+        NULL,                   // Parameters
+        1,                      // Priority
+        &automationTaskHandle   // Task handle
+    );
+
     logger->info("Tasks initialized");
 }
 
@@ -56,6 +62,9 @@ void sensorMonitorTask(void* parameter) {
     }
     
     logger->info("Sensor monitoring task started");
+    const int updateInterval = 50;
+    const int sendInterval = 399;
+    long currentUpdate = millis();
     
     // Monitor sensors forever
     while (true) {
@@ -63,26 +72,36 @@ void sensorMonitorTask(void* parameter) {
         Utils::SpiJsonDocument jsonData;
         
         // Add gyroscope and accelerometer data if available
-        if (gyro) {
-            gyro->update();
+        if (orientation) {
+            orientation->update();
             
             // Create nested objects for gyro and accelerometer data
-            jsonData["gyro"]["x"] = String(gyro->getX());
-            jsonData["gyro"]["y"] = String(gyro->getY());
-            jsonData["gyro"]["z"] = String(gyro->getZ());
+            jsonData["gyro"]["x"] = orientation->getX();
+            jsonData["gyro"]["y"] = orientation->getY();
+            jsonData["gyro"]["z"] = orientation->getZ();
             
-            jsonData["accel"]["x"] = String(gyro->getAccelX());
-            jsonData["accel"]["y"] = String(gyro->getAccelY());
-            jsonData["accel"]["z"] = String(gyro->getAccelZ());
-            jsonData["accel"]["magnitude"] = String(gyro->getAccelMagnitude());
+            jsonData["accel"]["x"] = orientation->getAccelX();
+            jsonData["accel"]["y"] = orientation->getAccelY();
+            jsonData["accel"]["z"] = orientation->getAccelZ();
+            jsonData["accel"]["magnitude"] = orientation->getAccelMagnitude();
+        }
         
-            // Send the data to all connected clients
-            String data;
-            serializeJson(jsonData, data);
-            webSocket->sendJsonMessage(-1, "sensor_data", data);
+        // Add distance sensor data if available
+        if (distanceSensor) {
+            float distance = distanceSensor->measureDistance();
+            jsonData["distance"]["value"] = distance;
+            jsonData["distance"]["unit"] = "cm";
+            jsonData["distance"]["valid"] = (distance >= 0);
+            jsonData["distance"]["obstacle"] = distanceSensor->isObstacleDetected();
+        }
+        
+        // Send the data to all connected clients using the DTO v1.0 format
+        if (millis() - currentUpdate >= sendInterval){
+            webSocket->sendJsonMessage(-1, "sensor_data", jsonData);
+            currentUpdate = millis();
         }
         
         // Delay before next reading
-        vTaskDelay(pdMS_TO_TICKS(300));
+        vTaskDelay(pdMS_TO_TICKS(updateInterval));
     }
 }

@@ -1,8 +1,8 @@
 #include "WiFiManager.h"
-#include "../../include/Config.h"
+#include "Config.h"
 
-#include "../Utils/SpiAllocatorUtils.h"
-#include "SPIFFS.h"
+#include "lib/Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/FileManager.h"
 
 namespace Communication {
 
@@ -12,17 +12,6 @@ WiFiManager::WiFiManager() : _initialized(false), _isAP(false) {
     _config.password = WIFI_PASSWORD;
     _config.apSsid = WIFI_AP_SSID;
     _config.apPassword = WIFI_AP_PASSWORD;
-    
-    // Initialize SPIFFS and ensure config directory exists
-    if (SPIFFS.begin(true)) {
-        if (!SPIFFS.exists("/config")) {
-            if (!SPIFFS.mkdir("/config")) {
-                Serial.println("Failed to create /config directory");
-            } else {
-                Serial.println("Created /config directory");
-            }
-        }
-    }
     
     // Try to load config from file
     loadConfig();
@@ -38,19 +27,25 @@ bool WiFiManager::init() {
     _initialized = true;
     
     // Debug: List all files in SPIFFS to help diagnose issues
-    if (SPIFFS.begin(true)) {
-        Serial.println("SPIFFS init successful in init()");
-        Serial.println("SPIFFS files in root:");
-        File root = SPIFFS.open("/");
-        File file = root.openNextFile();
-        while(file) {
+    if (_fileManager.init()) {
+        Serial.println("FileManager init successful in init()");
+        Serial.println("Files in root directory:");
+        
+        std::vector<Utils::FileManager::FileInfo> files = _fileManager.listFiles("/");
+        for (const auto& fileInfo : files) {
             Serial.print("  ");
-            Serial.println(file.name());
-            file = root.openNextFile();
+            Serial.print(fileInfo.name);
+            if (fileInfo.isDirectory) {
+                Serial.println("/");
+            } else {
+                Serial.print(" (");
+                Serial.print(fileInfo.size);
+                Serial.println(" bytes)");
+            }
         }
         Serial.println("End of file list");
     } else {
-        Serial.println("SPIFFS init failed in init()");
+        Serial.println("FileManager init failed in init()");
     }
     
     return true;
@@ -168,37 +163,38 @@ int32_t WiFiManager::getRSSI() const {
 }
 
 bool WiFiManager::loadConfig() {
-    if (!SPIFFS.begin(true)) {
-        Serial.println("Failed to mount SPIFFS");
+    if (!_fileManager.init()) {
+        Serial.println("Failed to initialize FileManager");
         return false;
     }
     
     // Debug output to help diagnose the issue
-    Serial.println("SPIFFS mounted successfully");
+    Serial.println("FileManager initialized successfully");
     Serial.println("Checking for wifi.json...");
     
-    if (!SPIFFS.exists("/config/wifi.json")) {
+    if (!_fileManager.exists("/config/wifi.json")) {
         Serial.println("No wifi.json found at /config/wifi.json, using default config");
         return false;
     }
     
-    Serial.println("Found wifi.json, opening file");
-    File file = SPIFFS.open("/config/wifi.json", "r");
-    if (!file) {
-        Serial.println("Failed to open wifi.json");
+    Serial.println("Found wifi.json, reading file");
+    String jsonContent = _fileManager.readFile("/config/wifi.json");
+    if (jsonContent.isEmpty()) {
+        Serial.println("Failed to read wifi.json or file is empty");
         return false;
     }
     
     Utils::SpiJsonDocument doc;
-    DeserializationError error = deserializeJson(doc, file);
-    file.close();
+    DeserializationError error = deserializeJson(doc, jsonContent);
     
     if (error) {
         Serial.println("Failed to parse wifi.json: " + String(error.c_str()));
         
         // If we had a parsing error, rename the broken config file for debugging
-        if (SPIFFS.exists("/config/wifi.json")) {
-            SPIFFS.rename("/config/wifi.json", "/config/wifi.json.broken");
+        if (_fileManager.exists("/config/wifi.json")) {
+            // Create backup of broken file
+            _fileManager.writeFile("/config/wifi.json.broken", jsonContent);
+            _fileManager.deleteFile("/config/wifi.json");
             Serial.println("Renamed broken config to wifi.json.broken");
         }
         
@@ -231,35 +227,33 @@ bool WiFiManager::loadConfig() {
 }
 
 bool WiFiManager::saveConfig(const WiFiConfig& config) {
-    if (!SPIFFS.begin(true)) {
-        Serial.println("Failed to mount SPIFFS");
+    if (!_fileManager.init()) {
+        Serial.println("Failed to initialize FileManager");
         return false;
     }
     
     // Create /config directory if it doesn't exist
-    if (!SPIFFS.exists("/config")) {
-        if (!SPIFFS.mkdir("/config")) {
+    if (!_fileManager.exists("/config")) {
+        if (!_fileManager.createDir("/config")) {
             Serial.println("Failed to create /config directory");
         }
     }
     
     // Create a backup of the existing file if it exists
-    if (SPIFFS.exists("/config/wifi.json")) {
-        if (SPIFFS.exists("/config/wifi.json.bak")) {
-            SPIFFS.remove("/config/wifi.json.bak");
+    if (_fileManager.exists("/config/wifi.json")) {
+        if (_fileManager.exists("/config/wifi.json.bak")) {
+            _fileManager.deleteFile("/config/wifi.json.bak");
         }
-        if (!SPIFFS.rename("/config/wifi.json", "/config/wifi.json.bak")) {
-            Serial.println("Warning: Failed to create backup of wifi.json");
-        } else {
-            Serial.println("Created backup of previous wifi.json");
+        
+        // Create backup by reading and writing to new file
+        String backupContent = _fileManager.readFile("/config/wifi.json");
+        if (!backupContent.isEmpty()) {
+            if (!_fileManager.writeFile("/config/wifi.json.bak", backupContent)) {
+                Serial.println("Warning: Failed to create backup of wifi.json");
+            } else {
+                Serial.println("Created backup of previous wifi.json");
+            }
         }
-    }
-    
-    // Open file for writing
-    File file = SPIFFS.open("/config/wifi.json", "w");
-    if (!file) {
-        Serial.println("Failed to open wifi.json for writing");
-        return false;
     }
     
     // Validate config before saving
@@ -280,31 +274,33 @@ bool WiFiManager::saveConfig(const WiFiConfig& config) {
     doc["ap_ssid"] = validConfig.apSsid;
     doc["ap_password"] = validConfig.apPassword;
     
+    // Serialize to string
+    String jsonString;
+    serializeJson(doc, jsonString);
+    
     // Write to file
-    if (serializeJson(doc, file) == 0) {
+    if (!_fileManager.writeFile("/config/wifi.json", jsonString)) {
         Serial.println("Failed to write wifi.json");
-        file.close();
         return false;
     }
     
-    file.close();
-    
     // Verify that the file was written correctly
-    if (SPIFFS.exists("/config/wifi.json")) {
-        File verifyFile = SPIFFS.open("/config/wifi.json", "r");
-        if (verifyFile && verifyFile.size() > 10) {
-            verifyFile.close();
+    if (_fileManager.exists("/config/wifi.json")) {
+        int fileSize = _fileManager.getSize("/config/wifi.json");
+        if (fileSize > 10) {
             Serial.println("WiFi config saved to file");
             return true;
         }
-        if (verifyFile) verifyFile.close();
     }
     
     // If verification failed, restore backup if available
     Serial.println("WiFi config verification failed, attempting to restore backup");
-    if (SPIFFS.exists("/config/wifi.json.bak")) {
-        if (SPIFFS.rename("/config/wifi.json.bak", "/config/wifi.json")) {
-            Serial.println("Restored backup wifi.json");
+    if (_fileManager.exists("/config/wifi.json.bak")) {
+        String backupContent = _fileManager.readFile("/config/wifi.json.bak");
+        if (!backupContent.isEmpty()) {
+            if (_fileManager.writeFile("/config/wifi.json", backupContent)) {
+                Serial.println("Restored backup wifi.json");
+            }
         }
     }
     

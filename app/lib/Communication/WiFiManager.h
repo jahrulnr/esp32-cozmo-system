@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
+#include "lib/Utils/FileManager.h"
 
 namespace Communication {
 
@@ -85,13 +86,13 @@ public:
     int32_t getRSSI() const;
     
     /**
-     * Load WiFi configuration from SPIFFS
+     * Load WiFi configuration from the filesystem
      * @return true if configuration was loaded successfully, false otherwise
      */
     bool loadConfig();
     
     /**
-     * Save WiFi configuration to SPIFFS
+     * Save WiFi configuration to the filesystem
      * @param config The WiFi configuration to save
      * @return true if configuration was saved successfully, false otherwise
      */
@@ -114,6 +115,7 @@ private:
     bool _initialized;
     bool _isAP;
     WiFiConfig _config;
+    Utils::FileManager _fileManager;
 };
 
 } // namespace Communication

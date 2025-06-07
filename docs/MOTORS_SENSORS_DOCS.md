@@ -15,6 +15,9 @@ This document details the Motors and Sensors components of the Cozmo-System proj
    - [Camera](#camera)
    - [Gyro](#gyro)
    - [CliffDetector](#cliffdetector)
+   - [DistanceSensor](#distancesensor)
+
+3. [Automation: Obstacle Avoidance & Mapping](#automation-obstacle-avoidance--mapping)
 
 ---
 
@@ -669,3 +672,203 @@ During normal operation, the `update()` method:
 1. Reads the current sensor values
 2. Compares them to the thresholds
 3. Sets the cliff detection flags accordingly
+
+### DistanceSensor
+
+The `DistanceSensor` class interfaces with the HC-SR04 ultrasonic sensor to measure distances and detect obstacles.
+
+#### Features
+
+- Accurate distance measurement (2-400 cm)
+- Obstacle detection with configurable threshold
+- Error handling for out-of-range or invalid measurements
+
+#### API Reference
+
+```cpp
+namespace Sensors {
+
+class DistanceSensor {
+public:
+    DistanceSensor();
+    ~DistanceSensor();
+
+    /**
+     * Initialize the distance sensor
+     * @param triggerPin GPIO pin connected to the TRIG pin of the sensor
+     * @param echoPin GPIO pin connected to the ECHO pin of the sensor
+     * @param maxDistance Maximum distance to measure in centimeters (default: 400cm)
+     * @return true if initialization was successful, false otherwise
+     */
+    bool init(int triggerPin, int echoPin, int maxDistance = 400);
+
+    /**
+     * Measure the distance
+     * @return Distance in centimeters, or -1 if measurement failed
+     */
+    float measureDistance();
+
+    /**
+     * Check if an obstacle is detected within the specified range
+     * @return true if an obstacle is detected within the threshold, false otherwise
+     */
+    bool isObstacleDetected();
+
+private:
+    int _triggerPin;
+    int _echoPin;
+    int _maxDistance;
+    unsigned long _timeout; // Timeout in microseconds
+    bool _initialized;
+};
+
+} // namespace Sensors
+```
+
+#### Example Usage
+
+```cpp
+#include "Sensors/DistanceSensor.h"
+
+Sensors::DistanceSensor distanceSensor;
+
+void setup() {
+    Serial.begin(115200);
+    
+    // Initialize distance sensor with trigger pin 4 and echo pin 13
+    if (distanceSensor.init(4, 13, 400)) {
+        Serial.println("Distance sensor initialized successfully");
+        
+        // Test measurement
+        float distance = distanceSensor.measureDistance();
+        if (distance >= 0) {
+            Serial.print("Initial distance: ");
+            Serial.print(distance);
+            Serial.println(" cm");
+        } else {
+            Serial.println("Initial measurement failed");
+        }
+    } else {
+        Serial.println("Distance sensor initialization failed");
+    }
+}
+
+void loop() {
+    // Measure distance
+    float distance = distanceSensor.measureDistance();
+    
+    if (distance >= 0) {
+        Serial.print("Distance: ");
+        Serial.print(distance);
+        Serial.println(" cm");
+        
+        // Check for obstacles
+        if (distanceSensor.isObstacleDetected()) {
+            Serial.println("Obstacle detected! Stopping robot");
+            // motors.move(Motors::MotorControl::STOP);
+        }
+    } else {
+        Serial.println("Measurement failed");
+    }
+    
+    delay(500);
+}
+```
+
+#### WebSocket API
+
+The distance sensor can be accessed through the WebSocket API using the following commands:
+
+1. Request distance measurement:
+```json
+{
+  "type": "distance_request"
+}
+```
+
+2. Response format:
+```json
+{
+  "type": "sensor_data",
+  "data": {
+    "distance": {
+      "value": 45.2,
+      "unit": "cm",
+      "valid": true,
+      "obstacle": false
+    }
+  }
+}
+```
+
+3. Periodic sensor updates (part of sensor monitoring task):
+```json
+{
+  "type": "sensor_update",
+  "data": {
+    "distance": {
+      "value": 45.2,
+      "unit": "cm",
+      "valid": true,
+      "obstacle": false
+    },
+    // other sensor data...
+  }
+}
+```
+
+#### Implementation Details
+
+The DistanceSensor class uses the HC-SR04 ultrasonic sensor to measure distances using sound waves. The class manages the timing of trigger pulses and echo signals to calculate distances.
+
+The measurement process involves:
+1. Sending a 10μs pulse to the trigger pin
+2. Measuring the duration of the echo signal
+3. Converting the time to distance using the speed of sound
+4. Validating the measurement against minimum and maximum ranges
+
+The obstacle detection feature provides a simplified interface for detecting objects within a specific distance threshold, which can be used for collision avoidance algorithms.
+
+---
+
+## Automation: Obstacle Avoidance & Mapping
+
+### Overview
+The automation task enables the robot to move autonomously, avoid obstacles, and build a simple map of its environment using the distance sensor, gyro, and accelerometer.
+
+### Features
+- **Obstacle Avoidance:**
+  - Robot moves forward until an obstacle is detected (using HC-SR04 distance sensor).
+  - If an obstacle is detected, the robot stops, displays a surprised face, then turns left or right, and continues moving.
+  - Uses gyro to update heading after turning.
+- **Mapping (Simple SLAM):**
+  - Robot maintains a simple grid map of explored area.
+  - Marks cells as free or obstacle based on sensor readings and movement.
+  - Map can be extended for visualization or further SLAM development.
+- **Expression Integration:**
+  - Robot face changes expression based on events (happy when moving, surprised on obstacle, focused when turning).
+
+### How It Works
+- The automation task runs in the background.
+- At each step:
+  1. Measure distance ahead.
+  2. If obstacle detected, mark map, stop, show expression, turn, update heading.
+  3. If no obstacle, move forward, update position, mark map as free.
+- The robot's position and heading are tracked in a grid.
+
+### Example Map Structure
+```cpp
+#define MAP_SIZE 20
+int8_t explorationMap[MAP_SIZE][MAP_SIZE]; // -1: unknown, 0: free, 1: obstacle
+int robotX = MAP_SIZE/2, robotY = MAP_SIZE/2; // Start in the middle
+float robotHeading = 0; // In degrees
+```
+
+### Task Initialization
+Call `setupTasks();` in your `setup()` function.
+
+### Customization
+- Adjust `moveDuration`, `turnDuration`, and `MAP_SIZE` as needed.
+- Integrate with WebSocket or dashboard for map visualization.
+
+---

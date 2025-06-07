@@ -1,10 +1,10 @@
 # WebSocket Data Transfer Object (DTO) Format
 
-> **PERHATIAN**: Format DTO yang didokumentasikan di sini adalah referensi untuk implementasi saat ini. Untuk format baru yang akan digunakan dalam integrasi server Go dan mikrokontroler, silakan merujuk ke [Kontrak DTO](/docs/dto_contract/README.md).
+> **PERHATIAN**: Format DTO yang didokumentasikan di sini adalah referensi untuk implementasi sebelumnya. Format terbaru yang saat ini digunakan mengikuti format baru dengan field version seperti didokumentasikan di [Kontrak DTO](/docs/dto_contract/README.md).
 
-## Message Format
+## Message Format (Legacy)
 
-Semua pesan mengikuti format JSON ini:
+Format DTO legacy menggunakan format JSON berikut:
 
 ```json
 {
@@ -13,9 +13,24 @@ Semua pesan mengikuti format JSON ini:
 }
 ```
 
+## Message Format (Current v1.0)
+
+Format DTO terbaru menggunakan format JSON berikut:
+
+```json
+{
+  "version": "1.0",
+  "type": "command_type",
+  "data": any
+}
+```
+
 Where:
+- `version`: A string identifying the version of the DTO format (currently "1.0")
 - `type`: A string identifying the type of command or response
 - `data`: Any valid JSON data structure containing the payload
+
+> **NOTE**: The system has been updated to support both formats. Legacy format messages will be automatically converted to the new format internally.
 
 ## Message Types
 
@@ -28,7 +43,7 @@ Where:
 | `arm_command` | Control robot arm position | `{ "position": float }` |
 | `action_command` | Perform predefined actions | `{ "action": string }` |
 | `expression_command` | Change robot facial expression | `{ "expression": string }` |
-| `gyro_request` | Request gyroscope data | `{}` |
+| `orientation_request` | Request gyroscope data | `{}` |
 | `camera_command` | Control camera settings | `{ "resolution": string, "quality": int }` |
 | `system_command` | System level commands | `{ "action": string }` |
 | `ping` | Keep-alive message | `{ "timestamp": int }` |
@@ -74,7 +89,7 @@ Where:
 #### Gyroscope Data Request
 ```json
 {
-  "type": "gyro_request",
+  "type": "orientation_request",
   "data": {}
 }
 ```

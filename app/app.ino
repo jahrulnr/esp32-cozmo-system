@@ -1,22 +1,29 @@
 #include <Arduino.h>
+#include <soc/soc.h>
+#include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "init.h"
 
 Sensors::Camera* camera = nullptr;
-Sensors::Gyro* gyro = nullptr;
+Sensors::OrientationSensor* orientation = nullptr;
+Sensors::DistanceSensor* distanceSensor = nullptr;
 Motors::MotorControl* motors = nullptr;
 Motors::ServoControl* servos = nullptr;
 Communication::WiFiManager* wifiManager = nullptr;
 Communication::WebServer* webServer = nullptr;
 Communication::WebSocketHandler* webSocket = nullptr;
+Communication::GPTAdapter* gptAdapter = nullptr;
 Screen::Screen* screen = nullptr;
 Utils::FileManager* fileManager = nullptr;
 Utils::HealthCheck* healthCheck = nullptr;
 Utils::Logger* logger = nullptr;
+Utils::CommandMapper* commandMapper = nullptr;
 
 void setup() {
+  // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   heap_caps_malloc_extmem_enable(0);  
   disableLoopWDT();
   setCpuFrequencyMhz(240);
+
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
   Serial.println("\n\nCozmo System Starting...");
@@ -32,9 +39,12 @@ void setup() {
   setupCamera();
   setupMotors();
   setupServos();
-  setupGyro();
+  setupOrientation();
+  setupDistanceSensor();
   setupWebServer();
   setupWebSocket();
+  setupGPT();
+  setupCommandMapper();
   setupHealthCheck();
   
   logger->info("System initialization complete");
@@ -51,18 +61,10 @@ void setup() {
 
 long timer = millis();
 void loop() {
-  // Run health checks
-  if (healthCheck) {
+  if (healthCheck)
     healthCheck->update();
-  }
-  
-  if (millis() - timer > 5000){
-    screen->mutexClear();
-    screen->drawCenteredText(40, "hello");
+  if (screen)
     screen->mutexUpdate();
-    timer = millis();
-  }
-  else if (screen)
-    screen->mutexUpdateFace();
+
   vTaskDelay(pdMS_TO_TICKS(33));
 }

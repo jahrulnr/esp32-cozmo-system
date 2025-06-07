@@ -10,7 +10,7 @@ FileManager::~FileManager() {
 }
 
 bool FileManager::init() {
-    if (!SPIFFS.begin(true)) {
+    if (!_initialized && !SPIFFS.begin(true)) {
         Serial.println("SPIFFS mount failed");
         return false;
     }

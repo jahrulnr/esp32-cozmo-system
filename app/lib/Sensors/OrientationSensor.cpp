@@ -1,20 +1,25 @@
-#include "Gyro.h"
+#include "OrientationSensor.h"
 #include <math.h>
 
 namespace Sensors {
 
-Gyro::Gyro() : _x(0), _y(0), _z(0), 
+OrientationSensor::OrientationSensor() : _x(0), _y(0), _z(0), 
                _accelX(0), _accelY(0), _accelZ(0),
                _offsetX(0), _offsetY(0), _offsetZ(0),
                _accelOffsetX(0), _accelOffsetY(0), _accelOffsetZ(0),
-               _initialized(false), _wire(nullptr) {
+               _initialized(false), _wire(nullptr),
+               _gyroRange(GYRO_RANGE_250_DEG), 
+               _accelRange(ACCEL_RANGE_2G),
+               _gyroScale(131.0), // Default scale for ±250°/s
+               _accelScale(16384.0) // Default scale for ±2g
+{
 }
 
-Gyro::~Gyro() {
+OrientationSensor::~OrientationSensor() {
     // Clean up resources if needed
 }
 
-bool Gyro::init(int sda, int scl) {
+bool OrientationSensor::init(int sda, int scl) {
     if (!Utils::I2CManager::getInstance().initBus("base", sda, scl, 400000)) {
         Serial.println("Failed to initialize I2C bus for gyroscope");
         return false;
@@ -45,17 +50,20 @@ bool Gyro::init(int sda, int scl) {
         return false;
     }
     
-    // Configure the gyroscope (±250°/s range) - 0x00
-    if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_GYRO_CONFIG, 0x00)) {
+    // Configure the gyroscope with default range (±250°/s)
+    if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_GYRO_CONFIG, _gyroRange)) {
         Serial.println("Failed to configure gyroscope");
         return false;
     }
     
-    // Configure the accelerometer (±2g range) - 0x00
-    if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_ACCEL_CONFIG, 0x00)) {
+    // Configure the accelerometer with default range (±2g)
+    if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_ACCEL_CONFIG, _accelRange)) {
         Serial.println("Failed to configure accelerometer");
         return false;
     }
+    
+    // Initialize scaling factors
+    updateScalingFactors();
     
     // Configure digital low-pass filter
     if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_CONFIG, 0x03)) {
@@ -68,7 +76,7 @@ bool Gyro::init(int sda, int scl) {
     return true;
 }
 
-void Gyro::update() {
+void OrientationSensor::update() {
     if (!_initialized) {
         return;
     }
@@ -83,10 +91,10 @@ void Gyro::update() {
     if (Utils::I2CManager::getInstance().readRegisters("base", MPU6050_ADDR, 
                                                      MPU6050_REG_ACCEL_XOUT_H, 
                                                      accelBuffer, sizeof(accelBuffer))) {
-        // Convert raw values to g (±2g range)
-        _accelX = ((int16_t)((accelBuffer[0] << 8) | accelBuffer[1])) / 16384.0;
-        _accelY = ((int16_t)((accelBuffer[2] << 8) | accelBuffer[3])) / 16384.0;
-        _accelZ = ((int16_t)((accelBuffer[4] << 8) | accelBuffer[5])) / 16384.0;
+        // Convert raw values to g using current scaling factor
+        _accelX = ((int16_t)((accelBuffer[0] << 8) | accelBuffer[1])) / _accelScale;
+        _accelY = ((int16_t)((accelBuffer[2] << 8) | accelBuffer[3])) / _accelScale;
+        _accelZ = ((int16_t)((accelBuffer[4] << 8) | accelBuffer[5])) / _accelScale;
         
         // Apply calibration offsets
         _accelX -= _accelOffsetX;
@@ -101,10 +109,10 @@ void Gyro::update() {
     if (Utils::I2CManager::getInstance().readRegisters("base", MPU6050_ADDR, 
                                                      MPU6050_REG_GYRO_XOUT_H, 
                                                      gyroBuffer, sizeof(gyroBuffer))) {
-        // Convert raw values to degrees per second (±250°/s range)
-        _x = ((int16_t)((gyroBuffer[0] << 8) | gyroBuffer[1])) / 131.0;
-        _y = ((int16_t)((gyroBuffer[2] << 8) | gyroBuffer[3])) / 131.0;
-        _z = ((int16_t)((gyroBuffer[4] << 8) | gyroBuffer[5])) / 131.0;
+        // Convert raw values to degrees per second using current scaling factor
+        _x = ((int16_t)((gyroBuffer[0] << 8) | gyroBuffer[1])) / _gyroScale;
+        _y = ((int16_t)((gyroBuffer[2] << 8) | gyroBuffer[3])) / _gyroScale;
+        _z = ((int16_t)((gyroBuffer[4] << 8) | gyroBuffer[5])) / _gyroScale;
         
         // Apply calibration offsets
         _x -= _offsetX;
@@ -115,36 +123,36 @@ void Gyro::update() {
     }
 }
 
-float Gyro::getX() const {
+float OrientationSensor::getX() const {
     return _x;
 }
 
-float Gyro::getY() const {
+float OrientationSensor::getY() const {
     return _y;
 }
 
-float Gyro::getZ() const {
+float OrientationSensor::getZ() const {
     return _z;
 }
 
-float Gyro::getAccelX() const {
+float OrientationSensor::getAccelX() const {
     return _accelX;
 }
 
-float Gyro::getAccelY() const {
+float OrientationSensor::getAccelY() const {
     return _accelY;
 }
 
-float Gyro::getAccelZ() const {
+float OrientationSensor::getAccelZ() const {
     return _accelZ;
 }
 
-float Gyro::getAccelMagnitude() const {
+float OrientationSensor::getAccelMagnitude() const {
     // Calculate the magnitude of the acceleration vector using Euclidean distance
     return sqrt(_accelX * _accelX + _accelY * _accelY + _accelZ * _accelZ);
 }
 
-bool Gyro::calibrate() {
+bool OrientationSensor::calibrate() {
     if (!_initialized) {
         return false;
     }
@@ -168,9 +176,9 @@ bool Gyro::calibrate() {
                                                          MPU6050_REG_ACCEL_XOUT_H, 
                                                          accelBuffer, sizeof(accelBuffer))) {
             // Get raw accelerometer values
-            float rawAccelX = ((int16_t)((accelBuffer[0] << 8) | accelBuffer[1])) / 16384.0;
-            float rawAccelY = ((int16_t)((accelBuffer[2] << 8) | accelBuffer[3])) / 16384.0;
-            float rawAccelZ = ((int16_t)((accelBuffer[4] << 8) | accelBuffer[5])) / 16384.0;
+            float rawAccelX = ((int16_t)((accelBuffer[0] << 8) | accelBuffer[1])) / _accelScale;
+            float rawAccelY = ((int16_t)((accelBuffer[2] << 8) | accelBuffer[3])) / _accelScale;
+            float rawAccelZ = ((int16_t)((accelBuffer[4] << 8) | accelBuffer[5])) / _accelScale;
             
             sumAccelX += rawAccelX;
             sumAccelY += rawAccelY;
@@ -182,9 +190,9 @@ bool Gyro::calibrate() {
                                                          MPU6050_REG_GYRO_XOUT_H, 
                                                          gyroBuffer, sizeof(gyroBuffer))) {
             // Get raw gyro values
-            float rawGyroX = ((int16_t)((gyroBuffer[0] << 8) | gyroBuffer[1])) / 131.0;
-            float rawGyroY = ((int16_t)((gyroBuffer[2] << 8) | gyroBuffer[3])) / 131.0;
-            float rawGyroZ = ((int16_t)((gyroBuffer[4] << 8) | gyroBuffer[5])) / 131.0;
+            float rawGyroX = ((int16_t)((gyroBuffer[0] << 8) | gyroBuffer[1])) / _gyroScale;
+            float rawGyroY = ((int16_t)((gyroBuffer[2] << 8) | gyroBuffer[3])) / _gyroScale;
+            float rawGyroZ = ((int16_t)((gyroBuffer[4] << 8) | gyroBuffer[5])) / _gyroScale;
             
             sumGyroX += rawGyroX;
             sumGyroY += rawGyroY;
@@ -209,6 +217,94 @@ bool Gyro::calibrate() {
     Serial.printf("Accel offsets: X=%.4f, Y=%.4f, Z=%.4f\n", _accelOffsetX, _accelOffsetY, _accelOffsetZ);
     
     return true;
+}
+
+void OrientationSensor::updateScalingFactors() {
+    // Update gyroscope scaling factor based on range
+    switch (_gyroRange) {
+        case GYRO_RANGE_250_DEG:
+            _gyroScale = 131.0f;
+            break;
+        case GYRO_RANGE_500_DEG:
+            _gyroScale = 65.5f;
+            break;
+        case GYRO_RANGE_1000_DEG:
+            _gyroScale = 32.8f;
+            break;
+        case GYRO_RANGE_2000_DEG:
+            _gyroScale = 16.4f;
+            break;
+        default:
+            _gyroScale = 131.0f; // Default to most sensitive
+    }
+    
+    // Update accelerometer scaling factor based on range
+    switch (_accelRange) {
+        case ACCEL_RANGE_2G:
+            _accelScale = 16384.0f;
+            break;
+        case ACCEL_RANGE_4G:
+            _accelScale = 8192.0f;
+            break;
+        case ACCEL_RANGE_8G:
+            _accelScale = 4096.0f;
+            break;
+        case ACCEL_RANGE_16G:
+            _accelScale = 2048.0f;
+            break;
+        default:
+            _accelScale = 16384.0f; // Default to most sensitive
+    }
+}
+
+bool OrientationSensor::setGyroRange(GyroRange range) {
+    if (!_initialized) {
+        return false;
+    }
+    
+    const uint8_t MPU6050_ADDR = 0x68;
+    const uint8_t MPU6050_REG_GYRO_CONFIG = 0x1B;
+    
+    // Configure the gyroscope with new range
+    if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_GYRO_CONFIG, range)) {
+        Serial.println("Failed to change gyroscope range");
+        return false;
+    }
+    
+    _gyroRange = range;
+    updateScalingFactors();
+    
+    Serial.printf("Gyroscope range changed to: %d\n", range);
+    return true;
+}
+
+bool OrientationSensor::setAccelRange(AccelRange range) {
+    if (!_initialized) {
+        return false;
+    }
+    
+    const uint8_t MPU6050_ADDR = 0x68;
+    const uint8_t MPU6050_REG_ACCEL_CONFIG = 0x1C;
+    
+    // Configure the accelerometer with new range
+    if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_ACCEL_CONFIG, range)) {
+        Serial.println("Failed to change accelerometer range");
+        return false;
+    }
+    
+    _accelRange = range;
+    updateScalingFactors();
+    
+    Serial.printf("Accelerometer range changed to: %d\n", range);
+    return true;
+}
+
+GyroRange OrientationSensor::getGyroRange() const {
+    return _gyroRange;
+}
+
+AccelRange OrientationSensor::getAccelRange() const {
+    return _accelRange;
 }
 
 } // namespace Sensors

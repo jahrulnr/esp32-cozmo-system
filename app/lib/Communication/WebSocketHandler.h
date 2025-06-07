@@ -6,7 +6,7 @@
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-#include "../Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocatorUtils.h"
 
 namespace Communication {
 
@@ -50,6 +50,7 @@ public:
 
     /**
      * Send a standardized JSON format message to a specific client
+     * Format: {version: "1.0", type: "command_type", data: {...}}
      * @param clientId The client ID to send to (or -1 for broadcast)
      * @param type The message type (command_type)
      * @param data The JsonVariant object containing the data payload
@@ -58,6 +59,7 @@ public:
 
     /**
      * Send a standardized JSON format message to a specific client
+     * Format: {version: "1.0", type: "command_type", data: {...}}
      * @param clientId The client ID to send to (or -1 for broadcast)
      * @param type The message type (command_type)
      * @param jsonString A pre-formatted JSON string for the data field
@@ -103,9 +105,13 @@ public:
     
     /**
      * Helper to parse incoming JSON messages
+     * Supports both old format and new DTO contract format (v1.0)
+     * For old format: {type, data}
+     * For new format: {version, type, data}
+     * 
      * @param data Pointer to the message data
      * @param len Length of the message
-     * @return JsonDocument with the parsed message, or null if parsing failed
+     * @return JsonDocument with the parsed message (always in new format), or null if parsing failed
      */
     static Utils::SpiJsonDocument parseJsonMessage(uint8_t* data, size_t len);
 

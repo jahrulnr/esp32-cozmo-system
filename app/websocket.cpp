@@ -1,10 +1,6 @@
 #include <Arduino.h>
-#include "init.h"
 #include <ArduinoJson.h>
-
-// Authentication credentials (should be moved to config file)
-const char* AUTH_USERNAME = "admin";
-const char* AUTH_PASSWORD = "admin";
+#include "init.h"
 
 // Current session data
 struct {
@@ -33,8 +29,14 @@ void setupWebSocket() {
         handleWebSocketEvent(server, client, type, arg, data, len);
       });
       
+      // Set the WebSocket in the Logger for sending logs to frontend
+      logger->setWebSocket(webSocket);
+      
       webSocket->begin();
       logger->info("WebSocket server started on path /ws");
+      
+      // Test WebSocket logging
+      logger->info("WebSocket logger test - this message should appear in frontend");
     } else {
       logger->error("WebSocket server initialization failed");
     }
@@ -91,7 +93,13 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
           if (!doc.isNull()) {
             String type = doc["type"].as<String>();
             JsonVariant data = doc["data"];
-            logger->debug("Received DTO message type: " + type + " from client #" + String(clientId));
+            String version = doc["version"] | "0.0";
+            
+            if (version == "1.0") {
+              logger->debug("Received DTO v1.0 message type: " + type + " from client #" + String(clientId));
+            } else {
+              logger->debug("Received legacy DTO message type: " + type + " from client #" + String(clientId));
+            }
             
             // Login command doesn't require authentication
             if (type == "login") {
@@ -250,11 +258,39 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 float left = data["left"] | 0.0;
                 float right = data["right"] | 0.0;
                 int duration = data["duration"] | 1000;
+                String action = data["action"] | "";
                 
                 if (motors) {
-                  // Set motor speeds with duration
-                  // motors->setSpeed(left, right, duration);
-                  logger->debug("Motor command - Left: " + String(left) + ", Right: " + String(right) + ", Duration: " + String(duration));
+                  if (action == "reset") {
+                    // Handle reset command
+                    motors->stop();
+                    logger->debug("Motor reset command received");
+                  } else {
+                    // Determine direction based on motor values
+                    Motors::MotorControl::Direction direction;
+                    
+                    if (left > 0 && right > 0) {
+                      screen->getFace()->LookTop();
+                      direction = Motors::MotorControl::FORWARD;
+                    } else if (left < 0 && right < 0) {
+                      screen->getFace()->LookBottom();
+                      direction = Motors::MotorControl::BACKWARD;
+                    } else if (left < 0 && right > 0) {
+                      screen->getFace()->LookLeft();
+                      direction = Motors::MotorControl::LEFT;
+                    } else if (left > 0 && right < 0) {
+                      screen->getFace()->LookRight();
+                      direction = Motors::MotorControl::RIGHT;
+                    } else {
+                      screen->getFace()->LookFront();
+                      direction = Motors::MotorControl::STOP;
+                    }
+                    
+                    // Move motors in the determined direction with optional duration
+                    motors->move(direction, duration);
+                    logger->debug("Motor command - Left: " + String(left) + ", Right: " + String(right) + 
+                                 ", Direction: " + String(direction) + ", Duration: " + String(duration));
+                  }
                   
                   // Send motor status response
                   Utils::SpiJsonDocument statusData;
@@ -291,25 +327,37 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   webSocket->sendError(clientId, 404, "Servo control not available");
                 }
               }
-              else if (type == "gyro_request") {
-                if (gyro) {
-                  gyro->update();
+              else if (type == "orientation_request") {
+                if (orientation) {
+                  orientation->update();
                   
                   Utils::SpiJsonDocument sensorData;
-                  sensorData["gyro"]["x"] = gyro->getX();
-                  sensorData["gyro"]["y"] = gyro->getY();
-                  sensorData["gyro"]["z"] = gyro->getZ();
-                  sensorData["accel"]["x"] = gyro->getAccelX();
-                  sensorData["accel"]["y"] = gyro->getAccelY();
-                  sensorData["accel"]["z"] = gyro->getAccelZ();
-                  
-                  // Calculate magnitude
-                  float magnitude = sqrt(pow(gyro->getAccelX(), 2) + pow(gyro->getAccelY(), 2) + pow(gyro->getAccelZ(), 2));
-                  sensorData["accel"]["magnitude"] = magnitude;
+                  sensorData["gyro"]["x"] = orientation->getX();
+                  sensorData["gyro"]["y"] = orientation->getY();
+                  sensorData["gyro"]["z"] = orientation->getZ();
+                  sensorData["accel"]["x"] = orientation->getAccelX();
+                  sensorData["accel"]["y"] = orientation->getAccelY();
+                  sensorData["accel"]["z"] = orientation->getAccelZ();
+                  sensorData["accel"]["magnitude"] = orientation->getAccelMagnitude();
                   
                   webSocket->sendJsonMessage(clientId, "sensor_data", sensorData);
                 } else {
                   webSocket->sendError(clientId, 404, "Gyroscope not available");
+                }
+              }
+              else if (type == "distance_request") {
+                if (distanceSensor) {
+                  float distance = distanceSensor->measureDistance();
+                  
+                  Utils::SpiJsonDocument sensorData;
+                  sensorData["distance"]["value"] = distance;
+                  sensorData["distance"]["unit"] = "cm";
+                  sensorData["distance"]["valid"] = (distance >= 0);
+                  sensorData["distance"]["obstacle"] = distanceSensor->isObstacleDetected();
+                  
+                  webSocket->sendJsonMessage(clientId, "sensor_data", sensorData);
+                } else {
+                  webSocket->sendError(clientId, 404, "Distance sensor not available");
                 }
               }
               // Legacy joystick update (convert to appropriate DTO commands)
@@ -330,24 +378,47 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   webSocket->sendOk(clientId, "Servo updated");
                 } 
                 else if (joyType == "motor" && motors) {
-                  // Simple differential drive
-                  int leftSpeed = y + x;
-                  int rightSpeed = y - x;
+                  // Determine direction based on joystick input
+                  Motors::MotorControl::Direction direction;
+                  int directionValue = 0; // For status reporting
                   
-                  // Scale to motor values
-                  leftSpeed = map(constrain(leftSpeed, -100, 100), -100, 100, -255, 255);
-                  rightSpeed = map(constrain(rightSpeed, -100, 100), -100, 100, -255, 255);
+                  // Use joystick position to determine direction
+                  if (y > 20) {
+                    direction = Motors::MotorControl::FORWARD;
+                    directionValue = 1;
+                  }
+                  else if (y < -20) {
+                    direction = Motors::MotorControl::BACKWARD;
+                    directionValue = -1;
+                  }
+                  else if (x < -20) {
+                    direction = Motors::MotorControl::LEFT;
+                    directionValue = 2;
+                  }
+                  else if (x > 20) {
+                    direction = Motors::MotorControl::RIGHT;
+                    directionValue = 3;
+                  }
+                  else {
+                    direction = Motors::MotorControl::STOP;
+                    directionValue = 0;
+                  }
                   
-                  // Set motor speeds
-                  // motors->setSpeed(leftSpeed);
-                  // motors->setSpeed(rightSpeed);
+                  // Move the motors in the determined direction
+                  motors->move(direction);
                   
-                  logger->debug("Motors L: " + String(leftSpeed) + ", R: " + String(rightSpeed));
+                  // Calculate magnitude for status response (for UI feedback)
+                  int magnitude = sqrt(x*x + y*y);
+                  magnitude = constrain(magnitude, 0, 100);
+                  
+                  logger->debug("Motors direction: " + String(directionValue) + ", magnitude: " + String(magnitude));
                   
                   // Send motor status response
                   Utils::SpiJsonDocument statusData;
-                  statusData["left"] = leftSpeed / 255.0; // Normalize to -1.0 to 1.0
-                  statusData["right"] = rightSpeed / 255.0;
+                  statusData["direction"] = directionValue;
+                  statusData["magnitude"] = magnitude / 100.0; // Normalize to 0.0 to 1.0
+                  statusData["left"] = (direction == Motors::MotorControl::LEFT || direction == Motors::MotorControl::BACKWARD) ? -magnitude / 100.0 : magnitude / 100.0;
+                  statusData["right"] = (direction == Motors::MotorControl::RIGHT || direction == Motors::MotorControl::BACKWARD) ? -magnitude / 100.0 : magnitude / 100.0;
                   webSocket->sendJsonMessage(clientId, "motor_status", statusData);
                 }
               }
@@ -522,6 +593,51 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 
                 webSocket->sendJsonMessage(clientId, "file_operation", response);
               }
+              // Read file content
+              else if (type == "read_file") {
+                String path = data["path"] | "";
+                
+                if (path.length() > 0) {
+                  // Use FileManager for file operations
+                  static Utils::FileManager fileManager;
+                  if (!fileManager.init()) {
+                    logger->error("Failed to initialize FileManager for file reading");
+                    webSocket->sendError(clientId, 500, "Failed to initialize file system");
+                    break;
+                  }
+                  
+                  // Read file content
+                  String content = fileManager.readFile(path);
+                  
+                  // Check if file was read successfully
+                  if (content.length() > 0 || SPIFFS.exists(path)) {
+                    logger->info("File read: " + path + " (" + String(content.length()) + " bytes)");
+                    
+                    // Send file content to client
+                    Utils::SpiJsonDocument response;
+                    response["path"] = path;
+                    response["content"] = content;
+                    response["size"] = content.length();
+                    response["success"] = true;
+                    
+                    // Get file extension for content type hint
+                    String extension = "";
+                    int dotIndex = path.lastIndexOf('.');
+                    if (dotIndex >= 0) {
+                      extension = path.substring(dotIndex + 1);
+                      extension.toLowerCase();
+                    }
+                    response["type"] = extension;
+                    
+                    webSocket->sendJsonMessage(clientId, "file_content", response);
+                  } else {
+                    logger->error("Failed to read file: " + path);
+                    webSocket->sendError(clientId, 404, "File not found or empty");
+                  }
+                } else {
+                  webSocket->sendError(clientId, 400, "Missing file path");
+                }
+              }
               else if (type == "upload_file") {
                 String path = data["path"] | "/";
                 String name = data["name"] | "";
@@ -645,33 +761,79 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               // Chat message
               else if (type == "send_chat") {
                 String content = data["content"] | "";
-                
+                #if GPT_ENABLED
+                if (content.length() > 0 && gptAdapter) {
+                  // Process with GPTAdapter
+                  sendGPT(content, [clientId](const String& gptResponse) {
+                    Utils::SpiJsonDocument response;
+                    response["sender"] = "Cozmo";
+                    response["content"] = gptResponse;
+                    response["timestamp"] = String(millis() / 1000);
+                    webSocket->sendJsonMessage(clientId, "chat_message", response);
+                  });
+                } else {
+                  Utils::SpiJsonDocument response;
+                  response["sender"] = "System";
+                  response["content"] = "Error: Empty message or GPT not available.";
+                  response["timestamp"] = String(millis() / 1000);
+                  webSocket->sendJsonMessage(clientId, "chat_message", response);
+                }
+                #else
                 if (content.length() > 0) {
-                  // Echo message back to client (in a real system, this would be processed)
+                  // Echo message back to client (legacy fallback)
                   Utils::SpiJsonDocument response;
                   response["sender"] = "System";
                   response["content"] = "Received: " + content;
                   response["timestamp"] = String(millis() / 1000);
-                  
                   webSocket->sendJsonMessage(clientId, "chat_message", response);
                 }
+                #endif
               }
-              // Start sensor updates
-              else if (type == "start_sensor_updates" && gyro) {
-                Utils::SpiJsonDocument sensorData;
-                gyro->update();
+              // Learning data operations
+              else if (type == "get_learning_data") {
+                String dataType = data["dataType"] | "gpt";  // Default to GPT data
                 
-                // Create nested objects for gyro and accelerometer data
-                sensorData["gyro"]["x"] = String(gyro->getX());
-                sensorData["gyro"]["y"] = String(gyro->getY());
-                sensorData["gyro"]["z"] = String(gyro->getZ());
+                if (dataType == "gpt") {
+                  // Get GPT learning data
+                  String learningData = getGPTLearningData();
+                  
+                  Utils::SpiJsonDocument response;
+                  response["data"] = learningData;
+                  response["type"] = "gpt";
+                  webSocket->sendJsonMessage(clientId, "learning_data", response);
+                  logger->debug("Sent GPT learning data to client #" + String(clientId));
+                }
+                else if (dataType == "map") {
+                  // Get robot map data
+                  String mapJson = getMapAsJson();
+                  
+                  Utils::SpiJsonDocument response;
+                  response["data"] = mapJson;
+                  response["type"] = "map";
+                  webSocket->sendJsonMessage(clientId, "learning_data", response);
+                  logger->debug("Sent map data to client #" + String(clientId));
+                }
+              }
+              // Clear learning data
+              else if (type == "clear_learning_data") {
+                String dataType = data["dataType"] | "gpt";
+                bool success = false;
                 
-                sensorData["accel"]["x"] = String(gyro->getAccelX());
-                sensorData["accel"]["y"] = String(gyro->getAccelY());
-                sensorData["accel"]["z"] = String(gyro->getAccelZ());
-                sensorData["accel"]["magnitude"] = String(gyro->getAccelMagnitude());
+                if (dataType == "gpt") {
+                  // Clear GPT learning data
+                  success = clearGPTLearningData();
+                }
+                else if (dataType == "map") {
+                  // Reset map
+                  resetMap();
+                  success = true;
+                }
                 
-                webSocket->sendJsonMessage(clientId, "sensor_data", sensorData);
+                Utils::SpiJsonDocument response;
+                response["success"] = success;
+                response["dataType"] = dataType;
+                webSocket->sendJsonMessage(clientId, "learning_data_cleared", response);
+                logger->debug("Cleared " + dataType + " learning data: " + String(success ? "success" : "failed"));
               }
               // Debug command
               else if (type == "debug_command") {
@@ -683,6 +845,32 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 response["level"] = "info";
                 
                 webSocket->sendJsonMessage(clientId, "log_message", response);
+              }
+              // Execute text command
+              else if (type == "execute_command") {
+                String cmdText = data["command"] | "";
+                
+                if (cmdText.length() > 0 && commandMapper != nullptr) {
+                  logger->debug("Processing text command: " + cmdText);
+                  
+                  // Process the command text
+                  String resultText = processTextCommands(cmdText);
+                  
+                  Utils::SpiJsonDocument response;
+                  response["success"] = true;
+                  response["originalText"] = cmdText;
+                  response["resultText"] = resultText;
+                  response["containedCommands"] = (resultText != cmdText);
+                  
+                  webSocket->sendJsonMessage(clientId, "command_executed", response);
+                  logger->info("Text command executed: " + cmdText);
+                } else {
+                  Utils::SpiJsonDocument response;
+                  response["success"] = false;
+                  response["message"] = "Empty command or CommandMapper not initialized";
+                  
+                  webSocket->sendJsonMessage(clientId, "command_executed", response);
+                }
               }
             } else {
               // Not authenticated

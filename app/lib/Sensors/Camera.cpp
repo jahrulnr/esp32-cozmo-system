@@ -1,5 +1,5 @@
 #include "Camera.h"
-#include "../../include/Config.h"
+#include "Config.h"
 
 namespace Sensors {
 
