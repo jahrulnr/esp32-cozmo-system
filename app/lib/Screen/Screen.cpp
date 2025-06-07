@@ -92,6 +92,7 @@ void Screen::drawText(int x, int y, const String& text, const uint8_t* font) {
         _u8g2->setFont(font);
     }
     
+    clear();
     _holdFace = true;
     _holdTimer = 0; // Reset timer to ensure it's initialized in update()
     _u8g2->drawStr(x, y, text.c_str());
@@ -116,6 +117,8 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
         // Simple case: text fits, center it
         int x = (screenWidth - textWidth) / 2;
         
+    
+        clear();
         _holdFace = true;
         _holdTimer = 0; // Reset timer to ensure it's initialized in update()
         _u8g2->drawStr(x, y, text.c_str());
@@ -124,6 +127,8 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
         _logger->debug("Drawing centered text: " + text);
     } else {
         // Text is too long - handle wrapping
+    
+        clear();
         _holdFace = true;
         
         // Try smaller font for long text if using default font
@@ -229,7 +234,6 @@ void Screen::update() {
 
     if (_holdFace) {
         if (_holdTimer == 0) {
-            clear();
             _holdTimer = millis() + 3000; // Set timer to 3 seconds from now
             // Log when text display starts
             _logger->debug("Text display started, will hold for 3s until " + String(_holdTimer));
