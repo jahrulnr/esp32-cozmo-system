@@ -284,6 +284,25 @@
                         <button class="btn btn-danger" id="preset-stop">Stop</button>
                     </div>
                 </div>
+                
+                <!-- Automation Controls -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Automation</h2>
+                    </div>
+                    <p>Enable or disable automatic behaviors when no manual control is detected for 10 seconds</p>
+                    <div class="automation-controls mt-4">
+                        <div class="form-group">
+                            <div class="switch-container">
+                                <label class="switch">
+                                    <input type="checkbox" id="automation-toggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="ml-2">Automation: <span id="automation-status">Enabled</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Sensors Section -->

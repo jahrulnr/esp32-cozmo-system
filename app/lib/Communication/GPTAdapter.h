@@ -35,6 +35,7 @@ public:
      */
     void sendPrompt(const String& prompt, ResponseCallback callback);
     void sendPrompt(const String& prompt, const String& additionalCommand, ResponseCallback callback);
+    void sendPromptWithCustomSystem(const String& prompt, const String& systemCommand, ResponseCallback callback);
 
     /**
      * Set the model to use

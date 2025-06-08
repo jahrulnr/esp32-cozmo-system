@@ -12,44 +12,6 @@ void setupGPT(){
 	gptAdapter->setMaxTokens(GPT_MAX_TOKENS);
 	gptAdapter->setTemperature(GPT_TEMPERATURE);
   #endif
-  
-  // Create directory for data storage if enabled
-  #if GPT_LEARNING_ENABLED
-  static Utils::FileManager fileManager;
-  if (fileManager.init()) {
-    // Extract directory part from path
-    String dirPath = "/data";
-    if (!fileManager.exists(dirPath)) {
-      fileManager.createDir(dirPath);
-      logger->info("Created directory for GPT learning data");
-    }
-  }
-  #endif
-}
-
-// Log a GPT interaction (prompt + response) to a file for learning purposes
-bool logGPTInteraction(const String& prompt, const String& response) {
-  #if GPT_LEARNING_ENABLED
-  static Utils::FileManager fileManager;
-  if (!fileManager.init()) {
-    logger->error("Failed to initialize FileManager for GPT logging");
-    return false;
-  }
-  
-  String logEntry = "{\"timestamp\":" + String(millis()) + 
-                   ",\"prompt\":\"" + prompt + 
-                   "\",\"response\":\"" + response + "\"}\n";
-  
-  bool success = fileManager.appendFile(GPT_DATA_LOG_PATH, logEntry);
-  if (success) {
-    logger->debug("Logged GPT interaction to " + String(GPT_DATA_LOG_PATH));
-  } else {
-    logger->error("Failed to log GPT interaction");
-  }
-  return success;
-  #else
-  return false;
-  #endif
 }
 
 void gptChatTask(void * param) {
@@ -217,7 +179,7 @@ void gptChatTask(void * param) {
 		additionalCommand += "   [FACE_SLEEPY], [FACE_SUSPICIOUS], [FACE_SQUINT], [FACE_FURIOUS], [FACE_SCARED], [FACE_AWE], [FACE_GLEE]\n";
 		additionalCommand += "3. Look direction commands: [LOOK_LEFT], [LOOK_RIGHT], [LOOK_FRONT], [LOOK_TOP], [LOOK_BOTTOM], [BLINK]\n";
 		additionalCommand += "4. Movement commands: [MOVE_FORWARD=5s], [MOVE_BACKWARD=5s], [TURN_LEFT=3s], [TURN_RIGHT=3s], [STOP]\n";
-		additionalCommand += "5. Servo commands: [HEAD_UP], [HEAD_DOWN], [HEAD_CENTER], [ARM_OPEN], [ARM_CLOSE], [ARM_CENTER]\n";
+		additionalCommand += "5. Servo commands: [HEAD_UP], [HEAD_DOWN], [HEAD_CENTER], [HAND_UP], [HAND_DOWN], [HAND_CENTER]\n";
 		additionalCommand += "6. Consider sensor readings when responding (avoid cliffs, obstacles, etc)\n";
 		additionalCommand += "7. Be concise but helpful in your responses\n";
 		additionalCommand += "8. If asked about hardware capabilities, use this context to provide accurate information\n\n";
@@ -248,11 +210,6 @@ void gptChatTask(void * param) {
 				screen->drawCenteredText(20, processedResponse);
 				screen->mutexUpdate();
 			}
-			
-			// Log the interaction if requested
-			if (data->saveToLog) {
-				logGPTInteraction(data->prompt, gptResponse);
-			}
 		});
 	}
 
@@ -268,27 +225,4 @@ void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback c
 	};
 
 	xTaskCreate(gptChatTask, "gptChatTask", 20 * 1024, data, 10, &gptTaskHandle);
-}
-
-// Clear learning data (useful for testing or resetting learning)
-bool clearGPTLearningData() {
-  #if GPT_LEARNING_ENABLED
-  static Utils::FileManager fileManager;
-  if (!fileManager.init()) {
-    logger->error("Failed to initialize FileManager for GPT data clearing");
-    return false;
-  }
-  
-  if (!fileManager.exists(GPT_DATA_LOG_PATH)) {
-    return true; // File doesn't exist, consider it "cleared"
-  }
-  
-  bool success = fileManager.deleteFile(GPT_DATA_LOG_PATH);
-  if (success) {
-    logger->info("GPT learning data cleared");
-  }
-  return success;
-  #else
-  return false;
-  #endif
 }

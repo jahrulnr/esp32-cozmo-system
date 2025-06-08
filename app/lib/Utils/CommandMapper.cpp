@@ -1,4 +1,5 @@
 #include "CommandMapper.h"
+#include "app.h"  // For access to updateManualControlTime()
 
 namespace Utils {
 
@@ -285,28 +286,28 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["ARM_OPEN"] = [this](const String& param) -> bool {
+    _commandHandlers["HAND_UP"] = [this](const String& param) -> bool {
         if (_servos) {
             _servos->setHand(180);
-            _logger->debug("Arm open");
+            _logger->debug("hand up");
             return true;
         }
         return false;
     };
     
-    _commandHandlers["ARM_CLOSE"] = [this](const String& param) -> bool {
+    _commandHandlers["HAND_DOWN"] = [this](const String& param) -> bool {
         if (_servos) {
             _servos->setHand(0);
-            _logger->debug("Arm closed");
+            _logger->debug("hand down");
             return true;
         }
         return false;
     };
     
-    _commandHandlers["ARM_CENTER"] = [this](const String& param) -> bool {
+    _commandHandlers["HAND_CENTER"] = [this](const String& param) -> bool {
         if (_servos) {
             _servos->setHand(90);
-            _logger->debug("Arm centered");
+            _logger->debug("hand centered");
             return true;
         }
         return false;
@@ -324,6 +325,9 @@ bool CommandMapper::executeCommand(const String& commandStr) {
         String parameter = matches.size() > 2 ? String(matches[2].str().c_str()) : "";
         
         _logger->debug("Executing command: " + command + (parameter.isEmpty() ? "" : " with param: " + parameter));
+        
+        // Mark as manual control to pause automation
+        updateManualControlTime();
         
         // Look up command handler
         if (_commandHandlers.count(command.c_str()) > 0) {

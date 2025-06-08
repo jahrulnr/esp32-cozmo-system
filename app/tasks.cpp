@@ -9,6 +9,19 @@ TaskHandle_t sensorMonitorTaskHandle = NULL;
  */
 void setupTasks() {
     logger->info("Initializing tasks...");
+
+    #if PROTECT_COZMO
+    // protect cozmo
+    xTaskCreatePinnedToCore(
+            protectCozmoTask,       // Task function
+            "protectCozmo",         // Task name
+            4 * 1024,               // Stack size
+            NULL,                   // Parameters
+            1,                      // Priority
+            NULL,                    // Task handle
+            1
+        );
+    #endif
     
     // Create camera streaming task
     if (camera) {
@@ -35,6 +48,15 @@ void setupTasks() {
         1,                         // Priority
         &sensorMonitorTaskHandle   // Task handle
     );
+    
+    // Initialize automation variables
+    g_automationEnabled = AUTOMATION_ENABLED;
+    g_lastManualControlTime = millis();
+    
+    // Create automation task
+    if (automation) {
+        automation->start();
+    }
 
     logger->info("Tasks initialized");
 }
@@ -59,6 +81,7 @@ void sensorMonitorTask(void* parameter) {
     
     // Monitor sensors forever
     while (true) {
+
         // Create JSON object for sensor data
         Utils::SpiJsonDocument jsonData;
         

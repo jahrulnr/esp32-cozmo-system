@@ -44,6 +44,8 @@ private:
     int _echoPin;
 		float _threshold;
     int _maxDistance;
+    float _lastValue;
+    bool _inprogress;
     unsigned long _timeout; // Timeout in microseconds
     bool _initialized;
 };

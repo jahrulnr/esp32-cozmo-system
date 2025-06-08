@@ -7,6 +7,7 @@
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include "lib/Automation/Automation.h"
 #include "lib/Sensors/Camera.h"
 #include "lib/Sensors/OrientationSensor.h"
 #include "lib/Sensors/DistanceSensor.h"
@@ -36,6 +37,7 @@ struct gptRequest
 };
 
 // Component instances
+extern Automation::Automation* automation;
 extern Sensors::Camera* camera;
 extern Sensors::OrientationSensor* orientation;
 extern Sensors::DistanceSensor* distanceSensor;
@@ -59,15 +61,19 @@ extern bool g_isApOnlyMode;
 extern TaskHandle_t cameraStreamTaskHandle;
 extern TaskHandle_t sensorMonitorTaskHandle;
 extern TaskHandle_t gptTaskHandle;
+extern TaskHandle_t automationTaskHandle;
+
+// Automation control
+extern bool g_automationEnabled;
+extern unsigned long g_lastManualControlTime;
 
 // Function prototypes
+void protectCozmo();
+void protectCozmoTask(void * param);
 void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback callback);
-bool logGPTInteraction(const String& prompt, const String& response);
-String getGPTLearningData();
-bool clearGPTLearningData();
 
 // Forward declarations
 void setupPins();
@@ -92,6 +98,10 @@ void setupGPT();
 void setupHealthCheck();
 void setupTasks();
 void setupCommandMapper();
+void setupAutomation();
+void updateManualControlTime();
+bool isAutomationEnabled();
+void setAutomationEnabled(bool enabled);
 String processTextCommands(const String& text);
 void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 
                          AwsEventType type, void* arg, uint8_t* data, size_t len);

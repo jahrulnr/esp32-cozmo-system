@@ -218,6 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleCameraFrameHeader(msg.data);
             } else if (msg.type === 'logout_response') {
                 handleLogoutResponse(msg.data);
+            } else if (msg.type === 'automation_status') {
+                updateAutomationStatus(msg.data);
             } else {
                 console.log('Unknown message type:', msg.type, msg.data);
             }
@@ -1861,6 +1863,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const presetStop = document.getElementById('preset-stop');
     if (presetStop) {
         presetStop.addEventListener('click', () => sendMotorPreset('stop'));
+    }
+    
+    // Automation control functions
+    function requestAutomationStatus() {
+        if (connected) {
+            sendJsonMessage('get_automation_status');
+            console.log('Requested automation status');
+        }
+    }
+    
+    function setAutomationEnabled(enabled) {
+        if (connected) {
+            sendJsonMessage('automation_control', { enabled: enabled });
+            console.log('Set automation enabled:', enabled);
+        }
+    }
+    
+    function updateAutomationStatus(data) {
+        const automationToggle = document.getElementById('automation-toggle');
+        if (automationToggle) {
+            automationToggle.checked = data.enabled;
+            console.log('Automation status updated:', data.enabled);
+        }
+    }
+
+    // Automation control UI
+    const automationToggle = document.getElementById('automation-toggle');
+    if (automationToggle) {
+        automationToggle.addEventListener('change', (e) => {
+            setAutomationEnabled(e.target.checked);
+        });
+        
+        // Request current status when page loads
+        setTimeout(() => {
+            requestAutomationStatus();
+        }, 1000);
     }
     
     // Dashboard controls - use more specific selectors

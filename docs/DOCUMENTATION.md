@@ -179,20 +179,6 @@ servos.setHand(45);   // 45-degree position
 - `lib/Motors/ServoControl.h`
 - `lib/Motors/ServoControl.cpp`
 
-#### BlockMotor (`Motors::BlockMotor`)
-
-The BlockMotor class controls a servo for lifting and manipulating blocks.
-
-**Key Features:**
-- Three positions: DOWN, HOLD, UP
-- Position-based control
-- Uses ESP32 Servo library
-
-**Key Files:**
-- `lib/Motors/BlockMotor.h`
-- `lib/Motors/BlockMotor.cpp`
-
----
 
 ### Screen
 

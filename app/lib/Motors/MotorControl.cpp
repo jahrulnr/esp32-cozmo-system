@@ -100,7 +100,9 @@ void MotorControl::move(Direction direction, unsigned long duration) {
 
     // If duration is specified, stop after the given time
     if (duration > 0) {
-        vTaskDelay(pdMS_TO_TICKS(duration));
+        for(int i = 0; i <= duration; i+=10) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
         stop();
     }
 }

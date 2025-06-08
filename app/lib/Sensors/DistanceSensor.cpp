@@ -4,7 +4,7 @@ namespace Sensors {
 
 DistanceSensor::DistanceSensor() : _triggerPin(-1), _echoPin(-1),
                                  _maxDistance(400), _threshold(20.0),
-																 _timeout(0),
+                                 _timeout(0), _lastValue(0.), _inprogress(false),
                                  _initialized(false) {
 }
 
@@ -46,7 +46,11 @@ float DistanceSensor::measureDistance() {
     if (!_initialized) {
         return -1.0;
     }
+
+    if (_inprogress) 
+        return _lastValue;
     
+    _inprogress = true;
     // Send a 10μs pulse on the TRIG pin
     digitalWrite(_triggerPin, LOW);
     delayMicroseconds(2);
@@ -66,6 +70,8 @@ float DistanceSensor::measureDistance() {
     if (duration == 0 || distance > _maxDistance) {
         return -1.0; // Timeout or out of range
     }
+    _inprogress = false;
+    _lastValue = distance;
     
     return distance;
 }

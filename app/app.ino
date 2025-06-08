@@ -3,6 +3,7 @@
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "app.h"
 
+Automation::Automation* automation = nullptr;
 Sensors::Camera* camera = nullptr;
 Sensors::OrientationSensor* orientation = nullptr;
 Sensors::DistanceSensor* distanceSensor = nullptr;
@@ -50,7 +51,13 @@ void setup() {
   setupWebSocket();
   setupGPT();
   setupCommandMapper();
+  setupAutomation();
   setupHealthCheck();
+
+  if (motors && screen)
+    motors->setScreen(screen);
+  if (servos && screen)
+    servos->setScreen(screen);
   
   logger->info("System initialization complete");
   

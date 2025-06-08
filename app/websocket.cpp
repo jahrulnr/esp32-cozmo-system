@@ -281,6 +281,9 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                       direction = Motors::MotorControl::STOP;
                     }
 
+                    // Update manual control time to pause automation
+                    updateManualControlTime();
+                    
                     // Move motors in the determined direction with optional duration
                     motors->move(direction, duration);
                     logger->debug("Motor command - Left: " + String(left) + ", Right: " + String(right) +
@@ -301,6 +304,9 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 float tilt = data["tilt"] | 90.0;
 
                 if (servos) {
+                  // Update manual control time to pause automation
+                  updateManualControlTime();
+                  
                   servos->setHand(pan);  // Set pan servo
                   servos->setHead(tilt); // Set tilt servo
 
@@ -314,6 +320,9 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 float position = data["position"] | 90.0;
 
                 if (servos) {
+                  // Update manual control time to pause automation
+                  updateManualControlTime();
+                  
                   servos->setHand(position);
 
                   logger->debug("Arm command - Position: " + String(position));
@@ -358,6 +367,9 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               else if(type == "servo_update" && servos) {
                 String servoType = data["type"] | "";
                 int position = data["position"] | 0;
+
+                // Update manual control time to pause automation
+                updateManualControlTime();
 
                 if (servoType == "head") {
                   int servoY = map(position, -100, 100, 0, 180);
@@ -410,6 +422,9 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                     directionValue = 0;
                   }
 
+                  // Update manual control time to pause automation
+                  updateManualControlTime();
+                  
                   // Move the motors in the determined direction
                   motors->move(direction);
 
@@ -427,6 +442,27 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   statusData["right"] = (direction == Motors::MotorControl::RIGHT || direction == Motors::MotorControl::BACKWARD) ? -magnitude / 100.0 : magnitude / 100.0;
                   webSocket->sendJsonMessage(clientId, "motor_status", statusData);
                 }
+              }
+              // Set automation state
+              else if (type == "automation_control") {
+                bool enabled = data["enabled"] | g_automationEnabled;  // Default to current state if not specified
+                
+                // Update automation state
+                setAutomationEnabled(enabled);
+                
+                // Get current status for response
+                Utils::SpiJsonDocument statusData;
+                statusData["enabled"] = isAutomationEnabled();
+                webSocket->sendJsonMessage(clientId, "automation_status", statusData);
+                
+                logger->info("Automation " + String(enabled ? "enabled" : "disabled") + " by client #" + String(clientId));
+              }
+              // Get automation status
+              else if (type == "get_automation_status") {
+                // Get current status for response
+                Utils::SpiJsonDocument statusData;
+                statusData["enabled"] = isAutomationEnabled();
+                webSocket->sendJsonMessage(clientId, "automation_status", statusData);
               }
               // Get WiFi networks
               else if (type == "get_wifi_networks") {

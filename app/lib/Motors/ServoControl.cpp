@@ -51,7 +51,7 @@ void ServoControl::moveLook(ServoType type, int angle) {
             break;
         case HAND:
             lastPosition = _lastHandPosition;
-            break;
+        break;
     }
 
     if (angle > lastPosition) 
@@ -66,11 +66,31 @@ void ServoControl::setHead(int angle) {
     }
 
     moveLook(HEAD, angle);
-    _lastHeadPosition = angle;
     
     // Constrain angle to valid range
-    _headAngle = constrain(angle, 60, 110);
-    _headServo.write(_headAngle);
+    angle = constrain(angle, 60, 110);
+    
+    // Smooth movement implementation
+    const int step = 2;  // smaller step for smoother movement
+    const int delayMs = 15;  // delay between steps
+    
+    // Move servo gradually to target position
+    if (_headAngle < angle) {
+        for (int pos = _headAngle; pos <= angle; pos += step) {
+            _headServo.write(pos);
+            vTaskDelay(pdMS_TO_TICKS(delayMs));
+        }
+    } else if (_headAngle > angle) {
+        for (int pos = _headAngle; pos >= angle; pos -= step) {
+            _headServo.write(pos);
+            vTaskDelay(pdMS_TO_TICKS(delayMs));
+        }
+    }
+    
+    // Ensure final position is exact
+    _headServo.write(angle);
+    _headAngle = angle;
+    _lastHeadPosition = angle;
 }
 
 void ServoControl::setHand(int angle) {
@@ -79,14 +99,34 @@ void ServoControl::setHand(int angle) {
     }
 
     moveLook(HAND, angle);
-    _lastHandPosition = angle;
     
     // Constrain angle to valid range
     angle = constrain(angle, 0, 180);
     // reverse
     angle = 180 - angle;
-    _handAngle = constrain(angle, 90, 130);
-    _handServo.write(_handAngle);
+    int targetAngle = constrain(angle, 90, 130);
+    
+    // Smooth movement implementation
+    const int step = 2;  // smaller step for smoother movement
+    const int delayMs = 15;  // delay between steps
+    
+    // Move servo gradually to target position
+    if (_handAngle < targetAngle) {
+        for (int pos = _handAngle; pos <= targetAngle; pos += step) {
+            _handServo.write(pos);
+            vTaskDelay(pdMS_TO_TICKS(delayMs));
+        }
+    } else if (_handAngle > targetAngle) {
+        for (int pos = _handAngle; pos >= targetAngle; pos -= step) {
+            _handServo.write(pos);
+            vTaskDelay(pdMS_TO_TICKS(delayMs));
+        }
+    }
+    
+    // Ensure final position is exact
+    _handServo.write(targetAngle);
+    _handAngle = targetAngle;
+    _lastHandPosition = angle;
 }
 
 int ServoControl::getHead() const {
