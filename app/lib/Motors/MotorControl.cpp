@@ -4,7 +4,7 @@ namespace Motors {
 
 MotorControl::MotorControl() : _leftMotorPin1(-1), _leftMotorPin2(-1),
                                _rightMotorPin1(-1), _rightMotorPin2(-1),
-                               _speed(200), _currentDirection(STOP), _initialized(false) {
+                               _currentDirection(STOP), _initialized(false) {
 }
 
 MotorControl::~MotorControl() {
@@ -29,51 +29,12 @@ bool MotorControl::init(int leftMotorPin1, int leftMotorPin2, int rightMotorPin1
     return true;
 }
 
-void MotorControl::setSpeed(uint8_t speed) {
-    _speed = speed;
-}
-
 void MotorControl::move(Direction direction, unsigned long duration) {
     if (!_initialized) {
         return;
     }
 
     _currentDirection = direction;
-
-    // switch (direction) {
-    //     case FORWARD:
-    //         analogWrite(_leftMotorPin1, _speed);
-    //         analogWrite(_leftMotorPin2, 0);
-    //         analogWrite(_rightMotorPin1, _speed);
-    //         analogWrite(_rightMotorPin2, 0);
-    //         break;
-            
-    //     case BACKWARD:
-    //         analogWrite(_leftMotorPin1, 0);
-    //         analogWrite(_leftMotorPin2, _speed);
-    //         analogWrite(_rightMotorPin1, 0);
-    //         analogWrite(_rightMotorPin2, _speed);
-    //         break;
-            
-    //     case LEFT:
-    //         analogWrite(_leftMotorPin1, 0);
-    //         analogWrite(_leftMotorPin2, _speed);
-    //         analogWrite(_rightMotorPin1, _speed);
-    //         analogWrite(_rightMotorPin2, 0);
-    //         break;
-            
-    //     case RIGHT:
-    //         analogWrite(_leftMotorPin1, _speed);
-    //         analogWrite(_leftMotorPin2, 0);
-    //         analogWrite(_rightMotorPin1, 0);
-    //         analogWrite(_rightMotorPin2, _speed);
-    //         break;
-            
-    //     case STOP:
-    //     default:
-    //         stop();
-    //         break;
-    // }
 
     switch (direction) {
         case FORWARD:

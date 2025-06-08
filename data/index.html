@@ -247,11 +247,16 @@
                         <div class="card-header">
                             <h2 class="card-title">Servo Control</h2>
                         </div>
-                        <p>Use the joystick to control the servo positions</p>
-                        <div id="servo-joystick-container" class="joystick-container"></div>
-                        <div class="mt-4">
-                            <div>X: <span id="servo-x">0</span>°</div>
-                            <div>Y: <span id="servo-y">0</span>°</div>
+                        <p>Use the sliders to control the servo positions</p>
+                        <div class="servo-sliders">
+                            <div class="form-group">
+                                <label class="form-label">Head Position: <span id="servo-x">0</span></label>
+                                <input type="range" class="form-range" min="-100" max="100" value="0" id="servo-head-slider">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Hand Position: <span id="servo-y">0</span></label>
+                                <input type="range" class="form-range" min="-100" max="100" value="0" id="servo-hand-slider">
+                            </div>
                         </div>
                     </div>
                     
@@ -283,11 +288,24 @@
                         </select>
                     </div>
                     <div class="flex gap-2 mt-4">
-                        <button class="btn" id="preset-forward">Forward</button>
-                        <button class="btn" id="preset-backward">Backward</button>
-                        <button class="btn" id="preset-left">Turn Left</button>
-                        <button class="btn" id="preset-right">Turn Right</button>
+                        <button class="btn movement-forward" id="preset-forward">Forward</button>
+                        <button class="btn movement-backward" id="preset-backward">Backward</button>
+                        <button class="btn movement-turning-left" id="preset-left">Turn Left</button>
+                        <button class="btn movement-turning-right" id="preset-right">Turn Right</button>
                         <button class="btn btn-danger" id="preset-stop">Stop</button>
+                    </div>
+                    <div class="keyboard-controls-hint mt-4">
+                        <h3 class="mb-2"><i class="fas fa-keyboard mr-1"></i> Keyboard Controls</h3>
+                        <p>Hold down arrow keys for continuous movement:</p>
+                        <div class="flex justify-center mt-2">
+                            <kbd>↑</kbd> Forward
+                        </div>
+                        <div class="flex gap-4 justify-center mt-2">
+                            <kbd>←</kbd> Left
+                            <kbd>↓</kbd> Backward
+                            <kbd>→</kbd> Right
+                        </div>
+                        <p class="mt-2">Release key to stop the motors.</p>
                     </div>
                 </div>
             </section>

@@ -37,14 +37,16 @@ void setupTasks() {
         &sensorMonitorTaskHandle   // Task handle
     );
 
+    #ifdef AUTOMATION
     xTaskCreate(
         automationTask,         // Task function
-        "Automation",          // Task name
-        20 * 1024,                   // Stack size
+        "Automation",           // Task name
+        20 * 1024,              // Stack size
         NULL,                   // Parameters
         1,                      // Priority
         &automationTaskHandle   // Task handle
     );
+    #endif
 
     logger->info("Tasks initialized");
 }
@@ -125,6 +127,36 @@ void sensorMonitorTask(void* parameter) {
                     lastTempBehaviorCheck = millis();
                 }
             }
+            xSemaphoreGive(sensor_handle);
+        }
+        
+        // Add temperature sensor data if available
+        if (temperatureSensor && temperatureSensor->isSupported() && xSemaphoreTake(sensor_handle, 1) == pdTRUE) {
+            float temperature = temperatureSensor->readTemperature();
+            if (!isnan(temperature)) {
+                jsonData["temperature"]["value"] = temperature;
+                jsonData["temperature"]["unit"] = "C";
+                jsonData.shrinkToFit();
+                
+                // Periodically trigger temperature-based behavior check
+                static unsigned long lastTempBehaviorCheck = 0;
+                if (millis() - lastTempBehaviorCheck > 5000) { // Check every 5 seconds
+                    checkTemperature();
+                    lastTempBehaviorCheck = millis();
+                }
+            }
+            xSemaphoreGive(sensor_handle);
+        }
+        
+        // Add temperature sensor data if available
+        if (servos && xSemaphoreTake(sensor_handle, 1) == pdTRUE) {
+            int servoHead = map(servos->getHead(), 0, 180, -100, 100);
+            int servoHand = map(servos->getHand(), 0, 180, -100, 100);
+
+            
+            jsonData["servo"]["head"] = servoHead;
+            jsonData["servo"]["hand"] = servoHand;
+            jsonData.shrinkToFit();
             xSemaphoreGive(sensor_handle);
         }
         

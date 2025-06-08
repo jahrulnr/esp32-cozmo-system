@@ -23,21 +23,6 @@ void setupWebServer() {
       webServer->getServer()->serveStatic("/css/", SPIFFS, "/css/");
       webServer->getServer()->serveStatic("/js/", SPIFFS, "/js/");
       
-      // API endpoints
-      webServer->on("/api/status", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Utils::SpiJsonDocument doc;
-        // Use the new DTO contract format
-        doc["version"] = "1.0";
-        doc["type"] = "system_status_response";
-        doc["data"]["status"] = "online";
-        doc["data"]["wifi"] = wifiManager && wifiManager->isConnected() ? "connected" : "disconnected";
-        doc["data"]["camera"] = camera ? "active" : "inactive";
-        
-        String response;
-        serializeJson(doc, response);
-        request->send(200, "application/json", response);
-      });
-      
       webServer->on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
         if (request->hasParam("path")) {
           String path = request->getParam("path")->value();

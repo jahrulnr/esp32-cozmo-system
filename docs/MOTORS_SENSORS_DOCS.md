@@ -57,7 +57,6 @@ public:
 
     bool init(int leftMotorPin1 = 2, int leftMotorPin2 = 4, 
               int rightMotorPin1 = 13, int rightMotorPin2 = 12);
-    void setSpeed(uint8_t speed);
     void move(Direction direction, unsigned long duration = 0);
     void stop();
     Direction getCurrentDirection() const;
@@ -83,9 +82,6 @@ Motors::MotorControl motors;
 void setup() {
     // Initialize motors with default pins
     motors.init();
-    
-    // Set motor speed (0-255)
-    motors.setSpeed(200);
 }
 
 void loop() {

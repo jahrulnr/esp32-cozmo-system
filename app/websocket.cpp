@@ -253,7 +253,7 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   }
                 }
               }
-              // Motor and servo control
+              // Motor 
               else if (type == "motor_command") {
                 float left = data["left"] | 0.0;
                 float right = data["right"] | 0.0;
@@ -360,24 +360,35 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   webSocket->sendError(clientId, 404, "Distance sensor not available");
                 }
               }
+              else if(type == "servo_update" && servos) {
+                String servoType = data["type"] | "";
+                int position = data["position"] | 0;
+
+                if (servoType == "head") {
+                  int servoY = map(position, -100, 100, 0, 180);
+
+                  servos->setHead(servoY);
+                  position = servos->getHead();
+
+                  logger->debug("Servo Y: " + String(servoY));
+                  webSocket->sendOk(clientId, "Servo updated. Y="+String(position));
+                } 
+                else if(servoType == "hand")  {
+                  int servoX = map(position, -100, 100, 0, 180);
+                  servos->setHand(servoX);
+                  position = servos->getHand();
+
+                  logger->debug("Servo X: " + String(servoX));
+                  webSocket->sendOk(clientId, "Servo updated. X="+String(position));
+                }
+              }
               // Legacy joystick update (convert to appropriate DTO commands)
               else if (type == "joystick_update") {
                 String joyType = data["type"] | "";
                 int x = data["x"] | 0;
                 int y = data["y"] | 0;
 
-                if (joyType == "servo" && servos) {
-                  // Map joystick values (-100 to 100) to servo angles
-                  int servoX = map(x, -100, 100, 0, 180);
-                  int servoY = map(y, -100, 100, 0, 180);
-
-                  servos->setHand(servoX); // Assuming channel 0 is X
-                  servos->setHead(servoY); // Assuming channel 1 is Y
-
-                  logger->debug("Servo X: " + String(servoX) + ", Y: " + String(servoY));
-                  webSocket->sendOk(clientId, "Servo updated");
-                }
-                else if (joyType == "motor" && motors) {
+                if (joyType == "motor" && motors) {
                   // Determine direction based on joystick input
                   Motors::MotorControl::Direction direction;
                   int directionValue = 0; // For status reporting

@@ -1,0 +1,9 @@
+just a note.
+
+original accelerator on my cozmo
+y=0
+y=-1 -> miring kekanan
+y=1 > miring kiri
+x=0
+x=1 putar atas
+x=-1 putar bawah

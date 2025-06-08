@@ -32,12 +32,6 @@ public:
               int rightMotorPin1 = 13, int rightMotorPin2 = 12);
 
     /**
-     * Set the speed of the motors
-     * @param speed Speed value (0-255)
-     */
-    void setSpeed(uint8_t speed);
-
-    /**
      * Move in a specified direction
      * @param direction Direction to move
      * @param duration Duration of movement in milliseconds (0 = continuous)
@@ -58,7 +52,6 @@ public:
 private:
     int _leftMotorPin1, _leftMotorPin2;
     int _rightMotorPin1, _rightMotorPin2;
-    uint8_t _speed;
     Direction _currentDirection;
     bool _initialized;
 };

@@ -11,11 +11,21 @@ int8_t explorationMap[MAP_SIZE][MAP_SIZE]; // -1: unknown, 0: free, 1: obstacle,
 int robotX = MAP_SIZE/2, robotY = MAP_SIZE/2; // Start in the middle
 float robotHeading = 0; // In degrees
 
+// Gyroscope rotation tracking variables
+float accumulatedZRotation = 0.0f;     // Accumulated rotation around Z axis in degrees
+float lastZGyroValue = 0.0f;           // Previous gyro reading for calculating delta
+unsigned long lastGyroReadTime = 0;    // Last time we read the gyro (for time delta)
+int fullRotationCount = 0;             // Count of complete 360° rotations
+bool inRotationSequence = false;       // Flag to indicate we're tracking a rotation sequence
+unsigned long rotationStartTime = 0;   // When the current rotation sequence started
+float rotationThreshold = 10.0f;       // Minimum degrees/sec to consider as intentional rotation
+
 // Flag for learning mode
 #define LEARNING_ENABLED true
 #define MAP_SAVE_PATH "/data/map_data.txt"
 #define DEFAULT_AUTOMATION_PATH "/data/default_automation.txt"
 #define LEARNING_AUTOMATION_PATH "/data/learning_automation.txt"
+#define ROTATION_LEARNING_PATH "/data/rotation_learning.txt"
 #define AUTOMATION_INTERVAL 1800000 // 30 minutes in milliseconds
 
 AutomationPattern defaultPattern = {
@@ -24,6 +34,10 @@ AutomationPattern defaultPattern = {
     {500, 350, 600, 350, 700, 350, 800, 350, 500, 500},
     10
 };
+
+// Function prototypes for rotation tracking
+void updateRotationTracking();
+bool saveRotationLearningData(int direction, unsigned long duration);
 
 // --- Automation Task for Obstacle Avoidance & Mapping ---
 void markMapCell(int x, int y, int8_t value) {
@@ -366,6 +380,21 @@ void executeAutomationStep(int moveType, int duration) {
             motors->move(Motors::MotorControl::RIGHT, duration);
             if (screen && screen->getFace()) screen->getFace()->Expression.GoTo_Skeptic();
             break;
+        case 4: // Gyro-assisted 90° left turn
+            rotateWithGyro(-1, 90, duration);
+            break;
+        case 5: // Gyro-assisted 90° right turn
+            rotateWithGyro(1, 90, duration);
+            break;
+        case 6: // Gyro-assisted 180° turn
+            rotateWithGyro(1, 180, duration);
+            break;
+        case 7: // Full 360° scan clockwise
+            perform360Scan(1);
+            break;
+        case 8: // Full 360° scan counterclockwise
+            perform360Scan(-1);
+            break;
         default:
             // Invalid movement type
             return;
@@ -455,7 +484,7 @@ void automationTask(void* parameter) {
     logger->info("Automation task started (obstacle avoidance & mapping)");
     
     int moveStep = 1; // 1 cell per move
-    int moveDuration = 400; // ms per move
+    int moveDuration = 5000; // ms per move
     int turnDuration = 350; // ms per 90 deg turn (adjust as needed)
     int8_t lastObstacle = 0;
     unsigned long lastMapSaveTime = 0;
@@ -475,6 +504,9 @@ void automationTask(void* parameter) {
         // Update cliff detectors
         if (cliffLeftDetector) cliffLeftDetector->update();
         if (cliffRightDetector) cliffRightDetector->update();
+        
+        // Update rotation tracking from gyroscope
+        updateRotationTracking();
         
         // Check for cliff detection
         bool cliff = cliffDetected();
@@ -514,15 +546,22 @@ void automationTask(void* parameter) {
             robotX -= dx * moveStep; // Move backward
             robotY -= dy * moveStep;
             
-            // Turn around (180 degrees)
+            // Turn around (180 degrees) using gyro-assisted rotation if available
             if (screen && screen->getFace()) screen->getFace()->Expression.GoTo_Focused();
-            motors->move(Motors::MotorControl::LEFT, turnDuration * 2);
             
-            // Update heading (180 degree turn)
-            robotHeading += 180;
-            if (robotHeading >= 360) robotHeading -= 360;
-            
-            vTaskDelay(pdMS_TO_TICKS(turnDuration * 2 + 100));
+            if (orientation) {
+                // Use precision gyro-based rotation
+                rotateWithGyro(-1, 180, turnDuration * 2);
+            } else {
+                // Fallback to timed rotation
+                motors->move(Motors::MotorControl::LEFT, turnDuration * 2);
+                
+                // Update heading (180 degree turn)
+                robotHeading += 180;
+                if (robotHeading >= 360) robotHeading -= 360;
+                
+                vTaskDelay(pdMS_TO_TICKS(turnDuration * 2 + 100));
+            }
             
             // Mark the cell in front as a cliff (special value 2)
             dx = round(cos((robotHeading - 180) * DEG_TO_RAD)); // Original direction
@@ -808,4 +847,376 @@ bool loadOfflineNavigationPattern(AutomationPattern& pattern) {
     }
     
     return false;
+}
+
+// Function to update rotation tracking based on gyroscope data
+void updateRotationTracking() {
+    if (!orientation) return;
+
+    // Get current time for delta time calculation
+    unsigned long currentTime = millis();
+    float deltaTime = 0;
+    
+    // Calculate time difference since last reading
+    if (lastGyroReadTime > 0) {
+        deltaTime = (currentTime - lastGyroReadTime) / 1000.0f; // Convert to seconds
+    }
+    lastGyroReadTime = currentTime;
+    
+    // If this is the first reading or too much time passed, skip accumulation
+    if (deltaTime <= 0 || deltaTime > 0.1) return;
+    
+    // Read current gyroscope data (Z-axis rotation)
+    orientation->update();
+    float currentZValue = orientation->getZ();
+    
+    // Calculate rotation delta in degrees
+    float rotationDelta = currentZValue * deltaTime;
+    
+    // Check if this is significant rotation (filter out noise/drift)
+    if (fabs(currentZValue) > rotationThreshold) {
+        // If not already in a rotation sequence, start one
+        if (!inRotationSequence) {
+            inRotationSequence = true;
+            rotationStartTime = currentTime;
+            accumulatedZRotation = 0.0f;
+            logger->debug("Starting rotation tracking sequence");
+        }
+        
+        // Accumulate rotation
+        accumulatedZRotation += rotationDelta;
+        
+        // Debug output every ~45 degrees
+        if (fabs(accumulatedZRotation) >= 45.0f && 
+            fabs(accumulatedZRotation) <= 46.0f) {
+            logger->debug("Accumulated rotation: " + String(accumulatedZRotation) + " degrees");
+        }
+        
+        // Check for full 360-degree rotation (with some tolerance)
+        if (fabs(accumulatedZRotation) >= 355.0f) {
+            // Determine rotation direction
+            int direction = (accumulatedZRotation > 0) ? 1 : -1;
+            
+            // Record the full rotation
+            fullRotationCount += direction;
+            
+            // Reset accumulation but keep tracking
+            accumulatedZRotation = 0.0f;
+            
+            // Log and save the rotation data
+            unsigned long rotationDuration = currentTime - rotationStartTime;
+            logger->info("Detected full 360° rotation! Direction: " + 
+                        String(direction > 0 ? "clockwise" : "counterclockwise") + 
+                        ", Duration: " + String(rotationDuration) + "ms");
+            
+            // Save rotation data for learning
+            saveRotationLearningData(direction, rotationDuration);
+            
+            // Update the rotation start time for the next potential rotation
+            rotationStartTime = currentTime;
+        }
+    }
+    // If rotation speed falls below threshold, end the sequence
+    else if (inRotationSequence && fabs(currentZValue) < rotationThreshold) {
+        // Only log if we accumulated meaningful rotation
+        if (fabs(accumulatedZRotation) > 45.0f) {
+            logger->debug("Ending rotation sequence, accumulated " + 
+                        String(accumulatedZRotation) + " degrees");
+        }
+        inRotationSequence = false;
+        accumulatedZRotation = 0.0f;
+    }
+    
+    // Update last value for next calculation
+    lastZGyroValue = currentZValue;
+}
+
+// Save rotation data to a file for learning
+bool saveRotationLearningData(int direction, unsigned long duration) {
+    #if LEARNING_ENABLED
+    static Utils::FileManager fileManager;
+    if (!fileManager.init()) {
+        logger->error("Failed to initialize FileManager for rotation data saving");
+        return false;
+    }
+    
+    // Create directory if it doesn't exist
+    String dirPath = "/data";
+    if (!fileManager.exists(dirPath)) {
+        fileManager.createDir(dirPath);
+    }
+    
+    // Create JSON data structure for rotation learning
+    Utils::SpiJsonDocument rotationData;
+    
+    // Check if file exists to append or create new
+    String existingData;
+    if (fileManager.exists(ROTATION_LEARNING_PATH)) {
+        existingData = fileManager.readFile(ROTATION_LEARNING_PATH);
+    }
+    
+    if (!existingData.isEmpty()) {
+        // Parse existing data
+        DeserializationError error = deserializeJson(rotationData, existingData);
+        if (error) {
+            logger->error("Failed to parse existing rotation data, creating new file");
+            rotationData = Utils::SpiJsonDocument();
+        }
+    }
+    
+    // If this is first entry, create the base structure
+    if (rotationData.isNull()) {
+        rotationData = Utils::SpiJsonDocument();
+        rotationData["rotations"] = JsonArray();
+    }
+    
+    // Add this rotation to the array
+    JsonObject rotation = rotationData["rotations"].add<JsonObject>();
+    rotation["timestamp"] = millis();
+    rotation["direction"] = direction > 0 ? "clockwise" : "counterclockwise";
+    rotation["duration_ms"] = duration;
+    rotation["x"] = robotX;
+    rotation["y"] = robotY;
+    
+    // Convert to string
+    String jsonData;
+    serializeJson(rotationData, jsonData);
+    
+    // Save to file
+    bool success = fileManager.writeFile(ROTATION_LEARNING_PATH, jsonData);
+    if (success) {
+        logger->debug("Rotation learning data saved to " + String(ROTATION_LEARNING_PATH));
+    } else {
+        logger->error("Failed to save rotation learning data");
+    }
+    return success;
+    #else
+    return false;
+    #endif
+}
+
+// Get rotation learning data as JSON string
+String getRotationLearningData() {
+    static Utils::FileManager fileManager;
+    if (!fileManager.init()) {
+        logger->error("Failed to initialize FileManager for reading rotation data");
+        return "{}";
+    }
+    
+    if (!fileManager.exists(ROTATION_LEARNING_PATH)) {
+        return "{\"rotations\":[]}";
+    }
+    
+    String data = fileManager.readFile(ROTATION_LEARNING_PATH);
+    if (data.isEmpty()) {
+        return "{\"rotations\":[]}";
+    }
+    
+    return data;
+}
+
+// Rotate using gyroscope data for precise turning
+bool rotateWithGyro(int direction, float targetDegrees, int maxTimeMs = 5000) {
+    if (!orientation || !motors) return false;
+    
+    // Reset accumulated rotation
+    accumulatedZRotation = 0.0f;
+    lastGyroReadTime = millis();
+    
+    // Direction: 1 for clockwise, -1 for counterclockwise
+    Motors::MotorControl::Direction turnDir = (direction > 0) ? 
+                                              Motors::MotorControl::RIGHT : 
+                                              Motors::MotorControl::LEFT;
+    
+    // Start rotating
+    motors->move(turnDir, maxTimeMs);
+    
+    // Set initial time for timeout
+    unsigned long startTime = millis();
+    
+    // Update screen to show we're rotating
+    if (screen && screen->getFace()) screen->getFace()->Expression.GoTo_Skeptic();
+    
+    logger->debug("Starting gyro-assisted rotation of " + String(targetDegrees) + " degrees");
+    
+    // Loop until we reach the target rotation or timeout
+    while (fabs(accumulatedZRotation) < targetDegrees && 
+           (millis() - startTime) < maxTimeMs) {
+        
+        // Get current time and calculate delta
+        unsigned long currentTime = millis();
+        float deltaTime = (currentTime - lastGyroReadTime) / 1000.0f;
+        lastGyroReadTime = currentTime;
+        
+        // Skip if time delta is invalid
+        if (deltaTime <= 0 || deltaTime > 0.1) continue;
+        
+        // Read gyroscope
+        orientation->update();
+        float zGyro = orientation->getZ();
+        
+        // Calculate rotation this frame and accumulate
+        float rotationThisFrame = zGyro * deltaTime;
+        accumulatedZRotation += rotationThisFrame;
+        
+        // Debugging every ~45 degrees
+        if (fmod(fabs(accumulatedZRotation), 45.0f) < 1.0f) {
+            logger->debug("Rotation progress: " + String(accumulatedZRotation) + " degrees");
+        }
+        
+        // Small delay to prevent CPU hogging
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
+    
+    // Stop motors
+    motors->stop();
+    
+    // Update heading based on actual rotation
+    robotHeading += direction * fabs(accumulatedZRotation);
+    if (robotHeading < 0) robotHeading += 360;
+    if (robotHeading >= 360) robotHeading -= 360;
+    
+    // Was the rotation successful?
+    bool success = fabs(accumulatedZRotation) >= (targetDegrees * 0.9); // 90% accuracy
+    
+    logger->info("Gyro rotation completed: " + String(accumulatedZRotation) + 
+                " degrees, target was " + String(targetDegrees) + 
+                (success ? " (success)" : " (incomplete)"));
+    
+    // Reset accumulation
+    accumulatedZRotation = 0.0f;
+    
+    return success;
+}
+
+// Perform a complete 360-degree rotation for mapping and learning
+bool perform360Scan(int direction = 1) {
+    if (!motors || !orientation) return false;
+    
+    logger->info("Starting 360-degree scan for mapping and learning");
+    
+    // Set face to scanning expression
+    if (screen && screen->getFace()) screen->getFace()->Expression.GoTo_Focused();
+    
+    // Reset tracking variables
+    accumulatedZRotation = 0.0f;
+    lastGyroReadTime = millis();
+    rotationStartTime = millis();
+    
+    // Direction (1 = clockwise, -1 = counterclockwise)
+    direction = (direction >= 0) ? 1 : -1;
+    Motors::MotorControl::Direction turnDir = (direction > 0) ? 
+                                             Motors::MotorControl::RIGHT : 
+                                             Motors::MotorControl::LEFT;
+    
+    // Start rotation
+    motors->move(turnDir);
+    
+    // Target is slightly more than 360 degrees to ensure we complete the full circle
+    float targetDegrees = 365.0f;
+    unsigned long startTime = millis();
+    unsigned long timeoutMs = 10000; // 10 second timeout
+    
+    // Map data collection points
+    int mapPoints = 8; // Take 8 readings during rotation
+    float degreeIncrement = 360.0f / mapPoints;
+    float nextMappingPoint = degreeIncrement;
+    
+    // Loop until we reach full rotation or timeout
+    logger->debug("Beginning rotation, target: " + String(targetDegrees) + " degrees");
+    
+    while (fabs(accumulatedZRotation) < targetDegrees && 
+           (millis() - startTime) < timeoutMs) {
+        
+        // Update time and gyroscope reading
+        unsigned long currentTime = millis();
+        float deltaTime = (currentTime - lastGyroReadTime) / 1000.0f;
+        lastGyroReadTime = currentTime;
+        
+        // Skip if time delta is invalid
+        if (deltaTime <= 0 || deltaTime > 0.1) continue;
+        
+        // Read gyroscope
+        orientation->update();
+        float zGyro = orientation->getZ();
+        
+        // Calculate rotation this frame and accumulate
+        float rotationThisFrame = zGyro * deltaTime;
+        accumulatedZRotation += rotationThisFrame;
+        
+        // Check if we've reached the next mapping point
+        if (fabs(accumulatedZRotation) >= nextMappingPoint) {
+            // Take distance reading at this point
+            float distance = distanceSensor ? distanceSensor->measureDistance() : -1;
+            
+            // Calculate angle in world coordinates
+            float worldAngle = robotHeading + (direction * fabs(accumulatedZRotation));
+            if (worldAngle < 0) worldAngle += 360;
+            if (worldAngle >= 360) worldAngle -= 360;
+            
+            logger->debug("Mapping point at " + String(nextMappingPoint) + 
+                         " degrees, distance: " + String(distance) + " cm");
+            
+            // If we have valid distance data, mark it on the map
+            if (distance > 0 && distance < 400) {
+                float radians = worldAngle * DEG_TO_RAD;
+                int cellDistance = round(distance / 20); // Convert to cell units (approx)
+                int dx = round(cos(radians) * cellDistance);
+                int dy = round(sin(radians) * cellDistance);
+                
+                // Mark the cell on the map
+                if (distance < 20) {
+                    markMapCell(robotX + dx, robotY + dy, 1); // Obstacle
+                } else {
+                    markMapCell(robotX + dx, robotY + dy, 0); // Free space
+                }
+            }
+            
+            // Update next mapping point
+            nextMappingPoint += degreeIncrement;
+        }
+        
+        // Debug output every 90 degrees
+        if (fmod(fabs(accumulatedZRotation), 90.0f) < 2.0f && 
+            fabs(accumulatedZRotation) > 5.0f) {
+            logger->debug("Rotation progress: " + String(accumulatedZRotation) + " degrees");
+        }
+        
+        // Small delay to prevent CPU hogging
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
+    
+    // Stop motors
+    motors->stop();
+    
+    // Calculate actual duration
+    unsigned long duration = millis() - rotationStartTime;
+    
+    // Was the rotation successful?
+    bool success = fabs(accumulatedZRotation) >= 350.0f; // At least 350 degrees
+    
+    if (success) {
+        logger->info("360-degree scan completed: " + String(accumulatedZRotation) + 
+                    " degrees in " + String(duration) + "ms");
+        
+        // Save rotation data
+        saveRotationLearningData(direction, duration);
+        
+        // Update the map
+        saveMapToFile();
+        
+        // Return to happy face
+        if (screen && screen->getFace()) screen->getFace()->Expression.GoTo_Happy();
+    } else {
+        logger->warning("360-degree scan incomplete: only reached " + 
+                       String(accumulatedZRotation) + " degrees");
+        
+        // Return to concerned face
+        if (screen && screen->getFace()) screen->getFace()->Expression.GoTo_Skeptic();
+    }
+    
+    // Reset accumulation
+    accumulatedZRotation = 0.0f;
+    
+    return success;
 }

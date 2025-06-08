@@ -151,7 +151,6 @@ The MotorControl class manages the robot's movement via DC motors.
 ```cpp
 Motors::MotorControl motors;
 motors.init(2, 4, 13, 12);  // left1, left2, right1, right2 pins
-motors.setSpeed(200);  // 0-255
 motors.move(Motors::MotorControl::FORWARD, 1000);  // Move forward for 1 second
 ```
 

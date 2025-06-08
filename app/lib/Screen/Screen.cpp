@@ -4,7 +4,7 @@ namespace Screen {
 
 Screen::Screen(Utils::Logger *logger) : _u8g2(nullptr), _initialized(false), 
     _holdFace(false), _holdTimer(0),
-    _mux(xSemaphoreCreateMutex()) {
+    _mux(xSemaphoreCreateMutex()), _face(nullptr) {
     _logger = logger;
 }
 
@@ -59,7 +59,8 @@ bool Screen::init(int sda, int scl) {
     _face->Look.Timer.SetIntervalMillis(1000);
     
     clear();
-    autoFace();
+    autoFace(false);
+    _face->RandomBlink = true;
     update();
     
     _initialized = true;
@@ -301,9 +302,9 @@ Face *Screen::getFace() {
 }
 
 void Screen::autoFace(bool exp) {
-//   _face->RandomBehavior = 
+  _face->RandomBehavior = 
   _face->RandomBlink = 
-//   _face->RandomLook = 
+  _face->RandomLook = 
     exp;
 }
 

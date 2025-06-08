@@ -29,8 +29,8 @@ bool ServoControl::init(int headServoPin, int handServoPin) {
     _headServo.setPeriodHertz(50);    // Standard 50hz servo
     _handServo.setPeriodHertz(50);   // Standard 50hz servo
     
-    _headServo.attach(_headServoPin, 500, 2400);
-    _handServo.attach(_handServoPin, 500, 2400);
+    _headServo.attach(_headServoPin, 500, 2500);
+    _handServo.attach(_handServoPin, 500, 2500);
     
     // Set initial positions
     setHead(_headAngle);
@@ -46,7 +46,7 @@ void ServoControl::setHead(int angle) {
     }
     
     // Constrain angle to valid range
-    _headAngle = constrain(angle, 0, 180);
+    _headAngle = constrain(angle, 60, 110);
     _headServo.write(_headAngle);
 }
 
@@ -56,7 +56,10 @@ void ServoControl::setHand(int angle) {
     }
     
     // Constrain angle to valid range
-    _handAngle = constrain(angle, 0, 180);
+    angle = constrain(angle, 0, 180);
+    // reverse
+    angle = 180 - angle;
+    _handAngle = constrain(angle, 90, 130);
     _handServo.write(_handAngle);
 }
 
@@ -65,7 +68,8 @@ int ServoControl::getHead() const {
 }
 
 int ServoControl::getHand() const {
-    return _handAngle;
+    // reverse
+    return 180 - _handAngle;
 }
 
 } // namespace Motors

@@ -3,6 +3,14 @@
 
 namespace Sensors {
 
+// adjustable based on position implementation
+const int BUFFER_X1 = 2; // original is 0
+const int BUFFER_Y1 = 0; // original is 2
+const int BUFFER_Z1 = 4;
+const int BUFFER_X2 = 3; // original is 1
+const int BUFFER_Y2 = 1; // original is 3
+const int BUFFER_Z2 = 5;
+
 OrientationSensor::OrientationSensor() : _x(0), _y(0), _z(0), 
                _accelX(0), _accelY(0), _accelZ(0),
                _offsetX(0), _offsetY(0), _offsetZ(0),
@@ -92,9 +100,9 @@ void OrientationSensor::update() {
                                                      MPU6050_REG_ACCEL_XOUT_H, 
                                                      accelBuffer, sizeof(accelBuffer))) {
         // Convert raw values to g using current scaling factor
-        _accelX = ((int16_t)((accelBuffer[0] << 8) | accelBuffer[1])) / _accelScale;
-        _accelY = ((int16_t)((accelBuffer[2] << 8) | accelBuffer[3])) / _accelScale;
-        _accelZ = ((int16_t)((accelBuffer[4] << 8) | accelBuffer[5])) / _accelScale;
+        _accelX = ((int16_t)((accelBuffer[BUFFER_X1] << 8) | accelBuffer[BUFFER_X2])) / _accelScale;
+        _accelY = ((int16_t)((accelBuffer[BUFFER_Y1] << 8) | accelBuffer[BUFFER_Y2])) / _accelScale;
+        _accelZ = ((int16_t)((accelBuffer[BUFFER_Z1] << 8) | accelBuffer[BUFFER_Z2])) / _accelScale;
         
         // Apply calibration offsets
         _accelX -= _accelOffsetX;
@@ -110,9 +118,9 @@ void OrientationSensor::update() {
                                                      MPU6050_REG_GYRO_XOUT_H, 
                                                      gyroBuffer, sizeof(gyroBuffer))) {
         // Convert raw values to degrees per second using current scaling factor
-        _x = ((int16_t)((gyroBuffer[0] << 8) | gyroBuffer[1])) / _gyroScale;
-        _y = ((int16_t)((gyroBuffer[2] << 8) | gyroBuffer[3])) / _gyroScale;
-        _z = ((int16_t)((gyroBuffer[4] << 8) | gyroBuffer[5])) / _gyroScale;
+        _x = ((int16_t)((gyroBuffer[BUFFER_X1] << 8) | gyroBuffer[BUFFER_X2])) / _gyroScale;
+        _y = ((int16_t)((gyroBuffer[BUFFER_Y1] << 8) | gyroBuffer[BUFFER_Y2])) / _gyroScale;
+        _z = ((int16_t)((gyroBuffer[BUFFER_Z1] << 8) | gyroBuffer[BUFFER_Z2])) / _gyroScale;
         
         // Apply calibration offsets
         _x -= _offsetX;
@@ -176,9 +184,9 @@ bool OrientationSensor::calibrate() {
                                                          MPU6050_REG_ACCEL_XOUT_H, 
                                                          accelBuffer, sizeof(accelBuffer))) {
             // Get raw accelerometer values
-            float rawAccelX = ((int16_t)((accelBuffer[0] << 8) | accelBuffer[1])) / _accelScale;
-            float rawAccelY = ((int16_t)((accelBuffer[2] << 8) | accelBuffer[3])) / _accelScale;
-            float rawAccelZ = ((int16_t)((accelBuffer[4] << 8) | accelBuffer[5])) / _accelScale;
+            float rawAccelX = ((int16_t)((accelBuffer[BUFFER_X1] << 8) | accelBuffer[BUFFER_X2])) / _accelScale;
+            float rawAccelY = ((int16_t)((accelBuffer[BUFFER_Y1] << 8) | accelBuffer[BUFFER_Y2])) / _accelScale;
+            float rawAccelZ = ((int16_t)((accelBuffer[BUFFER_Z1] << 8) | accelBuffer[BUFFER_Z2])) / _accelScale;
             
             sumAccelX += rawAccelX;
             sumAccelY += rawAccelY;
@@ -190,9 +198,9 @@ bool OrientationSensor::calibrate() {
                                                          MPU6050_REG_GYRO_XOUT_H, 
                                                          gyroBuffer, sizeof(gyroBuffer))) {
             // Get raw gyro values
-            float rawGyroX = ((int16_t)((gyroBuffer[0] << 8) | gyroBuffer[1])) / _gyroScale;
-            float rawGyroY = ((int16_t)((gyroBuffer[2] << 8) | gyroBuffer[3])) / _gyroScale;
-            float rawGyroZ = ((int16_t)((gyroBuffer[4] << 8) | gyroBuffer[5])) / _gyroScale;
+            float rawGyroX = ((int16_t)((gyroBuffer[BUFFER_X1] << 8) | gyroBuffer[BUFFER_X2])) / _gyroScale;
+            float rawGyroY = ((int16_t)((gyroBuffer[BUFFER_Y1] << 8) | gyroBuffer[BUFFER_Y2])) / _gyroScale;
+            float rawGyroZ = ((int16_t)((gyroBuffer[BUFFER_Z1] << 8) | gyroBuffer[BUFFER_Z2])) / _gyroScale;
             
             sumGyroX += rawGyroX;
             sumGyroY += rawGyroY;
@@ -210,7 +218,7 @@ bool OrientationSensor::calibrate() {
     // For accelerometer, we only want to zero X and Y, but leave Z with gravity of ~1g
     _accelOffsetX = sumAccelX / samples;
     _accelOffsetY = sumAccelY / samples;
-    _accelOffsetZ = (sumAccelZ / samples) - 1.0; // Subtract 1g to account for gravity
+    _accelOffsetZ = sumAccelZ / samples;
     
     Serial.printf("Calibration complete.\n");
     Serial.printf("Gyro offsets: X=%.4f, Y=%.4f, Z=%.4f\n", _offsetX, _offsetY, _offsetZ);

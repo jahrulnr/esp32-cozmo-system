@@ -16,6 +16,8 @@ const wifiList = document.getElementById('wifi-list');
 const fileList = document.getElementById('file-list');
 const breadcrumb = document.getElementById('breadcrumb');
 const printTime = document.querySelectorAll('.print-time');
+const servoHeadSlider = document.getElementById('servo-head-slider');
+const servoHandSlider = document.getElementById('servo-hand-slider');
     
 // Variables for frame processing
 let frameHeader = null;
@@ -375,16 +377,34 @@ document.addEventListener('DOMContentLoaded', () => {
     function initJoysticks() {
         if (joystickInitialized) return;
         joystickInitialized = true;
-        // Initialize the servo joystick using the bobboteck library
-        servoJoystickObj = new JoyStick('servo-joystick-container', {
-            title: 'servo-joystick',
-            width: 200, 
-            height: 200,
-            internalFillColor: '#3498db',
-            internalStrokeColor: '#2980b9',
-            externalStrokeColor: '#2c3e50',
-            autoReturnToCenter: true
-        }, servoJoystickCallback);
+        
+        if (servoHeadSlider) {
+            servoHeadSlider.addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('servo-x').textContent = value;
+                
+                // Send to server with throttling
+                const currentTime = Date.now();
+                if (currentTime - lastSendTimeServo >= sendThrottle) {
+                    sendServoPosition('head', value);
+                    lastSendTimeServo = currentTime;
+                }
+            });
+        }
+        
+        if (servoHandSlider) {
+            servoHandSlider.addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('servo-y').textContent = value;
+                
+                // Send to server with throttling
+                const currentTime = Date.now();
+                if (currentTime - lastSendTimeServo >= sendThrottle) {
+                    sendServoPosition('hand', value);
+                    lastSendTimeServo = currentTime;
+                }
+            });
+        }
 
         // Initialize the motor joystick using the bobboteck library
         motorJoystickObj = new JoyStick('motor-joystick-container', {
@@ -398,17 +418,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }, motorJoystickCallback);
     }
 
-    // Callback function for the servo joystick
-    function servoJoystickCallback(stickData) {
-        // Update display values on the UI
-        updateJoystickDisplayValues('servo', stickData.x, stickData.y);
+    // Function for sending servo position
+    function sendServoPosition(type, value) {
+        // Convert to number if needed
+        value = parseInt(value, 10);
         
-        // Send to server with throttling
-        const currentTime = Date.now();
-        if (currentTime - lastSendTimeServo >= sendThrottle) {
-            sendJoystickPosition('servo', stickData.x, stickData.y);
-            lastSendTimeServo = currentTime;
+        // Validate input
+        if (isNaN(value)) {
+            console.error(`Invalid servo position value: ${value}`);
+            return;
         }
+        
+        console.log(`Sending servo ${type} position: ${value}`);
+        
+        sendCommand('servo_update', {
+            type: type,
+            position: value
+        });
     }
 
     // Callback function for the motor joystick
@@ -599,14 +625,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Only update joystick displays from sensor data if we have a specific flag
         // This prevents sensor updates from overriding manual joystick positioning
         if (data.updateJoysticks === true) {
-            // Update joystick position displays
-            if (data.servo) {
-                updateJoystickDisplayValues('servo', data.servo.x, data.servo.y);
-            }
-            
             // Update motor position displays if available
             if (data.motor) {
                 updateJoystickDisplayValues('motor', data.motor.x, data.motor.y);
+            }
+        }
+
+        if (data.servo) {
+            if (data.servo.head) {
+                document.getElementById('servo-x').textContent = data.servo.head;
+                servoHeadSlider.value = data.servo.head;
+            }
+            if (data.servo.hand) {
+                document.getElementById('servo-y').textContent = data.servo.hand;
+                servoHandSlider.value = data.servo.hand;
             }
         }
     }
@@ -1891,19 +1923,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to reset joysticks position
     function resetJoysticks() {
-        const servoJoystick = document.getElementById('servo-joystick');
         const motorJoystick = document.getElementById('motor-joystick');
         
-        // Reset both joysticks - For absolutely positioned elements with transform: translate(-50%, -50%),
-        // we should just reset to center of container
-        if (servoJoystick) {
-            servoJoystick.style.left = '50%';
-            servoJoystick.style.top = '50%';
-            updateJoystickDisplayValues('servo', 0, 0); // Reset servo display values
-            // Also notify the server
-            sendJoystickPosition('servo', 0, 0);
-        }
-        
+        // Reset motor joystick
         if (motorJoystick) {
             motorJoystick.style.left = '50%';
             motorJoystick.style.top = '50%';
