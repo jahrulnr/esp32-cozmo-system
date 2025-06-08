@@ -17,8 +17,6 @@ This document details the Motors and Sensors components of the Cozmo-System proj
    - [CliffDetector](#cliffdetector)
    - [DistanceSensor](#distancesensor)
 
-3. [Automation: Obstacle Avoidance & Mapping](#automation-obstacle-avoidance--mapping)
-
 ---
 
 ## Motors Component
@@ -824,47 +822,5 @@ The measurement process involves:
 4. Validating the measurement against minimum and maximum ranges
 
 The obstacle detection feature provides a simplified interface for detecting objects within a specific distance threshold, which can be used for collision avoidance algorithms.
-
----
-
-## Automation: Obstacle Avoidance & Mapping
-
-### Overview
-The automation task enables the robot to move autonomously, avoid obstacles, and build a simple map of its environment using the distance sensor, gyro, and accelerometer.
-
-### Features
-- **Obstacle Avoidance:**
-  - Robot moves forward until an obstacle is detected (using HC-SR04 distance sensor).
-  - If an obstacle is detected, the robot stops, displays a surprised face, then turns left or right, and continues moving.
-  - Uses gyro to update heading after turning.
-- **Mapping (Simple SLAM):**
-  - Robot maintains a simple grid map of explored area.
-  - Marks cells as free or obstacle based on sensor readings and movement.
-  - Map can be extended for visualization or further SLAM development.
-- **Expression Integration:**
-  - Robot face changes expression based on events (happy when moving, surprised on obstacle, focused when turning).
-
-### How It Works
-- The automation task runs in the background.
-- At each step:
-  1. Measure distance ahead.
-  2. If obstacle detected, mark map, stop, show expression, turn, update heading.
-  3. If no obstacle, move forward, update position, mark map as free.
-- The robot's position and heading are tracked in a grid.
-
-### Example Map Structure
-```cpp
-#define MAP_SIZE 20
-int8_t explorationMap[MAP_SIZE][MAP_SIZE]; // -1: unknown, 0: free, 1: obstacle
-int robotX = MAP_SIZE/2, robotY = MAP_SIZE/2; // Start in the middle
-float robotHeading = 0; // In degrees
-```
-
-### Task Initialization
-Call `setupTasks();` in your `setup()` function.
-
-### Customization
-- Adjust `moveDuration`, `turnDuration`, and `MAP_SIZE` as needed.
-- Integrate with WebSocket or dashboard for map visualization.
 
 ---

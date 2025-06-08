@@ -33,11 +33,11 @@ void Face::LookFront() {
 }
 
 void Face::LookRight() {
-	Look.LookAt(-1.0, 0.0);
+	Look.LookAt(1.0, 0.0);
 }
 
 void Face::LookLeft() {
-	Look.LookAt(1.0, 0.0);
+	Look.LookAt(-1.0, 0.0);
 }
 
 void Face::LookTop() {

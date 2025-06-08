@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <ESP32Servo.h>
+#include "lib/Screen/Screen.h"
 
 namespace Motors {
 
@@ -10,6 +11,11 @@ namespace Motors {
  */
 class ServoControl {
 public:
+    enum ServoType {
+        HEAD,
+        HAND
+    };
+
     ServoControl();
     ~ServoControl();
 
@@ -33,6 +39,8 @@ public:
      */
     void setHand(int angle);
 
+    void setScreen(Screen::Screen *screen);
+
     /**
      * Get the current head angle
      * @return Current head angle in degrees
@@ -50,7 +58,11 @@ private:
     Servo _handServo;
     int _headAngle, _handAngle, _armAngle;
     int _headServoPin, _handServoPin, _armServoPin;
+    int _lastHeadPosition, _lastHandPosition;
     bool _initialized;
+
+    Screen::Screen *_screen;
+    void moveLook(ServoType type, int angle);
 };
 
 } // namespace Motors

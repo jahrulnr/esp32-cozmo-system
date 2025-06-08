@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include "app.h"
 
-TaskHandle_t automationTaskHandle = NULL;
 TaskHandle_t cameraStreamTaskHandle = NULL;
 TaskHandle_t sensorMonitorTaskHandle = NULL;
 
@@ -37,17 +36,6 @@ void setupTasks() {
         &sensorMonitorTaskHandle   // Task handle
     );
 
-    #ifdef AUTOMATION
-    xTaskCreate(
-        automationTask,         // Task function
-        "Automation",           // Task name
-        20 * 1024,              // Stack size
-        NULL,                   // Parameters
-        1,                      // Priority
-        &automationTaskHandle   // Task handle
-    );
-    #endif
-
     logger->info("Tasks initialized");
 }
 
@@ -64,8 +52,8 @@ void sensorMonitorTask(void* parameter) {
     }
     
     logger->info("Sensor monitoring task started");
-    const int updateInterval = 50;
-    const int sendInterval = 399;
+    const int updateInterval = 3;
+    const int sendInterval = 200;
     long currentUpdate = millis();
     SemaphoreHandle_t sensor_handle = xSemaphoreCreateMutex();
     
@@ -89,6 +77,7 @@ void sensorMonitorTask(void* parameter) {
             jsonData["accel"]["magnitude"] = orientation->getAccelMagnitude();
             jsonData.shrinkToFit();
             xSemaphoreGive(sensor_handle);
+            vTaskDelay(pdMS_TO_TICKS(updateInterval));
         }
         
         // Add distance sensor data if available
@@ -100,6 +89,7 @@ void sensorMonitorTask(void* parameter) {
             jsonData["distance"]["obstacle"] = distanceSensor->isObstacleDetected();
             jsonData.shrinkToFit();
             xSemaphoreGive(sensor_handle);
+            vTaskDelay(pdMS_TO_TICKS(updateInterval));
         }
         
         // Add cliff detector data if available
@@ -110,6 +100,7 @@ void sensorMonitorTask(void* parameter) {
             jsonData["cliff"]["right"] = cliffRightDetector->isCliffDetected();
             jsonData.shrinkToFit();
             xSemaphoreGive(sensor_handle);
+            vTaskDelay(pdMS_TO_TICKS(updateInterval));
         }
         
         // Add temperature sensor data if available
@@ -128,6 +119,7 @@ void sensorMonitorTask(void* parameter) {
                 }
             }
             xSemaphoreGive(sensor_handle);
+            vTaskDelay(pdMS_TO_TICKS(updateInterval));
         }
         
         // Add temperature sensor data if available
@@ -146,6 +138,7 @@ void sensorMonitorTask(void* parameter) {
                 }
             }
             xSemaphoreGive(sensor_handle);
+            vTaskDelay(pdMS_TO_TICKS(updateInterval));
         }
         
         // Add temperature sensor data if available
@@ -158,6 +151,7 @@ void sensorMonitorTask(void* parameter) {
             jsonData["servo"]["hand"] = servoHand;
             jsonData.shrinkToFit();
             xSemaphoreGive(sensor_handle);
+            vTaskDelay(pdMS_TO_TICKS(updateInterval));
         }
         
         // Send the data to all connected clients using the DTO v1.0 format

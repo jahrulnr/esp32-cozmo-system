@@ -270,19 +270,14 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                     Motors::MotorControl::Direction direction;
 
                     if (left > 0 && right > 0) {
-                      screen->getFace()->LookTop();
                       direction = Motors::MotorControl::FORWARD;
                     } else if (left < 0 && right < 0) {
-                      screen->getFace()->LookBottom();
                       direction = Motors::MotorControl::BACKWARD;
                     } else if (left < 0 && right > 0) {
-                      screen->getFace()->LookLeft();
                       direction = Motors::MotorControl::LEFT;
                     } else if (left > 0 && right < 0) {
-                      screen->getFace()->LookRight();
                       direction = Motors::MotorControl::RIGHT;
                     } else {
-                      screen->getFace()->LookFront();
                       direction = Motors::MotorControl::STOP;
                     }
 
@@ -799,52 +794,6 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   webSocket->sendJsonMessage(clientId, "chat_message", response);
                 }
                 #endif
-              }
-              // Learning data operations
-              else if (type == "get_learning_data") {
-                String dataType = data["dataType"] | "gpt";  // Default to GPT data
-
-                if (dataType == "gpt") {
-                  // Get GPT learning data
-                  String learningData = getGPTLearningData();
-
-                  Utils::SpiJsonDocument response;
-                  response["data"] = learningData;
-                  response["type"] = "gpt";
-                  webSocket->sendJsonMessage(clientId, "learning_data", response);
-                  logger->debug("Sent GPT learning data to client #" + String(clientId));
-                }
-                else if (dataType == "map") {
-                  // Get robot map data
-                  String mapJson = getMapAsJson();
-
-                  Utils::SpiJsonDocument response;
-                  response["data"] = mapJson;
-                  response["type"] = "map";
-                  webSocket->sendJsonMessage(clientId, "learning_data", response);
-                  logger->debug("Sent map data to client #" + String(clientId));
-                }
-              }
-              // Clear learning data
-              else if (type == "clear_learning_data") {
-                String dataType = data["dataType"] | "gpt";
-                bool success = false;
-
-                if (dataType == "gpt") {
-                  // Clear GPT learning data
-                  success = clearGPTLearningData();
-                }
-                else if (dataType == "map") {
-                  // Reset map
-                  resetMap();
-                  success = true;
-                }
-
-                Utils::SpiJsonDocument response;
-                response["success"] = success;
-                response["dataType"] = dataType;
-                webSocket->sendJsonMessage(clientId, "learning_data_cleared", response);
-                logger->debug("Cleared " + dataType + " learning data: " + String(success ? "success" : "failed"));
               }
               // Debug command
               else if (type == "debug_command") {

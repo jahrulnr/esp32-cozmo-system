@@ -13,7 +13,6 @@
 
 // Motor configuration
 #define MOTOR_ENABLED true
-#define MOTOR_SPEED_DEFAULT 255
 #define LEFT_MOTOR_PIN1 12
 #define LEFT_MOTOR_PIN2 13
 #define RIGHT_MOTOR_PIN1 10

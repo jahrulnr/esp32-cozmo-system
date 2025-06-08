@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "app.h"
-#include "lib/Automation/TemperatureBehavior.h"
 
 // Temperature thresholds
 const float TEMP_HIGH_THRESHOLD = 30.0;
@@ -20,9 +19,6 @@ void setupTemperatureSensor() {
   temperatureSensor = new Sensors::TemperatureSensor();
   if (temperatureSensor->init()) {
     logger->info("Temperature sensor initialized successfully");
-    
-    // Initialize temperature-based behavior templates
-    setupTemperatureTemplates();
   } else {
     logger->warning("Temperature sensor initialization failed or not supported on this device");
   }
@@ -62,12 +58,10 @@ void checkTemperature() {
   
   if (temperature > TEMP_HIGH_THRESHOLD) {
     logger->info("High temperature detected: " + String(temperature, 1) + "°C");
-    executeTemperatureBehavior();
     behaviorTriggered = true;
   }
   else if (temperature < TEMP_LOW_THRESHOLD) {
     logger->info("Low temperature detected: " + String(temperature, 1) + "°C");
-    executeTemperatureBehavior();
     behaviorTriggered = true;
   }
   

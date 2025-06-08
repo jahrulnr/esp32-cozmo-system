@@ -4,7 +4,8 @@ namespace Motors {
 
 MotorControl::MotorControl() : _leftMotorPin1(-1), _leftMotorPin2(-1),
                                _rightMotorPin1(-1), _rightMotorPin2(-1),
-                               _currentDirection(STOP), _initialized(false) {
+                               _currentDirection(STOP), _initialized(false),
+                               _screen(nullptr) {
 }
 
 MotorControl::~MotorControl() {
@@ -29,6 +30,31 @@ bool MotorControl::init(int leftMotorPin1, int leftMotorPin2, int rightMotorPin1
     return true;
 }
 
+void MotorControl::setScreen(Screen::Screen *screen) {
+    _screen = screen;
+}
+
+void MotorControl::moveLook(MotorControl::Direction direction) {
+    if (_screen && _screen->getFace()) {
+        switch (direction) {
+            case FORWARD:
+            case BACKWARD:
+            case STOP:
+            default:
+                _screen->getFace()->LookFront();
+                break;
+                
+            case LEFT:
+                _screen->getFace()->LookLeft();
+                break;
+                
+            case RIGHT:
+                _screen->getFace()->LookRight();
+                break;
+        }
+    }
+}
+
 void MotorControl::move(Direction direction, unsigned long duration) {
     if (!_initialized) {
         return;
@@ -36,6 +62,7 @@ void MotorControl::move(Direction direction, unsigned long duration) {
 
     _currentDirection = direction;
 
+    moveLook(direction);
     switch (direction) {
         case FORWARD:
             digitalWrite(_leftMotorPin1, HIGH);
@@ -73,7 +100,7 @@ void MotorControl::move(Direction direction, unsigned long duration) {
 
     // If duration is specified, stop after the given time
     if (duration > 0) {
-        delay(duration);
+        vTaskDelay(pdMS_TO_TICKS(duration));
         stop();
     }
 }
@@ -83,6 +110,7 @@ void MotorControl::stop() {
         return;
     }
     
+    moveLook(STOP);
     digitalWrite(_leftMotorPin1, LOW);
     digitalWrite(_leftMotorPin2, LOW);
     digitalWrite(_rightMotorPin1, LOW);

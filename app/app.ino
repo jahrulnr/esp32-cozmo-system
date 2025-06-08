@@ -22,11 +22,9 @@ Utils::Logger* logger = nullptr;
 Utils::CommandMapper* commandMapper = nullptr;
 
 void setup() {
-  // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   heap_caps_malloc_extmem_enable(0);  
   disableLoopWDT();
   setCpuFrequencyMhz(240);
-  // gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);

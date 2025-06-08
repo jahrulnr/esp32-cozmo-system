@@ -122,7 +122,7 @@ void gptChatTask(void * param) {
 		
 		// Motors configuration
 		if (motors != nullptr) {
-			additionalCommand += "Motors: Enabled with default speed " + String(MOTOR_SPEED_DEFAULT) + "\n";
+			additionalCommand += "Motors: Enabled \n";
 			additionalCommand += "- Left Motor: PIN1=" + String(LEFT_MOTOR_PIN1) + ", PIN2=" + String(LEFT_MOTOR_PIN2) + "\n";
 			additionalCommand += "- Right Motor: PIN1=" + String(RIGHT_MOTOR_PIN1) + ", PIN2=" + String(RIGHT_MOTOR_PIN2) + "\n";
 		} else {
@@ -268,26 +268,6 @@ void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback c
 	};
 
 	xTaskCreate(gptChatTask, "gptChatTask", 20 * 1024, data, 10, &gptTaskHandle);
-}
-
-// Function to retrieve learning data (can be called by automation tasks)
-String getGPTLearningData() {
-  #if GPT_LEARNING_ENABLED
-  static Utils::FileManager fileManager;
-  if (!fileManager.init()) {
-    logger->error("Failed to initialize FileManager for GPT data retrieval");
-    return "";
-  }
-  
-  if (!fileManager.exists(GPT_DATA_LOG_PATH)) {
-    logger->warning("GPT learning data file does not exist");
-    return "";
-  }
-  
-  return fileManager.readFile(GPT_DATA_LOG_PATH);
-  #else
-  return "";
-  #endif
 }
 
 // Clear learning data (useful for testing or resetting learning)
