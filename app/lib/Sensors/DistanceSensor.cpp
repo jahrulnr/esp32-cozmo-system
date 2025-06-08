@@ -65,12 +65,12 @@ float DistanceSensor::measureDistance() {
     // Speed of sound is ~343m/s or ~0.0343cm/μs
     // Distance = (Duration / 2) * 0.0343
     float distance = (duration / 2.0) * 0.0343;
+    _inprogress = false;
     
     // Check if the measurement is valid
     if (duration == 0 || distance > _maxDistance) {
-        return -1.0; // Timeout or out of range
+        return _lastValue > 0 ? _lastValue : -1.0; // Timeout or out of range
     }
-    _inprogress = false;
     _lastValue = distance;
     
     return distance;
