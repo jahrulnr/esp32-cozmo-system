@@ -396,13 +396,13 @@ bool Automation::saveBehaviorsToFile() {
     }
     
     // Build the content to save
-    String content = "";
+    String content = "\n";
     for (const auto& behavior : m_templateBehaviors) {
         content += behavior.toString() + "\n";
     }
     
     // Save to file
-    bool success = m_fileManager->writeFile("/config/templates.txt", content);
+    bool success = m_fileManager->appendFile("/config/templates.txt", content);
     
     // Log the result
     if (m_logger) {
