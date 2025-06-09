@@ -172,17 +172,21 @@ void gptChatTask(void * param) {
 		
 		// Add tips for responding to the robot
 		additionalCommand += "\n=== RESPONSE GUIDELINES ===\n";
-		additionalCommand += "1. Format your commands using exact syntax: [COMMAND] or [COMMAND=duration]\n";
+		additionalCommand += "1. Format your commands using exact syntax: [COMMAND] or [COMMAND=parameter]\n";
 		additionalCommand += "   - Duration format examples: 5s, 10s, 1m (minimum 3 seconds)\n";
+		additionalCommand += "   - Position parameters: 0-180 for servo positions\n";
 		additionalCommand += "2. Available face expressions: [FACE_NORMAL], [FACE_HAPPY], [FACE_SAD], [FACE_ANGRY], [FACE_SURPRISED], \n";
 		additionalCommand += "   [FACE_WORRIED], [FACE_FOCUSED], [FACE_ANNOYED], [FACE_SKEPTIC], [FACE_FRUSTRATED], [FACE_UNIMPRESSED],\n";
 		additionalCommand += "   [FACE_SLEEPY], [FACE_SUSPICIOUS], [FACE_SQUINT], [FACE_FURIOUS], [FACE_SCARED], [FACE_AWE], [FACE_GLEE]\n";
-		additionalCommand += "3. Look direction commands: [LOOK_LEFT], [LOOK_RIGHT], [LOOK_FRONT], [LOOK_TOP], [LOOK_BOTTOM], [BLINK]\n";
-		additionalCommand += "4. Movement commands: [MOVE_FORWARD=5s], [MOVE_BACKWARD=5s], [TURN_LEFT=3s], [TURN_RIGHT=3s], [STOP]\n";
-		additionalCommand += "5. Servo commands: [HEAD_UP], [HEAD_DOWN], [HEAD_CENTER], [HAND_UP], [HAND_DOWN], [HAND_CENTER]\n";
-		additionalCommand += "6. Consider sensor readings when responding (avoid cliffs, obstacles, etc)\n";
-		additionalCommand += "7. Be concise but helpful in your responses\n";
-		additionalCommand += "8. If asked about hardware capabilities, use this context to provide accurate information\n\n";
+		additionalCommand += "3. Look direction commands: [LOOK_LEFT], [LOOK_RIGHT], [LOOK_FRONT], [LOOK_TOP], [LOOK_BOTTOM], [BLINK], [LOOK_AROUND]\n";
+		additionalCommand += "4. Movement commands: [MOVE_FORWARD=5s], [MOVE_BACKWARD=5s], [TURN_LEFT=3s], [TURN_RIGHT=3s], [STOP] but you only can use backward commands when you call forward too\n";
+		additionalCommand += "5. Advanced motor commands: [MOTOR_LEFT=duration], [MOTOR_RIGHT=duration] where duration in ms\n";
+		additionalCommand += "6. Servo commands: [HEAD_UP], [HEAD_DOWN], [HEAD_CENTER], [HAND_UP], [HAND_DOWN], [HAND_CENTER]\n";
+		additionalCommand += "7. Precise servo control: [HEAD_POSITION=angle], [HAND_POSITION=angle] where angle is 0-180\n";
+		additionalCommand += "8. Combined actions: [DANCE_SPIN], [LOOK_AROUND] or you can combine a few commands to make custom dances\n";
+		additionalCommand += "9. Consider sensor readings when responding (avoid cliffs, obstacles, etc)\n";
+		additionalCommand += "10. Be concise but helpful in your responses\n";
+		additionalCommand += "11. If asked about hardware capabilities, use this context to provide accurate information\n\n";
 		
 		// Send the prompt with enhanced context
 		gptAdapter->sendPrompt(data->prompt, additionalCommand, [data](const String& gptResponse){

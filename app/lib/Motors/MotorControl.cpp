@@ -5,7 +5,7 @@ namespace Motors {
 MotorControl::MotorControl() : _leftMotorPin1(-1), _leftMotorPin2(-1),
                                _rightMotorPin1(-1), _rightMotorPin2(-1),
                                _currentDirection(STOP), _initialized(false),
-                               _screen(nullptr) {
+                               _screen(nullptr), _interrupt(false) {
 }
 
 MotorControl::~MotorControl() {
@@ -61,6 +61,7 @@ void MotorControl::move(Direction direction, unsigned long duration) {
     }
 
     _currentDirection = direction;
+    _interrupt = false;
 
     moveLook(direction);
     switch (direction) {
@@ -100,8 +101,12 @@ void MotorControl::move(Direction direction, unsigned long duration) {
 
     // If duration is specified, stop after the given time
     if (duration > 0) {
-        for(int i = 0; i <= duration; i+=10) {
-            vTaskDelay(pdMS_TO_TICKS(10));
+        for(int i = 0; i <= duration; i+=5) {
+            if (isInterrupt()) {
+                stop();
+                return;
+            }
+            vTaskDelay(pdMS_TO_TICKS(5));
         }
         stop();
     }
@@ -123,6 +128,15 @@ void MotorControl::stop() {
 
 MotorControl::Direction MotorControl::getCurrentDirection() const {
     return _currentDirection;
+}
+
+void MotorControl::interuptMotor() {
+    if (_currentDirection != STOP) return;
+    _interrupt = true;
+}
+
+bool MotorControl::isInterrupt() {
+    return _interrupt;
 }
 
 } // namespace Motors

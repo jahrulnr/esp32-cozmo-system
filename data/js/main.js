@@ -111,18 +111,28 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Check if WebSocket connection is established
+    function checkWebSocketConnection() {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            return true;
+        } else {
+            logToConsole('WebSocket not connected', 'error');
+            return false;
+        }
+    }
+
     // Send Command to server using the new DTO contract format (v1.0)
     function sendJsonMessage(type, data = {}) {
-        if (websocket && websocket.readyState === WebSocket.OPEN) {
+        if (checkWebSocketConnection()) {
             const message = JSON.stringify({
                 version: "1.0",
                 type: type,
                 data: data
             });
             websocket.send(message);
-        } else {
-            logToConsole('WebSocket not connected', 'error');
+            return true;
         }
+        return false;
     }
 
     // Legacy function for backward compatibility
@@ -578,28 +588,40 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update distance sensor data if available
         if (data.distance) {
             const distanceValue = document.getElementById('distance-value');
+            const distanceValueSmall = document.getElementById('distance-value-small');
             const obstacleStatus = document.getElementById('obstacle-status');
+            const obstacleStatusSmall = document.getElementById('obstacle-status-small');
             
+            // Update main distance value
             if (distanceValue) {
                 // Check if the distance reading is valid
                 if (data.distance.valid) {
-                    distanceValue.textContent = toFixed(data.distance.value, 1);
+                    const formattedValue = toFixed(data.distance.value, 1);
+                    distanceValue.textContent = formattedValue;
+                    if (distanceValueSmall) distanceValueSmall.textContent = formattedValue;
                     updateRadarVisualization(data.distance.value, data.distance.obstacle);
                 } else {
                     distanceValue.textContent = "N/A";
+                    if (distanceValueSmall) distanceValueSmall.textContent = "N/A";
                     updateRadarVisualization(-1, false); // Invalid reading
                 }
             }
             
+            // Update obstacle status
             if (obstacleStatus) {
-                if (data.distance.obstacle) {
-                    obstacleStatus.textContent = "Obstacle Detected!";
-                    obstacleStatus.style.backgroundColor = "rgba(248, 81, 73, 0.2)";
-                    obstacleStatus.style.color = "var(--color-danger)";
-                } else {
-                    obstacleStatus.textContent = "No Obstacle";
-                    obstacleStatus.style.backgroundColor = "rgba(86, 211, 100, 0.2)";
-                    obstacleStatus.style.color = "var(--color-success)";
+                const statusText = data.distance.obstacle ? "Obstacle Detected!" : "No Obstacle";
+                const bgColor = data.distance.obstacle ? 
+                    "rgba(248, 81, 73, 0.2)" : "rgba(86, 211, 100, 0.2)";
+                const textColor = data.distance.obstacle ? 
+                    "var(--color-danger)" : "var(--color-success)";
+                
+                obstacleStatus.textContent = statusText;
+                obstacleStatus.style.backgroundColor = bgColor;
+                obstacleStatus.style.color = textColor;
+                
+                // Update small obstacle status if available
+                if (obstacleStatusSmall) {
+                    obstacleStatusSmall.textContent = statusText;
                 }
             }
         }
@@ -650,6 +672,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const radarPin = document.getElementById('radar-pin');
         if (!radarPin) return;
         
+        // Update obstacle status elements if they exist
+        const obstacleStatus = document.getElementById('obstacle-status');
+        const obstacleStatusSmall = document.getElementById('obstacle-status-small');
+        
+        if (obstacleStatus) {
+            if (isObstacle) {
+                obstacleStatus.classList.add('obstacle-detected');
+            } else {
+                obstacleStatus.classList.remove('obstacle-detected');
+            }
+        }
+        
         // Check if we have a valid distance measurement
         if (distance < 0) {
             // Invalid distance reading, hide the pin
@@ -680,9 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Radar is reversed - closer objects are further from center
         const scale = 1 - normalizedDistance;
         
-        // Get the current sweep angle based on animation time
-        // HC-SR04 has ~30 degrees field of view, so we use -15 to +15 degrees
-        
         // Get the sweep element for manual positioning
         const sweepElement = document.querySelector('.radar-sweep');
         
@@ -710,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Weight the gyro influence more heavily (60% gyro, 40% animation)
         const sweepAngle = (baseAngle * 0.4) + (gyroInfluence * 1.5);
         
-        // // Update the radar-sweep element directly to override the CSS animation
+        // Optional: Update the radar-sweep element animation dynamically
         // if (sweepElement) {
         //     sweepElement.style.transform = `rotate(${sweepAngle}deg)`;
         //     sweepElement.style.animation = "none"; // Disable default CSS animation
@@ -720,27 +751,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const angle = sweepAngle * (Math.PI / 180);
         
         // Calculate x and y positions on the radar (centered at 50%, 50%)
-        // For a top-oriented semicircular radar:
-        // x ranges from 0% to 100% (leftmost to rightmost)
-        // y ranges from 0% to 50% (bottom to top semicircle center)
         const radius = scale * 50; // Scale to 0-50% of radar size
         
-        // Add extra movement to the pin based on gyro data
-        // This makes the pin follow the gyroscope movement more naturally
+        // Add extra movement to the pin based on gyro data for a more natural look
         const gyroFactor = 1.3; // Increase the gyro influence on pin position
         const pinAngle = angle + (currentRadarAngle * (Math.PI / 180) * gyroFactor);
         
         const x = 50 + Math.sin(pinAngle) * radius; // Sine for x because 0 degrees is up
         const y = 50 - Math.cos(pinAngle) * radius; // Cosine (negative) for y because 0 degrees is up
         
-        // Update the position of the pin
+        // Apply smooth transition to the pin position
         radarPin.style.left = x + '%';
         radarPin.style.top = y + '%';
         
-        // Also update text info (if needed)
+        // Also update the distance value displays
         const distanceValue = document.getElementById('distance-value');
+        const distanceValueSmall = document.getElementById('distance-value-small');
+        
         if (distanceValue) {
-            distanceValue.textContent = distance.toFixed(1);
+            const formattedValue = distance.toFixed(1);
+            distanceValue.textContent = formattedValue;
+            if (distanceValueSmall) {
+                distanceValueSmall.textContent = formattedValue;
+            }
         }
     }
     
@@ -1950,9 +1983,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const distanceRequestBtn = document.getElementById('distance-request');
     if (distanceRequestBtn) {
         distanceRequestBtn.addEventListener('click', () => {
-            // Send a request to get current distance measurement
-            sendJsonMessage('distance_request', {});
-            console.log('Distance measurement requested');
+            // Check WebSocket connection before sending request
+            if (checkWebSocketConnection()) {
+                // Send a request to get current distance measurement
+                sendJsonMessage('distance_request', {});
+                console.log('Distance measurement requested');
+            }
         });
     }
     
@@ -2229,7 +2265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Request initial distance data after a delay to ensure WebSocket is connected
     setTimeout(() => {
-        if (document.getElementById('distance-value')) {
+        if (document.getElementById('distance-value') && checkWebSocketConnection()) {
             sendJsonMessage('distance_request', {});
             console.log('Initial distance measurement requested');
         }
@@ -2237,13 +2273,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set up automatic regular distance updates
     setInterval(() => {
+        // Only request distance updates if the sensor section is visible and WebSocket is connected
         if (document.getElementById('distance-value') && 
-            document.getElementById('sensors-section').style.display !== 'none') {
+            document.getElementById('sensors-section').style.display !== 'none' &&
+            checkWebSocketConnection()) {
             sendJsonMessage('distance_request', {});
         }
 
+        // Periodically check system status
         if (connected) {
-            sendCommand('get_status');
+            sendJsonMessage('get_status', {});
         }
     }, 1000);
 });

@@ -32,17 +32,19 @@ public:
     static void taskFunction(void* parameter);
 
 private:
-    Utils::FileManager* m_fileManager;
-    Utils::CommandMapper* m_commandMapper;
-    Utils::Logger* m_logger;
-    Communication::WebSocketHandler* m_webSocket;
+    Utils::FileManager* _fileManager;
+    Utils::CommandMapper* _commandMapper;
+    Utils::Logger* _logger;
+    Communication::WebSocketHandler* _webSocket;
     
-    TaskHandle_t m_taskHandle;
-    bool m_enabled;
-    unsigned long m_lastManualControlTime;
-    int m_behaviorIndex;
-    std::vector<Utils::Sstring> m_templateBehaviors;
-    SemaphoreHandle_t m_behaviorsMutex;
+    TaskHandle_t _taskHandle;
+    bool _enabled;
+    unsigned long _lastManualControlTime;
+    int _behaviorIndex;
+    std::vector<Utils::Sstring> _templateBehaviors;
+    SemaphoreHandle_t _behaviorsMutex;
+
+    long _timer;
     
     void loadTemplateBehaviors();
     bool saveBehaviorsToFile();

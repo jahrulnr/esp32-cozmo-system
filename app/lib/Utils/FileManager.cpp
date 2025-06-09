@@ -39,6 +39,11 @@ bool FileManager::writeFile(const String& path, const String& content) {
     if (!_initialized) {
         return false;
     }
+
+    if (exists(path)) {
+        deleteFile(path);
+        vTaskDelay(pdMS_TO_TICKS(7));
+    }
     
     File file = SPIFFS.open(path, "w");
     if (!file) {
@@ -59,8 +64,7 @@ bool FileManager::appendFile(const String& path, const String& content) {
     
     File file = SPIFFS.open(path, "a");
     if (!file) {
-        Serial.println("Failed to open file for appending: " + path);
-        return false;
+        return writeFile(path, content);
     }
     
     size_t written = file.print(content);

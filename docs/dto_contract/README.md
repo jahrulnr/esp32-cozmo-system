@@ -40,48 +40,96 @@ Di mana:
 
 Pesan-pesan dalam sistem dibagi menjadi kategori-kategori berikut:
 
-1. **Autentikasi** (`auth_*`) - Login, logout, manajemen sesi
-2. **Kontrol Robot** (`robot_*`) - Perintah pergerakan dan aktuator
-3. **Sensor** (`sensor_*`) - Data dari sensor robot
-4. **Kamera** (`camera_*`) - Streaming video dan pengaturan kamera
-5. **File** (`file_*`) - Manajemen file sistem
-6. **Sistem** (`system_*`) - Status dan kontrol sistem
-7. **WiFi** (`wifi_*`) - Konfigurasi dan status jaringan
-8. **Chat** (`chat_*`) - Komunikasi berbasis teks
+1. **Autentikasi** - Login, logout, manajemen sesi
+2. **Kontrol Robot** - Perintah pergerakan dan aktuator
+3. **Sensor** - Data dari sensor robot
+4. **Kamera** - Streaming video dan pengaturan kamera
+5. **File** - Manajemen file sistem
+6. **Sistem** - Status dan kontrol sistem
+7. **WiFi** - Konfigurasi dan status jaringan
+8. **Chat** - Komunikasi berbasis teks
+9. **Log** - Pesan log sistem
+
+> **Catatan**: Dalam implementasi, message type tidak menggunakan prefix kategori (seperti `auth_*`), 
+> melainkan menggunakan nama yang langsung menggambarkan aksi (seperti `login`, `motor_command`).
+> Lihat dokumentasi MESSAGE_TYPE_MAPPING.md untuk mapping lengkap.
 
 ## Alur Komunikasi
 
 Aliran komunikasi antara komponen sistem adalah sebagai berikut:
 
 ```
-Browser Client <-> Go Server <-> ESP32-CAM Microcontroller
+┌─────────────┐      ┌───────────────┐      ┌─────────────┐
+│             │      │               │      │             │
+│   Browser   │◄────►│  Go Server    │◄────►│  ESP32-CAM  │
+│   Client    │      │               │      │             │
+└─────────────┘      └───────────────┘      └─────────────┘
 ```
 
-1. **Browser ke Server**: Permintaan pengguna dan UI updates
-2. **Server ke ESP32**: Perintah kontrol dan permintaan data
-3. **ESP32 ke Server**: Data sensor, status, dan frame kamera
-4. **Server ke Browser**: Data terproses dan respons
+## Tipe Pesan yang Diimplementasikan
 
-## Fitur yang Didukung
+Berikut ini adalah tipe-tipe pesan yang diimplementasi dalam sistem:
 
-Berikut ini adalah fitur yang didukung oleh kontrak DTO ini:
+### Autentikasi
 
-- Autentikasi dan manajemen sesi
-- Streaming video kamera
-- Kontrol motor dan servo
-- Pengaturan kamera
-- Pembacaan sensor
-- Manajemen file
-- Konfigurasi WiFi
-- Pengiriman perintah teks (chat)
-- Notifikasi sistem
+| Tipe Pesan       | Arah           | Deskripsi                  | Contoh Data |
+|------------------|----------------|----------------------------|-------------|
+| `login`          | Client → Server | Permintaan login           | `{"username": "admin", "password": "pass123"}` |
+| `login_response` | Server → Client | Hasil autentikasi          | `{"success": true, "token": "auth_token_xyz"}` |
 
-## Skema & Contoh
+### Kontrol Robot
 
-Skema JSON lengkap dan contoh untuk setiap tipe DTO dapat ditemukan di:
+| Tipe Pesan        | Arah           | Deskripsi                  | Contoh Data |
+|------------------ |----------------|----------------------------|-------------|
+| `motor_command`   | Client → Server | Kontrol motor              | `{"left": 100, "right": 100, "duration": 1000}` |
+| `servo_update`    | Client → Server | Posisi servo               | `{"type": "head", "position": 90}` |
+| `joystick_update` | Client → Server | Update posisi joystick     | `{"type": "motor", "x": 50, "y": 25}` |
 
-- Skema: [./schemas/](./schemas/)
-- Contoh: [./examples/](./examples/)
+### Sensor
+
+| Tipe Pesan     | Arah           | Deskripsi                  | Contoh Data |
+|----------------|----------------|----------------------------|-------------|
+| `sensor_data`  | Server → Client | Data dari sensor           | `{"gyro": {"x": 0, "y": 0, "z": 0}, "temperature": 25}` |
+| `distance_request` | Client → Server | Request pengukuran jarak | `{}` |
+
+### Kamera
+
+| Tipe Pesan       | Arah           | Deskripsi                  | Contoh Data |
+|------------------|----------------|----------------------------|-------------|
+| `camera_frame`   | Server → Client | Metadata frame kamera      | `{"width": 640, "height": 480, "format": "jpeg"}` |
+| `camera_command` | Client → Server | Kontrol kamera             | `{"action": "start", "resolution": "vga"}` |
+
+### File
+
+| Tipe Pesan       | Arah           | Deskripsi                  | Contoh Data |
+|------------------|----------------|----------------------------|-------------|
+| `list_files`     | Server → Client | Daftar file                | `[{"name": "config.json", "size": 1024, "type": "file"}]` |
+| `read_file`      | Client → Server | Baca file                  | `{"path": "/config/wifi.json"}` |
+| `file_operation` | Server → Client | Hasil operasi file         | `{"success": true, "message": "File created"}` |
+
+### Sistem
+
+| Tipe Pesan       | Arah           | Deskripsi                  | Contoh Data |
+|------------------|----------------|----------------------------|-------------|
+| `system_status`  | Server → Client | Status sistem              | `{"memory": "32KB", "uptime": 3600}` |
+| `error`          | Server → Client | Pesan error                | `{"code": 404, "message": "File not found"}` |
+
+### WiFi
+
+| Tipe Pesan        | Arah           | Deskripsi                  | Contoh Data |
+|-------------------|----------------|----------------------------|-------------|
+| `wifi_list`       | Server → Client | Daftar jaringan WiFi       | `[{"ssid": "Network1", "rssi": -50}]` |
+| `connect_wifi`    | Client → Server | Request koneksi WiFi       | `{"ssid": "Network1", "password": "pass123"}` |
+| `wifi_connection` | Server → Client | Status koneksi WiFi        | `{"connected": true, "ip": "192.168.1.100"}` |
+
+### Log
+
+| Tipe Pesan          | Arah           | Deskripsi                  | Contoh Data |
+|---------------------|----------------|----------------------------|-------------|
+| `log_message`       | Server → Client | Pesan log tunggal          | `{"level": "info", "message": "System started"}` |
+| `batch_log_messages`| Server → Client | Kumpulan pesan log         | `{"logs": [{"level": "info", "message": "Log 1"}]}` |
+
+> **Catatan:** Untuk informasi lebih detail dan contoh lengkap, lihat folder `/docs/dto_contract/examples/`.
 
 ## Implementasi
 

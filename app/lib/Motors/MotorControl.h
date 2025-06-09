@@ -51,14 +51,17 @@ public:
     Direction getCurrentDirection() const;
 
     void setScreen(Screen::Screen *screen);
+    void interuptMotor();
 
 private:
     int _leftMotorPin1, _leftMotorPin2;
     int _rightMotorPin1, _rightMotorPin2;
     Direction _currentDirection;
+    bool _interrupt;
     bool _initialized;
     Screen::Screen *_screen;
     void moveLook(Direction direction);
+    bool isInterrupt();
 };
 
 } // namespace Motors

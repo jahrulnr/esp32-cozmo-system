@@ -58,6 +58,7 @@ void ServoControl::moveLook(ServoType type, int angle) {
         _screen->getFace()->LookTop();
     else if(angle < lastPosition)
         _screen->getFace()->LookBottom();
+    else _screen->getFace()->LookFront();
 }
 
 void ServoControl::setHead(int angle) {
@@ -108,7 +109,7 @@ void ServoControl::setHand(int angle) {
     
     // Smooth movement implementation
     const int step = 2;  // smaller step for smoother movement
-    const int delayMs = 15;  // delay between steps
+    const int delayMs = 20;  // delay between steps
     
     // Move servo gradually to target position
     if (_handAngle < targetAngle) {

@@ -1,0 +1,247 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WebSocket Base DTO Schema",
+  "description": "Schema for WebSocket base message structure in Cozmo-System",
+  
+  "definitions": {
+    "baseDTO": {
+      "type": "object",
+      "required": ["version", "type", "data"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "DTO protocol version"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of message"
+        },
+        "data": {
+          "type": "object",
+          "description": "Message payload"
+        }
+      }
+    },
+    
+    "errorResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["error"] },
+            "data": {
+              "type": "object",
+              "required": ["code", "message"],
+              "properties": {
+                "code": {
+                  "type": "integer",
+                  "description": "Error code"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Error message"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "sensorDataRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["get_sensor_data"] },
+            "data": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    
+    "sensorDataResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_data"] },
+            "data": {
+              "type": "object",
+              "required": ["temperature", "humidity", "timestamp"],
+              "properties": {
+                "temperature": {
+                  "type": "number",
+                  "description": "Temperature in degrees Celsius"
+                },
+                "humidity": {
+                  "type": "number",
+                  "description": "Relative humidity percentage"
+                },
+                "timestamp": {
+                  "type": "integer",
+                  "description": "Timestamp in milliseconds since boot"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "sensorUpdateNotification": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["sensor_update"] },
+            "data": {
+              "type": "object",
+              "required": ["temperature", "humidity", "timestamp"],
+              "properties": {
+                "temperature": {
+                  "type": "number",
+                  "description": "Temperature in degrees Celsius"
+                },
+                "humidity": {
+                  "type": "number",
+                  "description": "Relative humidity percentage"
+                },
+                "timestamp": {
+                  "type": "integer",
+                  "description": "Timestamp in milliseconds since boot"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "setOutputRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["set_output"] },
+            "data": {
+              "type": "object",
+              "required": ["pin", "state"],
+              "properties": {
+                "pin": {
+                  "type": "integer",
+                  "description": "GPIO pin number"
+                },
+                "state": {
+                  "type": "boolean",
+                  "description": "Pin state (true = HIGH, false = LOW)"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "outputStateResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["output_state"] },
+            "data": {
+              "type": "object",
+              "required": ["pin", "state", "success"],
+              "properties": {
+                "pin": {
+                  "type": "integer",
+                  "description": "GPIO pin number"
+                },
+                "state": {
+                  "type": "boolean",
+                  "description": "Pin state (true = HIGH, false = LOW)"
+                },
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether the operation was successful"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "systemStatusRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["system_status"] },
+            "data": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    
+    "systemStatusResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/baseDTO" },
+        {
+          "properties": {
+            "type": { "enum": ["system_status"] },
+            "data": {
+              "type": "object",
+              "required": ["uptime", "heap", "cpu_freq", "ip"],
+              "properties": {
+                "uptime": {
+                  "type": "integer",
+                  "description": "System uptime in seconds"
+                },
+                "heap": {
+                  "type": "integer",
+                  "description": "Free heap memory in bytes"
+                },
+                "cpu_freq": {
+                  "type": "integer",
+                  "description": "CPU frequency in MHz"
+                },
+                "wifi_ssid": {
+                  "type": "string",
+                  "description": "WiFi SSID name"
+                },
+                "wifi_strength": {
+                  "type": "integer",
+                  "description": "WiFi signal strength in dBm"
+                },
+                "ip": {
+                  "type": "string",
+                  "description": "Device IP address"
+                },
+                "flash_size": {
+                  "type": "integer",
+                  "description": "Flash chip size in bytes"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  
+  "oneOf": [
+    { "$ref": "#/definitions/errorResponse" },
+    { "$ref": "#/definitions/sensorDataRequest" },
+    { "$ref": "#/definitions/sensorDataResponse" },
+    { "$ref": "#/definitions/sensorUpdateNotification" },
+    { "$ref": "#/definitions/setOutputRequest" },
+    { "$ref": "#/definitions/outputStateResponse" },
+    { "$ref": "#/definitions/systemStatusRequest" },
+    { "$ref": "#/definitions/systemStatusResponse" }
+  ]
+}

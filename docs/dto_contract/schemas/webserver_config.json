@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WebServer Configuration Schema",
+  "description": "Schema for configuring the WebServer component in Cozmo-System",
+  
+  "type": "object",
+  "required": ["server", "auth"],
+  "properties": {
+    "server": {
+      "type": "object",
+      "required": ["port", "cors"],
+      "properties": {
+        "port": {
+          "type": "integer",
+          "description": "Port number for the web server",
+          "default": 80
+        },
+        "cors": {
+          "type": "boolean",
+          "description": "Whether to enable CORS",
+          "default": true
+        },
+        "maxClients": {
+          "type": "integer",
+          "description": "Maximum number of WebSocket clients",
+          "default": 10
+        },
+        "pingInterval": {
+          "type": "integer",
+          "description": "WebSocket ping interval in milliseconds",
+          "default": 10000
+        },
+        "sessionTimeout": {
+          "type": "integer",
+          "description": "Session timeout in milliseconds",
+          "default": 3600000
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether authentication is enabled",
+          "default": true
+        },
+        "tokenExpiry": {
+          "type": "integer",
+          "description": "Token expiry time in milliseconds",
+          "default": 86400000
+        },
+        "users": {
+          "type": "array",
+          "description": "List of authorized users",
+          "items": {
+            "type": "object",
+            "required": ["username", "password"],
+            "properties": {
+              "username": {
+                "type": "string",
+                "description": "Username"
+              },
+              "password": {
+                "type": "string",
+                "description": "Password (preferably hashed)"
+              },
+              "role": {
+                "type": "string",
+                "description": "User role",
+                "enum": ["admin", "user", "guest"],
+                "default": "user"
+              }
+            }
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "object",
+      "description": "Custom route configuration",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "URL path"
+          },
+          "method": {
+            "type": "string",
+            "description": "HTTP method",
+            "enum": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+          },
+          "requiresAuth": {
+            "type": "boolean",
+            "description": "Whether the route requires authentication"
+          },
+          "handler": {
+            "type": "string",
+            "description": "Handler function name"
+          }
+        }
+      }
+    },
+    "static": {
+      "type": "object",
+      "description": "Static file serving configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to serve static files",
+          "default": true
+        },
+        "root": {
+          "type": "string",
+          "description": "Root directory for static files",
+          "default": "/data"
+        },
+        "cache": {
+          "type": "boolean",
+          "description": "Whether to enable HTTP caching",
+          "default": true
+        },
+        "maxAge": {
+          "type": "integer",
+          "description": "Maximum cache age in seconds",
+          "default": 3600
+        }
+      }
+    }
+  }
+}

@@ -8,16 +8,17 @@ Automation::Automation(Utils::FileManager* fileManager,
                        Utils::CommandMapper* commandMapper,
                        Utils::Logger* logger,
                        Communication::WebSocketHandler* webSocket)
-    : m_fileManager(fileManager)
-    , m_commandMapper(commandMapper)
-    , m_logger(logger)
-    , m_webSocket(webSocket)
-    , m_taskHandle(NULL)
-    , m_enabled(AUTOMATION_ENABLED)
-    , m_lastManualControlTime(0)
-    , m_behaviorIndex(0) {
+    : _fileManager(fileManager)
+    , _commandMapper(commandMapper)
+    , _logger(logger)
+    , _webSocket(webSocket)
+    , _taskHandle(NULL)
+    , _enabled(AUTOMATION_ENABLED)
+    , _lastManualControlTime(0)
+    , _behaviorIndex(0)
+    , _timer(0) {
     // Create a mutex for thread-safe access to behaviors
-    m_behaviorsMutex = xSemaphoreCreateMutex();
+    _behaviorsMutex = xSemaphoreCreateMutex();
 }
 
 // Destructor
@@ -27,7 +28,7 @@ Automation::~Automation() {
 
 // Start automation task
 void Automation::start() {
-    if (m_taskHandle != NULL) {
+    if (_taskHandle != NULL) {
         return; // Task already running
     }
     
@@ -41,50 +42,50 @@ void Automation::start() {
         8192,           // Stack size in words
         this,           // Parameter passed to the task
         1,              // Priority
-        &m_taskHandle,   // Task handle
+        &_taskHandle,   // Task handle
         0
     );
     
-    if (m_logger) {
-        m_logger->info("Automation task started");
+    if (_logger) {
+        _logger->info("Automation task started");
     }
 }
 
 // Stop automation task
 void Automation::stop() {
-    if (m_taskHandle != NULL) {
-        vTaskDelete(m_taskHandle);
-        m_taskHandle = NULL;
+    if (_taskHandle != NULL) {
+        vTaskDelete(_taskHandle);
+        _taskHandle = NULL;
         
-        if (m_logger) {
-            m_logger->info("Automation task stopped");
+        if (_logger) {
+            _logger->info("Automation task stopped");
         }
     }
 }
 
 // Update the time of last manual control
 void Automation::updateManualControlTime() {
-    m_lastManualControlTime = millis();
+    _lastManualControlTime = millis();
 }
 
 // Get automation enabled status
 bool Automation::isEnabled() const {
-    return m_enabled;
+    return _enabled;
 }
 
 // Set automation enabled status
 void Automation::setEnabled(bool enabled) {
-    m_enabled = enabled;
+    _enabled = enabled;
     
     // Send status to all connected clients
-    if (m_webSocket) {
+    if (_webSocket) {
         Utils::SpiJsonDocument statusDoc;
-        statusDoc["enabled"] = m_enabled;
-        m_webSocket->sendJsonMessage(-1, "automation_status", statusDoc);
+        statusDoc["enabled"] = _enabled;
+        _webSocket->sendJsonMessage(-1, "automation_status", statusDoc);
     }
     
-    if (m_logger) {
-        m_logger->info(String("Automation ") + (enabled ? "enabled" : "disabled"));
+    if (_logger) {
+        _logger->info(String("Automation ") + (enabled ? "enabled" : "disabled"));
     }
 }
 
@@ -92,51 +93,73 @@ void Automation::setEnabled(bool enabled) {
 void Automation::taskFunction(void* parameter) {
     // Convert parameter to Automation instance
     Automation* automation = static_cast<Automation*>(parameter);
-		long timer = millis();
-		long interval = pdMS_TO_TICKS(60000);
+    long updateTimer = millis();
+    long updateInterval = pdMS_TO_TICKS(60000 * 30);
+    long servoTimer = updateTimer;
+    long servoInterval = pdMS_TO_TICKS(10000);
     
     // Run automation forever
     while (true) {
+        // get servo position
+        if (servos) {
+            long lastServoUpdate = servoTimer;
+            bool restoreServo = false;
+            if (servos->getHead() != DEFAULT_HEAD_ANGLE && millis() - lastServoUpdate > servoInterval) {
+                servos->setHead(DEFAULT_HEAD_ANGLE);
+                servoTimer = millis();
+                restoreServo = true;
+            }
+            if (servos->getHand() != DEFAULT_HAND_ANGLE && millis() - lastServoUpdate > servoInterval) {
+                servos->setHand(DEFAULT_HAND_ANGLE);
+                servoTimer = millis();
+                restoreServo = true;
+            }
+
+            if (restoreServo) {
+                vTaskDelay(pdMS_TO_TICKS(300));
+            }
+        }
+
         // Check if automation is enabled and no manual control for a while
-        if (automation->m_enabled && 
-            (millis() - automation->m_lastManualControlTime > AUTOMATION_INACTIVITY_TIMEOUT)) {
+        if (automation->_enabled && 
+            (millis() - automation->_lastManualControlTime > AUTOMATION_INACTIVITY_TIMEOUT)) {
             
             // Take the mutex to safely access the behaviors list
-            if (xSemaphoreTake(automation->m_behaviorsMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            if (xSemaphoreTake(automation->_behaviorsMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
                 // Only run if we have templates available
-                if (!automation->m_templateBehaviors.empty()) {
+                if (!automation->_templateBehaviors.empty()) {
                     // Get the next behavior from templates
-                    Utils::Sstring behavior = automation->m_templateBehaviors[automation->m_behaviorIndex];
-                    automation->m_behaviorIndex = (automation->m_behaviorIndex + 1) % 
-                                                automation->m_templateBehaviors.size();
+                    Utils::Sstring behavior = automation->_templateBehaviors[automation->_behaviorIndex];
+                    automation->_behaviorIndex = (automation->_behaviorIndex + 1) % 
+                                                automation->_templateBehaviors.size();
                     
                     // Release the mutex before executing the behavior
-                    xSemaphoreGive(automation->m_behaviorsMutex);
+                    xSemaphoreGive(automation->_behaviorsMutex);
                     
                     // Execute the behavior
                     automation->executeBehavior(behavior);
                     
                     // Reset the manual control timer to prevent rapid successive behaviors
-                    automation->m_lastManualControlTime = millis();
+                    automation->_lastManualControlTime = millis();
                     
                     // Wait before next behavior (random delay between 5-10 seconds)
                     int randomDelay = random(5000, 10000);
                     vTaskDelay(pdMS_TO_TICKS(randomDelay));
                 } else {
                     // Release the mutex if no behaviors to execute
-                    xSemaphoreGive(automation->m_behaviorsMutex);
+                    xSemaphoreGive(automation->_behaviorsMutex);
                 }
             }
         }
 
-				if (millis() - timer > interval) {
-					xTaskCreate([](void * param){
-    				Automation* automation = static_cast<Automation*>(param);
-						automation->fetchAndAddNewBehaviors();
-						vTaskDelete(NULL);
-					}, "UpdateTemplate", 20 * 1024, automation, 8, NULL);
-					timer = millis();
-				}
+        if (millis() - updateTimer > updateInterval) {
+            xTaskCreate([](void * param){
+            Automation* automation = static_cast<Automation*>(param);
+                automation->fetchAndAddNewBehaviors();
+                vTaskDelete(NULL);
+            }, "UpdateTemplate", 20 * 1024, automation, 1, NULL);
+            updateTimer = millis();
+        }
         
         // Check at regular intervals
         vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
@@ -146,46 +169,50 @@ void Automation::taskFunction(void* parameter) {
 // Load template behaviors from file
 void Automation::loadTemplateBehaviors() {
     // Take the mutex to safely modify the behaviors list
-    if (xSemaphoreTake(m_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
-        m_templateBehaviors.clear();
+    if (xSemaphoreTake(_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
+        _templateBehaviors.clear();
         
         // Load template behaviors from file
-        Utils::Sstring templateBehaviorsStr = "";
-        if (m_fileManager && m_fileManager->exists("/config/templates.txt")) {
-            templateBehaviorsStr = m_fileManager->readFile("/config/templates.txt");
+        Utils::Sstring templateDefault = "";
+        if (_fileManager && _fileManager->exists("/config/templates.txt")) {
+            templateDefault = _fileManager->readFile("/config/templates.txt");
+        }
+
+        if (_fileManager && _fileManager->exists("/config/templates_update.txt")) {
+            templateDefault += _fileManager->readFile("/config/templates_update.txt");
         }
         
         // Split template behaviors into an array
         int startPos = 0;
         int nextPos = 0;
-        while ((nextPos = templateBehaviorsStr.indexOf('\n', startPos)) != -1) {
-            Utils::Sstring behavior = templateBehaviorsStr.substring(startPos, nextPos).trim();
+        while ((nextPos = templateDefault.indexOf('\n', startPos)) != -1) {
+            Utils::Sstring behavior = templateDefault.substring(startPos, nextPos).trim();
             if (behavior.length() > 0) {
-                m_templateBehaviors.push_back(behavior);
+                _templateBehaviors.push_back(behavior);
             }
             startPos = nextPos + 1;
         }
         
         // Add the remaining text as the last behavior if it exists
-        Utils::Sstring lastBehavior = templateBehaviorsStr.substring(startPos).trim();
+        Utils::Sstring lastBehavior = templateDefault.substring(startPos).trim();
         if (lastBehavior.length() > 0) {
-            m_templateBehaviors.push_back(lastBehavior);
+            _templateBehaviors.push_back(lastBehavior);
         }
         
         // Give the mutex back
-        xSemaphoreGive(m_behaviorsMutex);
+        xSemaphoreGive(_behaviorsMutex);
         
-        if (m_logger) {
-            m_logger->info("Loaded " + String(m_templateBehaviors.size()) + " template behaviors");
+        if (_logger) {
+            _logger->info("Loaded " + String(_templateBehaviors.size()) + " template behaviors");
         }
     }
 }
 
 // Execute a specific behavior
 void Automation::executeBehavior(const Utils::Sstring& behavior) {
-    if (m_commandMapper) {
-        if (m_logger) {
-            m_logger->debug("Executing automation behavior: " + behavior.toString());
+    if (_commandMapper) {
+        if (_logger) {
+            _logger->debug("Executing automation behavior: " + behavior.toString());
         }
         
         // Check if there's a vocalization message (text enclosed in asterisks)
@@ -209,17 +236,17 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
             ::screen->mutexUpdate();
             
             // Extract and execute commands
-            int commandCount = m_commandMapper->executeCommandString(behavior.toString());
+            int commandCount = _commandMapper->executeCommandString(behavior.toString());
             
             // Give the message some time to be visible, if it's not a long running action
             vTaskDelay(pdMS_TO_TICKS(1000));
         } else {
             // Just execute the commands without showing the message
-            int commandCount = m_commandMapper->executeCommandString(behavior.toString());
+            int commandCount = _commandMapper->executeCommandString(behavior.toString());
         }
         
-        if (m_logger) {
-            m_logger->debug("Executed automation behavior commands");
+        if (_logger) {
+            _logger->debug("Executed automation behavior commands");
         }
     }
 }
@@ -231,21 +258,21 @@ bool Automation::addNewBehavior(const String& behavior) {
     }
     
     // Take the mutex to safely modify the behaviors list
-    if (xSemaphoreTake(m_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
+    if (xSemaphoreTake(_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
         // Add the new behavior to our list
-        m_templateBehaviors.push_back(Utils::Sstring(behavior));
+        _templateBehaviors.push_back(Utils::Sstring(behavior));
         
         // Save to file
         bool saveResult = saveBehaviorsToFile();
         
         // Give the mutex back
-        xSemaphoreGive(m_behaviorsMutex);
+        xSemaphoreGive(_behaviorsMutex);
         
-        if (m_logger) {
+        if (_logger) {
             if (saveResult) {
-                m_logger->info("New behavior added: " + behavior);
+                _logger->info("New behavior added: " + behavior);
             } else {
-                m_logger->error("Failed to save new behavior to file");
+                _logger->error("Failed to save new behavior to file");
             }
         }
         
@@ -258,14 +285,14 @@ bool Automation::addNewBehavior(const String& behavior) {
 // Fetch new behaviors from GPT and add them
 bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
     if (!::gptAdapter) {
-        if (m_logger) {
-            m_logger->error("GPT adapter not available for generating behaviors");
+        if (_logger) {
+            _logger->error("GPT adapter not available for generating behaviors");
         }
         return false;
     }
     
-    if (m_logger) {
-        m_logger->info("Requesting new behaviors from GPT with prompt: " + prompt);
+    if (_logger) {
+        _logger->info("Requesting new behaviors from GPT with prompt: " + prompt);
     }
     
     // Create a semaphore for synchronizing with the callback
@@ -277,11 +304,11 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
     int exampleCount = 0;
     
     // Take the mutex to safely access the behaviors list
-    if (xSemaphoreTake(m_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
+    if (xSemaphoreTake(_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
         // Get up to 5 random examples from existing behaviors
-        if (!m_templateBehaviors.empty()) {
+        if (!_templateBehaviors.empty()) {
             // Create a list of indices
-            std::vector<int> indices(m_templateBehaviors.size());
+            std::vector<int> indices(_templateBehaviors.size());
             for (size_t i = 0; i < indices.size(); ++i) {
                 indices[i] = static_cast<int>(i);
             }
@@ -293,31 +320,37 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
             }
             
             // Get up to 5 examples
-            for (size_t i = 0; i < std::min(static_cast<size_t>(5), m_templateBehaviors.size()); ++i) {
+            for (size_t i = 0; i < std::min(static_cast<size_t>(5), _templateBehaviors.size()); ++i) {
                 existingBehaviorsList += "Example " + String(exampleCount + 1) + ": " + 
-                                         m_templateBehaviors[indices[i]].toString() + "\n";
+                                         _templateBehaviors[indices[i]].toString() + "\n";
                 exampleCount++;
             }
         }
         
         // Release the mutex
-        xSemaphoreGive(m_behaviorsMutex);
+        xSemaphoreGive(_behaviorsMutex);
     }
     
     // Additional command to guide GPT in generating appropriate behaviors
     String additionalCommand = 
-        "Generate 5 new robot behaviors in the exact format of existing templates. "
+        "Generate 8 new robot behaviors in the exact format of existing templates. "
         "Each behavior should be on a new line and use only this format: "
-        "[ACTION=time][ACTION2=time] *Robot vocalization*\n"
-        "Valid actions are: MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT, STOP, "
-        "LOOK_LEFT, LOOK_RIGHT, LOOK_TOP, LOOK_BOTTOM, LOOK_FRONT, "
-        "HEAD_UP, HEAD_DOWN, HAND_UP, HAND_DOWN, "
-        "FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, "
+        "[ACTION=time][ACTION2=time] *Robot vocalization*\n\n"
+        "Valid actions are:\n"
+        "Movement: MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT, STOP\n"
+        "Looking: LOOK_LEFT, LOOK_RIGHT, LOOK_TOP, LOOK_BOTTOM, LOOK_FRONT, LOOK_AROUND\n"
+        "Head control: HEAD_UP, HEAD_DOWN, HEAD_CENTER, HEAD_POSITION\n"
+        "Hand control: HAND_UP, HAND_DOWN, HAND_CENTER, HAND_POSITION\n"
+        "Advanced movement: MOTOR_LEFT, MOTOR_RIGHT, DANCE_SPIN\n"
+        "Face expressions: FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, "
         "FACE_SKEPTIC, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, "
-        "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY. "
-        "Times should be specified in ms (500ms) or s (2s). "
-        "Make behaviors unique and different from existing ones. "
-        "Each behavior should represent a cohesive action with matching facial expression and vocalization. "
+        "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY, FACE_NORMAL\n\n"
+        "Times should be specified in ms (500ms) or s (2s).\n"
+        "Servo positions should be specified as angles 0-180: [HEAD_POSITION=90]\n"
+        "Motor speeds should be specified as values 0-100: [MOTOR_LEFT=75]\n"
+        "Make behaviors unique and different from existing ones.\n"
+        "Each behavior should represent a cohesive action with matching facial expression and vocalization.\n"
+        "Create a mix of simple and complex behaviors.\n"
         "Do not include any explanations, numbering, or extra text.\n\n"
         "Here are some examples of current behaviors:\n" + existingBehaviorsList;
         
@@ -330,8 +363,8 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
         // Process the response from GPT
         int addedCount = 0;
         
-        if (self->m_logger) {
-            self->m_logger->debug("GPT Response received");
+        if (self->_logger) {
+            self->_logger->debug("GPT Response received");
         }
         
         // Split the response by newlines
@@ -362,11 +395,11 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
         // Set success flag if we added at least one behavior
         success = (addedCount > 0);
         
-        if (self->m_logger) {
+        if (self->_logger) {
             if (success) {
-                self->m_logger->info("Added " + String(addedCount) + " new behaviors from GPT");
+                self->_logger->info("Added " + String(addedCount) + " new behaviors from GPT");
             } else {
-                self->m_logger->warning("No valid behaviors found in GPT response");
+                self->_logger->warning("No valid behaviors found in GPT response");
             }
         }
         
@@ -377,8 +410,8 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
     // Wait for the callback to complete (with a timeout)
     if (xSemaphoreTake(doneSemaphore, pdMS_TO_TICKS(30000)) != pdTRUE) {
         // Timed out waiting for GPT response
-        if (m_logger) {
-            m_logger->error("Timed out waiting for GPT to generate behaviors");
+        if (_logger) {
+            _logger->error("Timed out waiting for GPT to generate behaviors");
         }
         vSemaphoreDelete(doneSemaphore);
         return false;
@@ -391,25 +424,127 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
 
 // Save the current behaviors to file
 bool Automation::saveBehaviorsToFile() {
-    if (!m_fileManager) {
+    if (!_fileManager) {
         return false;
     }
     
-    // Build the content to save
-    String content = "\n";
-    for (const auto& behavior : m_templateBehaviors) {
-        content += behavior.toString() + "\n";
+    // First, separate default behaviors (from templates.txt) from user-added behaviors
+    std::vector<Utils::Sstring> defaultBehaviors;
+    std::vector<Utils::Sstring> userBehaviors;
+    
+    // Load default behaviors to identify them
+    Utils::Sstring defaultTemplates = "";
+    if (_fileManager && _fileManager->exists("/config/templates.txt")) {
+        defaultTemplates = _fileManager->readFile("/config/templates.txt");
     }
     
-    // Save to file
-    bool success = m_fileManager->appendFile("/config/templates.txt", content);
+    // Parse default behaviors
+    std::vector<Utils::Sstring> defaultTemplatesList;
+    int startPos = 0;
+    int nextPos = 0;
+    while ((nextPos = defaultTemplates.indexOf('\n', startPos)) != -1) {
+        Utils::Sstring behavior = defaultTemplates.substring(startPos, nextPos).trim();
+        if (behavior.length() > 0) {
+            defaultTemplatesList.push_back(behavior);
+        }
+        startPos = nextPos + 1;
+    }
+    
+    Utils::Sstring lastDefault = defaultTemplates.substring(startPos).trim();
+    if (lastDefault.length() > 0) {
+        defaultTemplatesList.push_back(lastDefault);
+    }
+    
+    // Separate user-added behaviors from default behaviors
+    for (const auto& behavior : _templateBehaviors) {
+        // Check if this behavior is in the default list
+        bool isDefault = false;
+        for (const auto& defaultBehavior : defaultTemplatesList) {
+            if (behavior.toString() == defaultBehavior.toString()) {
+                isDefault = true;
+                break;
+            }
+        }
+        
+        if (isDefault) {
+            defaultBehaviors.push_back(behavior);
+        } else {
+            userBehaviors.push_back(behavior);
+        }
+    }
+    
+    // Apply LRU (Least Recently Used) logic to prevent memory issues
+    // Prefer keeping user-added behaviors, only trim if absolutely necessary
+    size_t totalBehaviors = defaultBehaviors.size() + userBehaviors.size();
+    if (totalBehaviors > AUTOMATION_MAX_BEHAVIORS) {
+        // Calculate how many behaviors to remove
+        size_t toRemove = totalBehaviors - AUTOMATION_MAX_BEHAVIORS;
+        
+        if (_logger) {
+            _logger->warning("Too many behaviors (" + String(totalBehaviors) + 
+                             "), removing " + String(toRemove) + " oldest behaviors");
+        }
+        
+        // First try to remove from default behaviors (they can be reloaded from file)
+        if (toRemove <= defaultBehaviors.size()) {
+            defaultBehaviors.erase(defaultBehaviors.begin(), defaultBehaviors.begin() + toRemove);
+            toRemove = 0;
+        } else {
+            toRemove -= defaultBehaviors.size();
+            defaultBehaviors.clear(); // Remove all default behaviors
+            
+            // If we still need to remove more, start removing user behaviors
+            if (toRemove > 0 && !userBehaviors.empty()) {
+                userBehaviors.erase(userBehaviors.begin(), userBehaviors.begin() + std::min(toRemove, userBehaviors.size()));
+            }
+        }
+        
+        // Rebuild the template behaviors list
+        _templateBehaviors.clear();
+        _templateBehaviors.insert(_templateBehaviors.end(), defaultBehaviors.begin(), defaultBehaviors.end());
+        _templateBehaviors.insert(_templateBehaviors.end(), userBehaviors.begin(), userBehaviors.end());
+        
+        // Adjust behaviorIndex if needed to prevent out-of-bounds access
+        if (_behaviorIndex >= _templateBehaviors.size() && !_templateBehaviors.empty()) {
+            _behaviorIndex = 0;
+        }
+    }
+    
+    // Build the content to save, validating behavior size to avoid memory issues
+    String content = "";
+    size_t validBehaviors = 0;
+    
+    for (const auto& behavior : userBehaviors) {
+        // Skip behaviors that are too large
+        if (behavior.length() > AUTOMATION_MAX_BEHAVIOR_LENGTH) {
+            if (_logger) {
+                _logger->warning("Skipping oversized behavior: " + behavior.toString().substring(0, 30) + "...");
+            }
+            continue;
+        }
+        
+        content += behavior.toString() + "\n";
+        validBehaviors++;
+    }
+    
+    // Check if content is too large (rough estimate, allowing ~10KB max)
+    if (content.length() > 10240) {
+        if (_logger) {
+            _logger->error("Behavior content too large (" + String(content.length()) + 
+                           " bytes), truncating to prevent memory issues");
+        }
+        content = content.substring(0, 10240);
+    }
+    
+    // Save to file (completely replace the templates_update.txt to ensure persistence)
+    bool success = _fileManager->writeFile("/config/templates_update.txt", content);
     
     // Log the result
-    if (m_logger) {
+    if (_logger) {
         if (success) {
-            m_logger->info("Successfully saved " + String(m_templateBehaviors.size()) + " behaviors to templates.txt");
+            _logger->info("Successfully saved " + String(validBehaviors) + " user behaviors to templates_update.txt");
         } else {
-            m_logger->error("Failed to save behaviors to templates.txt");
+            _logger->error("Failed to save behaviors to templates_update.txt");
         }
     }
     

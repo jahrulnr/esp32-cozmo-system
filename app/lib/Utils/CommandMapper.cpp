@@ -312,6 +312,88 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
+    
+    // Custom position commands
+    _commandHandlers["HEAD_POSITION"] = [this](const String& param) -> bool {
+        if (_servos) {
+            int angle = param.isEmpty() ? 90 : param.toInt();
+            // Constrain the angle to valid range
+            angle = constrain(angle, 0, 180);
+            _servos->setHead(angle);
+            _logger->debug("head position set to " + String(angle));
+            return true;
+        }
+        return false;
+    };
+    
+    _commandHandlers["HAND_POSITION"] = [this](const String& param) -> bool {
+        if (_servos) {
+            int angle = param.isEmpty() ? 90 : param.toInt();
+            // Constrain the angle to valid range
+            angle = constrain(angle, 0, 180);
+            _servos->setHand(angle);
+            _logger->debug("hand position set to " + String(angle));
+            return true;
+        }
+        return false;
+    };
+    
+    // Custom motor movement commands with duration control
+    _commandHandlers["MOTOR_LEFT"] = [this](const String& param) -> bool {
+        if (_motors) {
+            int duration = param.isEmpty() ? 100 : param.toInt();
+            // TODO: Implement motor duration control when available
+            _motors->move(Motors::MotorControl::LEFT, duration);
+            _logger->debug("Left motor activated at duration " + String(duration) + " for " + String(duration) + "ms");
+            return true;
+        }
+        return false;
+    };
+    
+    _commandHandlers["MOTOR_RIGHT"] = [this](const String& param) -> bool {
+        if (_motors) {
+            int duration = param.isEmpty() ? 100 : param.toInt();
+            // TODO: Implement motor duration control when available
+            _motors->move(Motors::MotorControl::RIGHT, duration);
+            _logger->debug("Right motor activated at duration " + String(duration) + " for " + String(duration) + "ms");
+            return true;
+        }
+        return false;
+    };
+    
+    // Combined movements
+    _commandHandlers["DANCE_SPIN"] = [this](const String& param) -> bool {
+        if (_motors && _screen && _screen->getFace()) {
+            _screen->getFace()->Expression.GoTo_Happy();
+            _motors->move(Motors::MotorControl::LEFT, 500);
+            delay(500);
+            _motors->move(Motors::MotorControl::RIGHT, 500);
+            delay(500);
+            _motors->move(Motors::MotorControl::LEFT, 500);
+            delay(500);
+            _motors->stop();
+            _logger->debug("Performed spin dance");
+            return true;
+        }
+        return false;
+    };
+    
+    _commandHandlers["LOOK_AROUND"] = [this](const String& param) -> bool {
+        if (_screen && _screen->getFace()) {
+            _screen->getFace()->LookLeft();
+            delay(500);
+            _screen->getFace()->LookRight();
+            delay(500);
+            _screen->getFace()->LookTop();
+            delay(500);
+            _screen->getFace()->LookBottom();
+            delay(500);
+            _screen->getFace()->LookFront();
+            _logger->debug("Looked around");
+            return true;
+        }
+        return false;
+    };
 }
 
 bool CommandMapper::executeCommand(const String& commandStr) {
