@@ -97,9 +97,16 @@ void Automation::taskFunction(void* parameter) {
     long updateInterval = pdMS_TO_TICKS(60000 * 30);
     long servoTimer = updateTimer;
     long servoInterval = pdMS_TO_TICKS(10000);
+    bool inprogress = false;
     
     // Run automation forever
     while (true) {
+        if (inprogress){
+            vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
+            continue;
+        }
+
+        inprogress = true;
         // get servo position
         if (servos) {
             long lastServoUpdate = servoTimer;
@@ -161,6 +168,7 @@ void Automation::taskFunction(void* parameter) {
             updateTimer = millis();
         }
         
+        inprogress = false;
         // Check at regular intervals
         vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
     }

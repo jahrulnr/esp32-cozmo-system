@@ -78,6 +78,20 @@ float DistanceSensor::measureDistance() {
 
 bool DistanceSensor::isObstacleDetected() {
     float distance = measureDistance();
+    if (distance < _threshold) {
+        float calculate = distance;
+        for (int i = 0; i < 4; ++i) {
+            vTaskDelay(pdMS_TO_TICKS(20));
+            float measure;
+            do {
+                measure = measureDistance();
+                vTaskDelay(pdMS_TO_TICKS(20));
+            } while (measure == -1.0);
+            calculate += measure;
+        }
+        distance = calculate / 5.0f;
+    }
+
     return (distance > 0 && distance < _threshold);
 }
 
