@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Variables for joystick controls
     let joystickInitialized = false;
-    let servoJoystickObj, motorJoystickObj;
     let lastSendTimeServo = 0;
     let lastSendTimeMotor = 0;
     const sendThrottle = 100; // Send position updates every 100ms
@@ -49,11 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Connect WebSocket
     function connectWebSocket() {
-        console.log('Connecting to WebSocket...');
+        
         websocket = new WebSocket(wsUri);
 
         websocket.onopen = (evt) => {
-            console.log('WebSocket Connected');
+            
             clearInterval(reconnectInterval);
             logToConsole('WebSocket connection established', 'success');
             
@@ -82,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         websocket.onclose = (evt) => {
             connected = false;
-            console.log('WebSocket Disconnected');
+            
             logToConsole('WebSocket connection lost. Attempting to reconnect...', 'warning');
             
             // Try to reconnect
@@ -140,23 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sendJsonMessage(command, data);
     }
 
-    function sendCommandToRobot(robotId, command, data = {}) {
-        if (websocket && websocket.readyState === WebSocket.OPEN) {
-            const message = {
-                version: "1.0",
-                type: 'command_to_robot',
-                data: {
-                    robot_id: robotId,
-                    command: command,
-                    payload: data
-                }
-            };
-            websocket.send(JSON.stringify(message));
-        } else {
-            logToConsole('WebSocket not connected', 'error');
-        }
-    }
-
     // Handle WebSocket messages
     function handleWebSocketMessage(evt) {
         // Handle binary data (camera frames)
@@ -168,12 +150,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle text data (JSON messages)
         try {
             const msg = JSON.parse(evt.data);
-            console.log('Received:', msg);
+            
 
             // Check for version field to determine format
             if (msg.version === "1.0") {
                 // New DTO contract format
-                console.log("Received v1.0 DTO format message");
+                
             }
 
             // Handle DTO format messages (works with both old and new format)
@@ -243,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleBinaryMessage(data) {
         // If we don't have frame header metadata, ignore this binary frame or assume it's a file upload response
         if (!frameHeader) {
-            console.log("Received binary data without header - likely a file upload response");
+            
             return;
         }
         
@@ -441,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        console.log(`Sending servo ${type} position: ${value}`);
+        
         
         sendCommand('servo_update', {
             type: type,
@@ -482,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const validX = Math.round(xVal);
         const validY = Math.round(yVal);
         
-        console.log(`Sending ${type} joystick position: X=${validX}, Y=${validY}`);
+        
         
         sendCommand('joystick_update', {
             type: type,
@@ -512,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const validX = Math.round(xVal);
         const validY = Math.round(yVal);
         
-        console.log(`Updating ${type} joystick: X=${validX}, Y=${validY}`);
+        
         
         try {
             if (type === 'servo') {
@@ -1466,7 +1448,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const isDirectory = file.type === 'directory' || file.name.endsWith('/');
             const icon = isDirectory ? 'fas fa-folder' : 'fas fa-file';
-            const fileName = file.name.replace(/\/$/, ''); // Remove trailing slash
+            const fileName = file.name;
+            const filePath = file.path;
+            const fullname = filePath + fileName;
             
             // Get file extension for icon
             let fileIcon = icon;
@@ -1489,11 +1473,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="file-size pe-2">${file.size ? formatFileSize(file.size) : ''}</div>
                 <div class="file-actions">
                     ${isDirectory ? 
-                        `<button class="btn btn-sm file-open" data-path="${fileName}">Open</button>` :
-                        `<button class="btn btn-sm file-view" data-path="${fileName}">View</button>
-                         <button class="btn btn-sm file-download" data-path="${fileName}">Download</button>`
+                        `<button class="btn btn-sm file-open" data-path="${fullname}">Open</button>` :
+                        `<button class="btn btn-sm file-view" data-path="${fullname}">View</button>
+                         <button class="btn btn-sm file-download" data-path="${fullname}">Download</button>`
                     }
-                    <button class="btn btn-sm btn-danger file-delete" data-path="${fileName}">Delete</button>
+                    <button class="btn btn-sm btn-danger file-delete" data-path="${fullname}">Delete</button>
                 </div>
             `;
             
@@ -1681,9 +1665,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = fileInput.files[0];
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('path', currentPath);
         
-        fetch('/upload', {
+        fetch('/upload?path='+currentPath, {
             method: 'POST',
             body: formData
         })
@@ -1902,14 +1885,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function requestAutomationStatus() {
         if (connected) {
             sendJsonMessage('get_automation_status');
-            console.log('Requested automation status');
+            
         }
     }
     
     function setAutomationEnabled(enabled) {
         if (connected) {
             sendJsonMessage('automation_control', { enabled: enabled });
-            console.log('Set automation enabled:', enabled);
+            
         }
     }
     
@@ -1917,7 +1900,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const automationToggle = document.getElementById('automation-toggle');
         if (automationToggle) {
             automationToggle.checked = data.enabled;
-            console.log('Automation status updated:', data.enabled);
+            
         }
     }
 
@@ -1987,7 +1970,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (checkWebSocketConnection()) {
                 // Send a request to get current distance measurement
                 sendJsonMessage('distance_request', {});
-                console.log('Distance measurement requested');
+                
             }
         });
     }
@@ -2267,7 +2250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (document.getElementById('distance-value') && checkWebSocketConnection()) {
             sendJsonMessage('distance_request', {});
-            console.log('Initial distance measurement requested');
+            
         }
     }, 2000);
     

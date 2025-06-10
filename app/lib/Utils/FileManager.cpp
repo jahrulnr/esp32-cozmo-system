@@ -108,7 +108,7 @@ int FileManager::getSize(const String& path) {
     return size;
 }
 
-std::vector<FileManager::FileInfo> FileManager::listFiles(const String& path) {
+std::vector<FileManager::FileInfo> FileManager::listFiles(String path) {
     std::vector<FileInfo> files;
     std::vector<FileInfo> directories;
     
@@ -121,23 +121,46 @@ std::vector<FileManager::FileInfo> FileManager::listFiles(const String& path) {
         Serial.println("Failed to open directory: " + path);
         return files;
     }
-    
+
+    String dir = path;
+    if (dir != "/" && dir.end() != "/") 
+        dir += "/";
+
     File file = root.openNextFile();
-    while (file) {
+    while (file)
+    {
         FileInfo info;
-        info.name = file.path();
+        Sstring fullpath = file.path();
+        Sstring tempname = fullpath.substring(path.length());
+        int isDir = tempname.indexOf("/");
+        if (isDir > 0) {
+            tempname = tempname.substring(0, isDir);
+            info.name = tempname.toString();
+            info.dir = dir;
+            info.size = 0;
+            info.isDirectory = isDir > 0;
+            bool exists = false;
+            for (auto dir: directories) {
+                if (dir.name == info.name) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists)
+                directories.push_back(info);
+            file = root.openNextFile();
+            continue;
+        }
+
+        info.name = file.name();
         info.size = file.size();
+        info.dir = dir;
         info.isDirectory = file.isDirectory();
         
-        // Sort into directories and files
-        if (info.isDirectory) {
-            directories.push_back(info);
-        } else {
-            files.push_back(info);
-        }
-        
+        files.push_back(info);
         file = root.openNextFile();
     }
+    
     
     root.close();
     

@@ -605,6 +605,7 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 for (const auto& file : fileList) {
                   JsonObject fileObj = files.add<JsonObject>();
                   fileObj["name"] = file.name;
+                  fileObj["path"] = file.dir;
                   fileObj["size"] = file.size;
                   fileObj["type"] = file.isDirectory ? "directory" : "file";
                 }

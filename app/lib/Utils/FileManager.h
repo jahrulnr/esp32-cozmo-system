@@ -4,6 +4,7 @@
 #include <SPIFFS.h>
 #include <vector>
 #include <algorithm>
+#include "Sstring.h"
 
 namespace Utils {
 
@@ -11,6 +12,7 @@ class FileManager {
 public:
     struct FileInfo {
         String name;
+        String dir;
         size_t size;
         bool isDirectory;
     };
@@ -73,7 +75,7 @@ public:
      * @param path The directory path
      * @return Vector of FileInfo structures
      */
-    std::vector<FileInfo> listFiles(const String& path = "/");
+    std::vector<FileInfo> listFiles(String path = "/");
 
     /**
      * Create a directory
