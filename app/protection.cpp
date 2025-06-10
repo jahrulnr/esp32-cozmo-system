@@ -72,6 +72,7 @@ bool handleObstacleDetection() {
             Motors::MotorControl::Direction turnDirection = (rand() % 2 == 0) ?
                 Motors::MotorControl::LEFT : Motors::MotorControl::RIGHT;
 
+            motors->move(Motors::MotorControl::BACKWARD, 1000);
             motors->move(turnDirection, 3000);
 
             // Check if path is clear
