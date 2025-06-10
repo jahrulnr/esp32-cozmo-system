@@ -102,7 +102,7 @@ void Automation::taskFunction(void* parameter) {
     // Run automation forever
     while (true) {
         if (inprogress){
-            vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
+            vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL / 2));
             continue;
         }
 

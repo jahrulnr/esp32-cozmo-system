@@ -68,12 +68,13 @@ bool handleObstacleDetection() {
         const int maxAttempts = 20;  // Prevent infinite loop
 
         while (!pathFound && attempts < maxAttempts) {
+            motors->interuptMotor();
             // Choose random direction
             Motors::MotorControl::Direction turnDirection = (rand() % 2 == 0) ?
                 Motors::MotorControl::LEFT : Motors::MotorControl::RIGHT;
 
             motors->move(Motors::MotorControl::BACKWARD, 1000);
-            motors->move(turnDirection, 3000);
+            motors->move(turnDirection, 1500);
 
             // Check if path is clear
             pathFound = !distanceSensor->isObstacleDetected();
