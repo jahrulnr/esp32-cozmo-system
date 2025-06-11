@@ -56,6 +56,7 @@ void setupTasks() {
     // Create automation task
     if (automation) {
         automation->start();
+        automation->setRandomBehaviorOrder();
     }
 
     logger->info("Tasks initialized");

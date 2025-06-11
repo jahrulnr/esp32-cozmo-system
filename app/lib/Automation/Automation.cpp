@@ -16,7 +16,9 @@ Automation::Automation(Utils::FileManager* fileManager,
     , _enabled(AUTOMATION_ENABLED)
     , _lastManualControlTime(0)
     , _behaviorIndex(0)
-    , _timer(0) {
+    , _timer(0)
+    , _randomBehaviorOrder(false) // Add this line
+{
     // Create a mutex for thread-safe access to behaviors
     _behaviorsMutex = xSemaphoreCreateMutex();
 }
@@ -45,6 +47,24 @@ void Automation::start() {
         &_taskHandle,   // Task handle
         0
     );
+
+    if (_fileManager && !_fileManager->exists("/config/templates_update.txt")) {
+        xTaskCreate(
+            [](void * param){
+                if (WiFi.isConnected()) {
+                    vTaskDelay(pdMS_TO_TICKS(11000));
+                    Automation* automation = static_cast<Automation*>(param);
+                    automation->fetchAndAddNewBehaviors();                
+                }
+                vTaskDelete(NULL);
+            },    // Function that implements the task
+            "automationUpdate",    // Task name
+            8192,           // Stack size in words
+            this,           // Parameter passed to the task
+            1,              // Priority
+            NULL
+        );
+    }
     
     if (_logger) {
         _logger->info("Automation task started");
@@ -86,6 +106,18 @@ void Automation::setEnabled(bool enabled) {
     
     if (_logger) {
         _logger->info(String("Automation ") + (enabled ? "enabled" : "disabled"));
+    }
+}
+
+// Add getter/setter for random order
+bool Automation::isRandomBehaviorOrder() const {
+    return _randomBehaviorOrder;
+}
+
+void Automation::setRandomBehaviorOrder(bool randomOrder) {
+    _randomBehaviorOrder = randomOrder;
+    if (_logger) {
+        _logger->info(String("Automation behavior order set to ") + (randomOrder ? "random" : "sequential"));
     }
 }
 
@@ -131,29 +163,26 @@ void Automation::taskFunction(void* parameter) {
         if (automation->_enabled && 
             (millis() - automation->_lastManualControlTime > AUTOMATION_INACTIVITY_TIMEOUT)) {
             
-            // Take the mutex to safely access the behaviors list
             if (xSemaphoreTake(automation->_behaviorsMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-                // Only run if we have templates available
                 if (!automation->_templateBehaviors.empty()) {
-                    // Get the next behavior from templates
-                    Utils::Sstring behavior = automation->_templateBehaviors[automation->_behaviorIndex];
-                    automation->_behaviorIndex = (automation->_behaviorIndex + 1) % 
-                                                automation->_templateBehaviors.size();
-                    
-                    // Release the mutex before executing the behavior
+                    // --- CHANGED: choose behavior index based on random/sequential ---
+                    size_t behaviorIdx = 0;
+                    if (automation->_randomBehaviorOrder) {
+                        behaviorIdx = random(0, automation->_templateBehaviors.size());
+                    } else {
+                        behaviorIdx = automation->_behaviorIndex;
+                        automation->_behaviorIndex = (automation->_behaviorIndex + 1) % 
+                                                    automation->_templateBehaviors.size();
+                    }
+                    Utils::Sstring behavior = automation->_templateBehaviors[behaviorIdx];
+                    // --- END CHANGE ---
+
                     xSemaphoreGive(automation->_behaviorsMutex);
-                    
-                    // Execute the behavior
                     automation->executeBehavior(behavior);
-                    
-                    // Reset the manual control timer to prevent rapid successive behaviors
                     automation->_lastManualControlTime = millis();
-                    
-                    // Wait before next behavior (random delay between 5-10 seconds)
                     int randomDelay = random(5000, 10000);
                     vTaskDelay(pdMS_TO_TICKS(randomDelay));
                 } else {
-                    // Release the mutex if no behaviors to execute
                     xSemaphoreGive(automation->_behaviorsMutex);
                 }
             }

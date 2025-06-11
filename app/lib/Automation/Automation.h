@@ -26,6 +26,8 @@ public:
     void updateManualControlTime();
     bool isEnabled() const;
     void setEnabled(bool enabled);
+    bool isRandomBehaviorOrder() const;
+    void setRandomBehaviorOrder(bool randomOrder = true);
     bool addNewBehavior(const String& behavior);
     bool fetchAndAddNewBehaviors(const String& prompt = "Generate new robot behaviors");
     
@@ -39,6 +41,7 @@ private:
     
     TaskHandle_t _taskHandle;
     bool _enabled;
+    bool _randomBehaviorOrder;
     unsigned long _lastManualControlTime;
     int _behaviorIndex;
     std::vector<Utils::Sstring> _templateBehaviors;
