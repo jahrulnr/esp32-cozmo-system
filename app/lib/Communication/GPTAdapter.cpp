@@ -104,6 +104,7 @@ void GPTAdapter::sendPromptWithCustomSystem(const String& prompt, const String& 
     http.begin("https://api.openai.com/v1/chat/completions");
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Authorization", "Bearer " + _apiKey.toString());
+    http.setReuse(true);
     
     // Prepare JSON payload
     Utils::SpiJsonDocument doc;

@@ -1,254 +1,190 @@
-# WebSocket Data Transfer Object (DTO) Format
+# Data Transfer Object (DTO) Format
 
-> **PERHATIAN**: Format DTO yang didokumentasikan di sini adalah referensi untuk implementasi sebelumnya. Format terbaru yang saat ini digunakan mengikuti format baru dengan field version seperti didokumentasikan di [Kontrak DTO](/docs/dto_contract/README.md).
+This document outlines the standardized format for WebSocket communication between the Cozmo-System robot platform and its clients. The DTO format ensures consistency and reliability in data exchange.
 
-## Message Format (Legacy)
+## General Structure
 
-Format DTO legacy menggunakan format JSON berikut:
-
-```json
-{
-  "type": "command_type",
-  "data": any
-}
-```
-
-## Message Format (Current v1.0)
-
-Format DTO terbaru menggunakan format JSON berikut:
+All WebSocket messages must adhere to the following JSON structure:
 
 ```json
 {
   "version": "1.0",
   "type": "command_type",
-  "data": any
+  "data": {
+    // Command-specific properties
+  }
 }
 ```
 
-Where:
-- `version`: A string identifying the version of the DTO format (currently "1.0")
-- `type`: A string identifying the type of command or response
-- `data`: Any valid JSON data structure containing the payload
+### Fields
 
-> **NOTE**: The system has been updated to support both formats. Legacy format messages will be automatically converted to the new format internally.
+- **`version`**: Specifies the protocol version. Current version is `1.0`.
+- **`type`**: Indicates the type of command or message being sent.
+- **`data`**: Contains the payload specific to the command type.
 
-## Message Types
+## Command Types
 
-### Commands (Client to Robot)
+### Motor Control
 
-| Type | Description | Data Structure |
-|------|-------------|----------------|
-| `motor_command` | Control robot motors | `{ "left": float, "right": float, "duration": int }` |
-| `head_command` | Control robot head position | `{ "pan": float, "tilt": float }` |
-| `arm_command` | Control robot arm position | `{ "position": float }` |
-| `action_command` | Perform predefined actions | `{ "action": string }` |
-| `expression_command` | Change robot facial expression | `{ "expression": string }` |
-| `orientation_request` | Request gyroscope data | `{}` |
-| `camera_command` | Control camera settings | `{ "resolution": string, "quality": int }` |
-| `system_command` | System level commands | `{ "action": string }` |
-| `ping` | Keep-alive message | `{ "timestamp": int }` |
+Used to control the robot's movement.
 
-### Responses (Robot to Client)
-
-| Type | Description | Data Structure |
-|------|-------------|----------------|
-| `motor_status` | Motor status information | `{ "left": float, "right": float }` |
-| `sensor_data` | Combined sensor data | `{ "gyro": { "x": float, "y": float, "z": float }, "accel": { "x": float, "y": float, "z": float, "magnitude": float } }` |
-| `camera_frame` | Camera frame data | `{ "format": string, "data": string }` |
-| `system_status` | System status information | `{ "battery": float, "temperature": float, "uptime": int }` |
-| `error` | Error information | `{ "code": int, "message": string }` |
-| `ok` | Success confirmation | `{ "message": string }` |
-
-## Examples
-
-### Command Examples
-
-#### Motor Command
 ```json
 {
   "type": "motor_command",
   "data": {
-    "left": 0.75,
-    "right": 0.75,
-    "duration": 1000
+    "direction": "forward",
+    "speed": 50
   }
 }
 ```
 
-#### Head Command
+- **`direction`**: Direction of movement (`forward`, `backward`, `left`, `right`).
+- **`speed`**: Speed percentage (0-100).
+
+### Camera Control
+
+Used to manage the camera's functionality.
+
 ```json
 {
-  "type": "head_command",
+  "type": "camera_command",
   "data": {
-    "pan": 45,
-    "tilt": 30
+    "action": "start_stream",
+    "resolution": "720p"
   }
 }
 ```
 
-#### Gyroscope Data Request
+- **`action`**: Camera action (`start_stream`, `stop_stream`, `capture_snapshot`).
+- **`resolution`**: Desired resolution (`480p`, `720p`, `1080p`).
+
+### System Status
+
+Requests system information.
+
 ```json
 {
-  "type": "orientation_request",
+  "type": "system_status",
   "data": {}
 }
 ```
 
-### Response Examples
+### File Operations
 
-#### Sensor Data (Gyroscope and Accelerometer)
+Manages files on the robot's file system.
+
+#### List Files
+
 ```json
 {
-  "type": "sensor_data",
+  "type": "list_files",
   "data": {
-    "gyro": {
-      "x": 0.01,
-      "y": -0.03,
-      "z": 0.15
-    },
-    "accel": {
-      "x": 0.03,
-      "y": -0.12,
-      "z": 0.98,
-      "magnitude": 0.99
-    }
+    "directory": "/"
   }
 }
 ```
 
-#### System Status
+- **`directory`**: Directory path to list files from.
+
+#### Read File
+
 ```json
 {
-  "type": "system_status",
+  "type": "read_file",
   "data": {
-    "battery": 85.2,
-    "temperature": 42.3,
-    "uptime": 3600
+    "file_path": "/config/settings.json"
   }
 }
 ```
+
+- **`file_path`**: Path of the file to read.
+
+#### Delete File
+
+```json
+{
+  "type": "delete_file",
+  "data": {
+    "file_path": "/logs/old.log"
+  }
+}
+```
+
+- **`file_path`**: Path of the file to delete.
+
+### WiFi Management
+
+Manages WiFi connections.
+
+#### List Networks
+
+```json
+{
+  "type": "wifi_list",
+  "data": {}
+}
+```
+
+#### Connect to Network
+
+```json
+{
+  "type": "connect_wifi",
+  "data": {
+    "ssid": "MyNetwork",
+    "password": "password123"
+  }
+}
+```
+
+- **`ssid`**: WiFi network name.
+- **`password`**: WiFi network password.
 
 ## Error Handling
 
-Error responses use the following format:
-```json
-{
-  "type": "error",
-  "data": {
-    "code": 404,
-    "message": "Command not recognized"
-  }
-}
-```
-
-Common error codes:
-- 400: Bad request
-- 404: Command not found
-- 500: Internal error
-
-## Client-Side Implementation
-
-### JavaScript Example
-
-```javascript
-// Send a standardized message
-function sendJsonMessage(type, data) {
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-        const message = JSON.stringify({
-            type: type,
-            data: data
-        });
-        websocket.send(message);
-    }
-}
-
-// Handle received messages
-websocket.onmessage = function(event) {
-    // Skip binary messages (like camera frames)
-    if (event.data instanceof ArrayBuffer) return;
-    
-    try {
-        const message = JSON.parse(event.data);
-        
-        // Process based on message type
-        switch (message.type) {
-            case 'sensor_data':
-                updateSensorDisplay(message.data);
-                break;
-            case 'error':
-                showError(message.data.message);
-                break;
-            // ... handle other types
-        }
-    } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-    }
-};
-
-// Example usage
-sendJsonMessage('motor_command', { left: 0.5, right: 0.5, duration: 2000 });
-```
-
-## C++ Implementation
-
-```cpp
-// Send a JSON message using WebSocketHandler
-void sendRobotStatus(WebSocketHandler& ws, int clientId) {
-    DynamicJsonDocument doc(1024);
-    doc["battery"] = getBatteryLevel();
-    doc["temperature"] = getProcessorTemp();
-    doc["uptime"] = millis() / 1000;
-    
-    ws.sendJsonMessage(clientId, "system_status", doc.as<JsonVariant>());
-}
-
-// Handle received message
-void handleWebSocketMessage(uint8_t* data, size_t len) {
-    DynamicJsonDocument doc = WebSocketHandler::parseJsonMessage(data, len);
-    
-    if (doc.isNull()) {
-        // Invalid JSON format
-        return;
-    }
-    
-    String type = doc["type"];
-    JsonVariant messageData = doc["data"];
-    
-    if (type == "motor_command") {
-        float left = messageData["left"];
-        float right = messageData["right"];
-        int duration = messageData["duration"];
-        
-        // Execute motor command
-        setMotorSpeeds(left, right, duration);
-    }
-}
-```
-
-## API Extensions
-
-When adding new command types, follow these guidelines:
-1. Use descriptive type names in snake_case
-2. Document the new type and its data structure in this file
-3. Include appropriate validation in the implementation
-4. Make sure it is properly handled in both the client and server code
-
-## New DTO Contract Format (v1.0)
-
-Untuk standardisasi komunikasi antara server Go dan mikrokontroler ESP32-CAM, kami telah mengembangkan format DTO baru yang mencakup versioning:
+All error responses follow this structure:
 
 ```json
 {
   "version": "1.0",
-  "type": "command_type",
+  "type": "error",
   "data": {
-    // Command-specific payload
+    "code": 400,
+    "message": "Invalid command type."
   }
 }
 ```
 
-Format baru ini akan menggantikan format lama secara bertahap. Dokumentasi lengkap tersedia di:
-- [Dokumentasi Kontrak DTO](/docs/dto_contract/README.md)
-- [Skema JSON](/docs/dto_contract/schemas/)
-- [Contoh Pesan](/docs/dto_contract/examples/)
-- [Panduan Implementasi](/docs/dto_contract/IMPLEMENTATION.md)
+- **`code`**: HTTP-like status code indicating the error type.
+- **`message`**: Description of the error.
+
+## Examples
+
+### Successful Response
+
+```json
+{
+  "version": "1.0",
+  "type": "success",
+  "data": {
+    "message": "Command executed successfully."
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "version": "1.0",
+  "type": "error",
+  "data": {
+    "code": 404,
+    "message": "File not found."
+  }
+}
+```
+
+---
+
+For more details, refer to the [README.md](../README.md) file.

@@ -1,125 +1,129 @@
-# Cozmo-System: Roadmap Integrasi Server dan Mikrokontroler
+# Cozmo-System: Server and Microcontroller Integration Roadmap
 
-Dokumen ini menjelaskan rencana dan timeline untuk mengintegrasikan server Go dengan mikrokontroler ESP32-CAM menggunakan kontrak DTO yang baru.
+This document outlines the timeline and plans for integrating the Go server with the ESP32-CAM microcontroller using the new DTO contract.
 
 ## Timeline
 
-| Waktu | Milestone | Status |
-|-------|-----------|--------|
-| Q2 2025 | Definisi kontrak DTO v1.0 | ✅ Selesai |
-| Q3 2025 | Implementasi DTO pada server Go | 🔄 Dalam Pengembangan |
-| Q3 2025 | Implementasi DTO pada ESP32-CAM | 🔄 Dalam Pengembangan |
-| Q4 2025 | Integrasi fase 1: Autentikasi & kontrol dasar | 📅 Dijadwalkan |
-| Q4 2025 | Integrasi fase 2: Kamera & sensor | 📅 Dijadwalkan |
-| Q1 2026 | Integrasi fase 3: Fitur lanjutan | 📅 Dijadwalkan |
-| Q2 2026 | Final release: Sistem terintegrasi penuh | 📅 Dijadwalkan |
+| Time | Milestone | Status |
+|------|-----------|--------|
+| Q2 2025 | DTO Contract Definition v1.0 | ✅ Complete |
+| Q3 2025 | DTO Implementation in Go Server | 🔄 In Progress |
+| Q3 2025 | DTO Implementation in ESP32-CAM | 🔄 In Progress |
+| Q4 2025 | Phase 1: Authentication & Basic Control | 📅 Scheduled |
+| Q4 2025 | Phase 2: Camera & Sensor Integration | 📅 Scheduled |
+| Q1 2026 | Phase 3: Advanced Features | 📅 Scheduled |
+| Q2 2026 | Final Release: Full System Integration | 📅 Scheduled |
 
-## Langkah-langkah Integrasi
+## Integration Steps
 
-### Fase Persiapan (Q2-Q3 2025)
+### Preparation Phase (Q2-Q3 2025)
 
-1. ✅ **Definisi kontrak DTO**
-   - Mendefinisikan format dan struktur DTO
-   - Membuat skema dan contoh untuk semua kategori pesan
-   - Dokumentasi implementasi
+1. ✅ **DTO Contract Definition**
+   - Define DTO format and structure
+   - Create schemas and examples for all message categories
+   - Implementation documentation
 
-2. 🔄 **Implementasi parsial di kedua sisi**
-   - Membuat kelas/modul DTO di server Go
-   - Membuat library DTO di ESP32-CAM
-   - Unit testing untuk serialisasi/deserialisasi
+2. 🔄 **Initial Implementation**
+   - Develop DTO classes/modules in Go server
+   - Create DTO library for ESP32-CAM
+   - Unit testing for serialization/deserialization
 
-3. 🔄 **Pengembangan mock API**
-   - Simulasi endpoint server untuk testing
-   - Simulasi respons mikrokontroler untuk testing
+3. 🔄 **Mock API Development**
+   - Server endpoint simulation for testing
+   - Microcontroller response simulation for testing
 
-### Fase 1: Integrasi Dasar (Q4 2025)
+### Phase 1: Core Integration (Q4 2025)
 
-1. **Autentikasi**
-   - Implementasi login/logout
-   - Manajemen sesi dan token
-   - Keamanan dasar
+1. **Authentication System**
+   - Login/logout implementation
+   - Session and token management
+   - Basic security measures
 
-2. **Kontrol Dasar**
-   - Kontrol motor
-   - Kontrol servo
-   - Status sistem
+2. **Motion Control**
+   - Motor control implementation
+   - Servo movement control
+   - System status monitoring
 
-### Fase 2: Integrasi Media & Sensor (Q4 2025)
+### Phase 2: Media & Sensor Integration (Q4 2025)
 
-1. **Camera Streaming**
-   - Format frame kamera
-   - Pengaturan kamera
-   - Pengambilan snapshot
+1. **Camera System**
+   - Camera frame formatting
+   - Camera configuration
+   - Snapshot capture functionality
 
-2. **Data Sensor**
-   - Gyroscope & accelerometer
-   - Suhu & sensor lainnya
-   - Pemantauan baterai
+2. **Sensor Integration**
+   - Gyroscope & accelerometer data
+   - Temperature & additional sensors
+   - Battery monitoring system
 
-### Fase 3: Fitur Lanjutan (Q1 2026)
+### Phase 3: Advanced Features (Q1 2026)
 
-1. **WiFi Management**
-   - Pemindaian jaringan
-   - Konfigurasi koneksi
-   - Manajemen otomatis
+1. **Network Management**
+   - Network scanning
+   - Connection configuration
+   - Automatic management
 
-2. **File Management**
-   - Upload/download
-   - Pengelolaan file konfigurasi
-   - Logging dan diagnostik
+2. **File System Management**
+   - Upload/download functionality
+   - Configuration file management
+   - Logging and diagnostics
 
-3. **AI & Voice Integration**
-   - Command recognition
-   - Text-to-speech
-   - Computer vision sederhana
+3. **AI & Voice Features**
+   - Command recognition system
+   - Text-to-speech functionality
+   - Basic computer vision
 
 ### Final Release (Q2 2026)
 
-1. **Sistem Terintegrasi Penuh**
-   - Pembaruan firmware OTA
-   - Dashboard monitoring
-   - Integrasi dengan layanan cloud
+1. **Complete System Integration**
+   - Over-the-air firmware updates
+   - Monitoring dashboard
+   - Cloud service integration
 
-2. **Dokumentasi & Packaging**
-   - Panduan pengembang
-   - Panduan pengguna
-   - Proses build & deployment
+2. **Documentation & Distribution**
+   - Developer documentation
+   - User manual
+   - Build & deployment process
 
-## Interface Points
+## Integration Points
 
-Berikut adalah titik-titik integrasi utama antara server Go dan mikrokontroler:
+Key integration points between the Go server and microcontroller:
 
-1. **WebSocket Communication**
-   - Server acts as coordinator
-   - Mikrocontroller sebagai perangkat edge
-   - Browser client sebagai UI
+1. **WebSocket Communication Layer**
+   - Server as central coordinator
+   - Microcontroller as edge device
+   - Browser client as user interface
 
-2. **Authentication Flow**
-   - Server mengelola otentikasi
-   - Token didistribusikan ke browser & mikrokontroler
-   - Session tracking terpusat
+2. **Authentication System**
+   - Centralized authentication management
+   - Token distribution to browser & microcontroller
+   - Session tracking system
 
 3. **Data Pipeline**
-   - Aliran sensor dari mikrokontroler ke server
-   - Pemrosesan & aggregasi di server
-   - Distribusi ke UI & storage
+   - Sensor data flow from microcontroller to server
+   - Server-side processing & aggregation
+   - Distribution to UI & storage systems
 
 4. **Command Chain**
-   - UI mengirim perintah ke server
-   - Server memvalidasi & meneruskan ke mikrokontroler
-   - Feedback loop untuk konfirmasi eksekusi
+   - UI command transmission to server
+   - Server validation & forwarding
+   - Execution confirmation feedback
 
-## Risiko dan Mitigasi
+## Risk Management
 
-| Risiko | Dampak | Mitigasi |
-|--------|--------|----------|
-| Format DTO tidak kompatibel | Tinggi | Versioning dan validasi skema ketat |
-| Performansi komunikasi WebSocket | Sedang | Optimasi binary protocol, batching |
-| Memory constraints pada ESP32-CAM | Tinggi | Optimasi alokasi & penggunaan PSRAM |
-| Keterlambatan jaringan | Sedang | Retry mechanism, state synchronization |
+| Risk | Impact | Mitigation Strategy |
+|------|--------|-------------------|
+| DTO Format Incompatibility | High | Strict schema validation & versioning |
+| WebSocket Performance | Medium | Binary protocol optimization, message batching |
+| ESP32-CAM Memory Constraints | High | PSRAM optimization & memory allocation |
+| Network Latency | Medium | Retry mechanisms, state synchronization |
 
-## Kesimpulan
+## Conclusion
 
-Integrasi server Go dan mikrokontroler ESP32-CAM merupakan langkah penting dalam pengembangan platform Cozmo-System. Dengan pendekatan bertahap dan fokus pada standardisasi komunikasi melalui kontrak DTO yang jelas, kita dapat memastikan bahwa kedua subsistem dapat bekerja bersama secara efektif dan efisien.
+The integration of the Go server and ESP32-CAM microcontroller represents a crucial milestone in the Cozmo-System platform development. Through a phased approach and focus on standardized communication via clear DTO contracts, we ensure effective and efficient cooperation between both subsystems.
 
-Dokumen ini akan diperbarui secara berkala seiring perkembangan proyek.
+This document will be updated regularly as the project progresses.
+
+---
+
+*Last Updated: June 12, 2025*

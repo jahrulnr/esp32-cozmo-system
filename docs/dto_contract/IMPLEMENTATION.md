@@ -1,24 +1,24 @@
-# Cozmo-System: Implementasi Kontrak DTO
+# Cozmo-System: DTO Contract Implementation
 
-Dokumen ini menjelaskan cara mengimplementasikan Kontrak DTO dalam kode Server (Go) dan Mikrokontroler (C++/Arduino).
+This document describes the implementation of the DTO Contract in the Server (Go) and Microcontroller (C++/Arduino) components.
 
-## Server (Go) Implementasi
+## Server (Go) Implementation
 
-### 1. Struktur DTO Dasar
+### 1. Base DTO Structure
 
 ```go
 // internal/models/dto.go
 
 package models
 
-// BaseDTO adalah struktur dasar untuk semua pesan DTO
+// BaseDTO defines the foundation structure for all DTO messages
 type BaseDTO struct {
     Version string      `json:"version"`
     Type    string      `json:"type"`
     Data    interface{} `json:"data"`
 }
 
-// NewBaseDTO membuat instance baru BaseDTO dengan versi default
+// NewBaseDTO creates a new BaseDTO instance with default version
 func NewBaseDTO(msgType string, data interface{}) *BaseDTO {
     return &BaseDTO{
         Version: "1.0",
@@ -28,7 +28,7 @@ func NewBaseDTO(msgType string, data interface{}) *BaseDTO {
 }
 ```
 
-### 2. DTO Autentikasi
+### 2. Authentication DTO
 
 ```go
 // internal/models/auth_dto.go
@@ -66,7 +66,7 @@ func AuthLoginResponse(success bool, token, message string) *BaseDTO {
 }
 ```
 
-### 3. Handler WebSocket
+### 3. WebSocket Handler Implementation
 
 ```go
 // internal/handlers/websocket_handler.go
@@ -140,9 +140,9 @@ func (h *WebSocketHandler) handleRobotMotorCommand(data interface{}, conn *webso
 }
 ```
 
-## Mikrokontroler (C++/Arduino) Implementasi
+## Microcontroller (C++/Arduino) Implementation
 
-### 1. DTO Parsing dan Serialisasi
+### 1. DTO Parsing and Serialization
 
 ```cpp
 // lib/Communication/DTOParser.h
@@ -156,13 +156,13 @@ namespace Communication {
 
 class DTOParser {
 public:
-    // Parse pesan WebSocket menjadi DTO
+    // Parse WebSocket message into DTO
     static bool parse(const String& jsonString, Utils::SpiJsonDocument& doc) {
         DeserializationError error = deserializeJson(doc, jsonString);
         return !error;
     }
     
-    // Ambil tipe pesan dari DTO
+    // Extract message type from DTO
     static String getType(const Utils::SpiJsonDocument& doc) {
         if (!doc.containsKey("type") || !doc.containsKey("version")) {
             return "";
@@ -170,7 +170,7 @@ public:
         return doc["type"].as<String>();
     }
     
-    // Buat DTO baru dengan tipe dan data tertentu
+    // Create new DTO with specified type and data
     template<typename T>
     static String createDTO(const String& type, const T& data) {
         Utils::SpiJsonDocument doc;
@@ -189,7 +189,7 @@ public:
 } // namespace Communication
 ```
 
-### 2. Data Classes
+### 2. DTO Data Classes
 
 ```cpp
 // lib/Communication/DTOData.h
@@ -200,14 +200,14 @@ public:
 
 namespace Communication {
 
-// Base class untuk semua data DTO
+// Base class for all DTO data structures
 class DTOData {
 public:
     virtual ~DTOData() {}
     virtual void serialize(JsonObject& obj) const = 0;
 };
 
-// Kelas untuk data status sistem
+// System status data structure
 class SystemStatusData : public DTOData {
 public:
     uint32_t uptime;
@@ -239,12 +239,12 @@ public:
     }
 };
 
-// Kelas untuk data gyroscope
-class GyroData : public DTOData {
+// Motion sensor data structure
+class MotionSensorData : public DTOData {
 public:
-    float x;
-    float y;
-    float z;
+    int16_t x;
+    int16_t y;
+    int16_t z;
     uint64_t timestamp;
     
     void serialize(JsonObject& obj) const override {
@@ -260,7 +260,7 @@ public:
 } // namespace Communication
 ```
 
-### 3. WebSocket Handler
+### 3. WebSocket Message Handler
 
 ```cpp
 // app/websocket.cpp
@@ -269,7 +269,7 @@ public:
 #include "Communication/DTOParser.h"
 #include "Utils/SpiAllocator.h"
 
-// Handler untuk pesan WebSocket dari klien
+// Handler for WebSocket messages from clients
 void handleWebSocketMessage(AsyncWebSocketClient *client, void *arg, uint8_t *data, size_t len) {
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     
@@ -316,7 +316,7 @@ void handleWebSocketMessage(AsyncWebSocketClient *client, void *arg, uint8_t *da
     }
 }
 
-// Contoh handler status sistem
+// System status request handler
 void handleSystemStatusRequest(AsyncWebSocketClient *client) {
     // Buat data status sistem
     Communication::SystemStatusData statusData;
@@ -339,14 +339,16 @@ void handleSystemStatusRequest(AsyncWebSocketClient *client) {
 }
 ```
 
-## Penggunaan pada Frontend (JavaScript)
+## Web Interface Implementation
+
+### 1. DTO Utilities
 
 ```javascript
 // data/js/dto.js
 
-// Utilitas untuk membuat dan memproses DTO
+// Utilities for creating and processing DTOs
 class DTOUtil {
-    // Buat DTO baru dengan tipe dan data tertentu
+    // Create new DTO with specified type and data
     static createDTO(type, data = {}) {
         return {
             version: "1.0",
@@ -355,13 +357,19 @@ class DTOUtil {
         };
     }
     
-    // Validasi DTO yang diterima
+    // Validate received DTO
     static validateDTO(dto) {
         return dto && dto.version && dto.type && dto.data !== undefined;
     }
 }
+```
 
-// Contoh penggunaan:
+## Communication Flow Examples
+
+### 1. Authentication Flow
+
+```javascript
+// Client initiates login
 const loginDTO = DTOUtil.createDTO("auth_login", {
     username: "admin",
     password: "password123"
@@ -370,99 +378,33 @@ const loginDTO = DTOUtil.createDTO("auth_login", {
 websocket.send(JSON.stringify(loginDTO));
 ```
 
-## Contoh Alur Komunikasi Lengkap
+### 2. Motion Control Flow
 
-Berikut adalah contoh alur komunikasi lengkap antara frontend, server, dan mikrokontroler:
+```javascript
+// Client sends motion command
+const motionCommand = DTOUtil.createDTO("motion_control", {
+    left: 75,
+    right: 75,
+    duration: 2000
+});
 
-1. **Pengguna membuat permintaan login dari browser**:
-   ```javascript
-   // Browser
-   const loginDTO = {
-       version: "1.0",
-       type: "auth_login",
-       data: {
-           username: "admin",
-           password: "password123"
-       }
-   };
-   websocket.send(JSON.stringify(loginDTO));
-   ```
+websocket.send(JSON.stringify(motionCommand));
+```
 
-2. **Server menerima dan memproses permintaan login**:
-   ```go
-   // Server (Go)
-   func (h *WebSocketHandler) handleAuthLogin(data interface{}, conn *websocket.Conn) {
-       // Parse data login
-       // Autentikasi user
-       // Buat token
-       
-       // Kirim respons
-       response := models.AuthLoginResponse(true, "generated-token", "")
-       jsonResponse, _ := json.Marshal(response)
-       conn.WriteMessage(websocket.TextMessage, jsonResponse)
-   }
-   ```
+### 3. System Status Flow
 
-3. **Browser menerima respons dan menyimpan token**:
-   ```javascript
-   // Browser
-   websocket.onmessage = (event) => {
-       const response = JSON.parse(event.data);
-       
-       if (response.type === "auth_login_response") {
-           if (response.data.success) {
-               localStorage.setItem("auth_token", response.data.token);
-               showDashboard();
-           } else {
-               showError(response.data.message);
-           }
-       }
-   };
-   ```
+```go
+// Server handles system status request
+func (h *WebSocketHandler) handleSystemStatusRequest(conn *websocket.Conn) {
+    statusData := collectSystemStatus()
+    response := models.NewBaseDTO("system_status", statusData)
+    jsonResponse, _ := json.Marshal(response)
+    conn.WriteMessage(websocket.TextMessage, jsonResponse)
+}
+```
 
-4. **Pengguna mengirim perintah motor ke robot**:
-   ```javascript
-   // Browser
-   const motorCommand = {
-       version: "1.0",
-       type: "robot_motor",
-       data: {
-           left: 75,
-           right: 75,
-           duration: 2000
-       }
-   };
-   websocket.send(JSON.stringify(motorCommand));
-   ```
+This implementation ensures consistent communication between all system components according to the defined DTO contract. All message handling follows the standardized format and maintains type safety across the platform.
 
-5. **Server meneruskan perintah ke robot**:
-   ```go
-   // Server (Go)
-   func (h *WebSocketHandler) handleRobotMotorCommand(data interface{}, conn *websocket.Conn) {
-       // Parse data perintah motor
-       // Teruskan ke robot yang terhubung
-       robotMsg := models.NewBaseDTO("robot_motor", data)
-       jsonMsg, _ := json.Marshal(robotMsg)
-       h.service.BroadcastToRobots(jsonMsg)
-   }
-   ```
+---
 
-6. **Robot menerima dan menjalankan perintah motor**:
-   ```cpp
-   // Mikrokontroler (ESP32)
-   void handleMotorCommand(AsyncWebSocketClient *client, const Utils::SpiJsonDocument& doc) {
-       JsonObject data = doc["data"];
-       
-       int leftPower = data["left"];
-       int rightPower = data["right"];
-       int duration = data["duration"];
-       
-       // Jalankan motor dengan parameter yang diberikan
-       motorController.setMotorPower(leftPower, rightPower, duration);
-       
-       // Kirim konfirmasi
-       client->text("{\"version\":\"1.0\",\"type\":\"command_result\",\"data\":{\"success\":true}}");
-   }
-   ```
-
-Implementasi ini memastikan bahwa semua komponen sistem berkomunikasi dengan format yang konsisten dan sesuai dengan kontrak DTO yang telah didefinisikan.
+For detailed message type specifications, see [MESSAGE_TYPE_MAPPING.md](MESSAGE_TYPE_MAPPING.md).

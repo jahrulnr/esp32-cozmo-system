@@ -26,6 +26,10 @@ This document summarizes the findings from the validation of the DTO (Data Trans
 
 Additionally, the `README.md` in the `dto_contract` directory has been updated to align with the actual implementation while maintaining its structure and organization.
 
+## Related Documents
+
+- **[Roadmap Compliance Report](ROADMAP_COMPLIANCE.md)**: Assessment of the DTO contract implementation against the project roadmap.
+
 ## Recommendations
 
 ### 1. Standardize Message Type Naming

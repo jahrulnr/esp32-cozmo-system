@@ -1,97 +1,156 @@
-# DTO Message Type Mapping
+# Message Type Mapping
 
-This document maps the message types in the DTO contract documentation to their implementation in the codebase. It helps identify inconsistencies and provides guidance on standardization.
+This document defines the standardized message types used in the Cozmo-System platform's WebSocket communication.
 
-## Message Type Mapping Table
+## Core Message Types
 
-| Category | Documented Type | Implemented Type | Direction | Purpose | Status |
-|----------|----------------|-----------------|-----------|---------|--------|
-| **Authentication** |
-| Auth | `auth_login` | `login` | Client → Server | Authentication request | ⚠️ Mismatch |
-| Auth | `auth_login_response` | `login_response` | Server → Client | Authentication result | ⚠️ Mismatch |
-| Auth | `auth_logout` | Not found | Client → Server | Logout request | ❓ Not implemented |
-| **Motor Control** |
-| Robot | `robot_motor` | `motor_command` | Client → Server | Motor control | ⚠️ Mismatch |
-| Robot | `robot_servo` | `servo_update` | Client → Server | Servo control | ⚠️ Mismatch |
-| Robot | N/A | `joystick_update` | Client → Server | Joystick control | ❓ Not documented |
-| **Camera** |
-| Camera | `camera_stream` | `camera_command` | Client → Server | Camera stream control | ⚠️ Mismatch |
-| Camera | `camera_frame` | `camera_frame` | Server → Client | Camera frame data | ✅ Match |
-| **Sensors** |
-| Sensor | `sensor_data` | `sensor_data` | Server → Client | Sensor readings | ✅ Match |
-| Sensor | `sensor_request` | Not found | Client → Server | Request sensor data | ❓ Not implemented |
-| **System** |
-| System | `system_status` | `system_status` | Server → Client | System information | ✅ Match |
-| System | `system_command` | Not found | Client → Server | System commands | ❓ Not implemented |
-| **WiFi** |
-| WiFi | `wifi_list` | `wifi_list` | Server → Client | Available WiFi networks | ✅ Match |
-| WiFi | `wifi_connection` | `wifi_connection` | Server → Client | WiFi connection status | ✅ Match |
-| WiFi | Not documented | `connect_wifi` | Client → Server | WiFi connection request | ❓ Not documented |
-| **File System** |
-| File | `file_list` | `list_files` | Server → Client | Directory listing | ⚠️ Mismatch |
-| File | `file_operation` | `file_operation` | Server → Client | File operation result | ✅ Match |
-| File | Not documented | `read_file` | Client → Server | Read file request | ❓ Not documented |
-| **Logs** |
-| Log | Not documented | `log_message` | Server → Client | Single log message | ❓ Not documented |
-| Log | Not documented | `batch_log_messages` | Server → Client | Multiple log messages | ❓ Not documented |
-| **Errors** |
-| Error | `error` | `error` | Server → Client | Error information | ✅ Match |
+### System Messages
 
-## Implementation Analysis
+| Type | Description | Direction |
+|------|-------------|-----------|
+| `system_status` | System health and metrics | Server → Client |
+| `error` | Error notifications | Bidirectional |
+| `ping` | Connection testing | Bidirectional |
+| `pong` | Connection response | Bidirectional |
 
-The mapping shows several patterns:
+### Authentication Messages
 
-1. **Direct matches (✅)**: Some message types are consistent between documentation and implementation.
+| Type | Description | Direction |
+|------|-------------|-----------|
+| `login` | Authentication request | Client → Server |
+| `login_response` | Authentication result | Server → Client |
+| `logout` | Session termination | Client → Server |
 
-2. **Naming mismatches (⚠️)**: Some message types follow different naming conventions:
-   - Documentation uses categorical prefixes (`auth_login`)
-   - Implementation uses direct action names (`login`)
+### Motion Control Messages
 
-3. **Missing documentation (❓)**: Several implemented message types are not documented.
+| Type | Description | Direction |
+|------|-------------|-----------|
+| `motion_control` | Movement commands | Client → Server |
+| `motion_status` | Movement state updates | Server → Client |
+| `servo_control` | Servo position control | Client → Server |
+| `servo_status` | Servo position updates | Server → Client |
 
-4. **Not implemented (❓)**: Some documented message types don't appear in the implementation.
+### Camera Messages
 
-## Recommendation for Standardization
+| Type | Description | Direction |
+|------|-------------|-----------|
+| `camera_start` | Start video stream | Client → Server |
+| `camera_stop` | Stop video stream | Client → Server |
+| `camera_frame` | Video frame data | Server → Client |
+| `camera_config` | Camera settings | Client → Server |
 
-Based on the actual implementation, the more practical approach would be to update the documentation to match the implementation rather than changing all the code. The recommended naming convention is:
+### Sensor Messages
 
-### Naming Convention
+| Type | Description | Direction |
+|------|-------------|-----------|
+| `sensor_data` | Combined sensor readings | Server → Client |
+| `motion_sensor` | Gyroscope/accelerometer data | Server → Client |
+| `temperature` | Temperature readings | Server → Client |
+| `battery` | Battery status | Server → Client |
 
-Use descriptive action-based names without category prefixes, but group them in documentation by category:
+### File Operations
 
-```
-Authentication:
-  - login
-  - login_response
+| Type | Description | Direction |
+|------|-------------|-----------|
+| `file_list` | Directory listing | Bidirectional |
+| `file_upload` | File transfer initiation | Client → Server |
+| `file_data` | File content transfer | Bidirectional |
+| `file_status` | Operation status | Server → Client |
 
-Motor Control:
-  - motor_command
-  - servo_update
-  - joystick_update
+## Message Structure
 
-Camera:
-  - camera_command
-  - camera_frame
+All messages follow the standard DTO format:
+
+```json
+{
+  "version": "1.0",
+  "type": "message_type",
+  "data": {
+    // Type-specific payload
+  }
+}
 ```
 
-### Implementation Guidelines
+## Type-Specific Formats
 
-1. **For new message types**:
-   - Use descriptive action-based names
-   - Document them in the appropriate category
-   - Follow the established patterns
+### System Status
 
-2. **For documentation updates**:
-   - Remove the category prefixes from message type names
-   - Keep the categorical organization for clarity
-   - Add all implemented but undocumented message types
+```json
+{
+  "version": "1.0",
+  "type": "system_status",
+  "data": {
+    "uptime": 3600,
+    "memory": {
+      "free": 153624,
+      "total": 4194304
+    },
+    "cpu": {
+      "frequency": 240,
+      "temperature": 45.2
+    },
+    "network": {
+      "ssid": "NetworkName",
+      "rssi": -67,
+      "ip": "192.168.1.100"
+    }
+  }
+}
+```
 
-## Next Steps
+### Motion Control
 
-1. Update the DTO contract documentation (README.md and examples) to match the actual implementation
-2. Add the missing message types to the documentation
-3. Create a complete registry of all message types with examples
-4. Implement any documented message types that are missing from the code
-5. Add validation for message format and types
+```json
+{
+  "version": "1.0",
+  "type": "motion_control",
+  "data": {
+    "direction": "forward",
+    "speed": 75,
+    "duration": 2000
+  }
+}
+```
 
-This standardization will ensure your DTO contract is accurate, consistent, and provides a reliable foundation for the integration phases in your roadmap.
+### Camera Configuration
+
+```json
+{
+  "version": "1.0",
+  "type": "camera_config",
+  "data": {
+    "resolution": "720p",
+    "framerate": 30,
+    "quality": 75,
+    "brightness": 0,
+    "contrast": 0
+  }
+}
+```
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2025-06-12 | Initial release |
+
+## Implementation Notes
+
+1. **Type Validation**
+   - Validate message type before processing
+   - Check required fields for each type
+   - Verify data format matches specification
+
+2. **Error Handling**
+   - Use appropriate error types
+   - Include helpful error messages
+   - Maintain consistent error format
+
+3. **Performance Considerations**
+   - Minimize message size
+   - Use appropriate data types
+   - Consider binary formats for large data
+
+---
+
+_Last Updated: June 12, 2025_

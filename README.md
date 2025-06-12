@@ -1,21 +1,21 @@
 # Cozmo-System Robot Platform
 
-This project implements a versatile ESP32-CAM-based robot platform with live video streaming, servo head/hand control, motor drive capabilities, and system monitoring. It inherits key features from the ESP32-CAM project and adds improved memory management and stability enhancements.
+This project implements a versatile ESP32-CAM-based robot platform featuring live video streaming, servo-controlled head/hand movements, motor drive capabilities, and system monitoring. It extends the ESP32-CAM project with enhanced memory management and improved stability.
 
 ## Dashboard Interface
 
-The system features a responsive, professional dashboard interface for IoT device control and monitoring. Built with a modern, GitHub-inspired dark theme.
+The platform provides a responsive, professional web dashboard for IoT device control and monitoring, featuring a modern, GitHub-inspired dark theme.
 
 ### Dashboard Features
 
-- **Camera:** Binary-based live streaming for memory efficiency, snapshot capture, and camera settings
-- **Gyro & Accelerometer:** Real-time sensor data visualization with 3D visualization
-- **Joystick Controls:** Interactive 2D joysticks for servo and motor control
-- **Chat Card:** Built-in communication system for controlling via text commands
-- **WiFi Manager:** WiFi network scanning and connection management
-- **Debug Console:** Real-time logging and command execution
-- **File Manager:** Upload, download, and manage files on the device
-- **Authentication:** Secure login system to protect access
+- **Camera Control:** Binary-based live streaming with memory optimization, snapshot capture, and configurable settings
+- **Motion Sensors:** Real-time gyroscope and accelerometer data with 3D visualization
+- **Motion Control:** Interactive 2D joysticks for precise servo and motor control
+- **Command Interface:** Text-based command system with chat functionality
+- **Network Management:** WiFi network scanning and connection configuration
+- **System Console:** Real-time system logging and command execution
+- **File System:** Integrated file upload, download, and management interface
+- **Security:** Role-based authentication system with secure access control
 
 ## Status
 
@@ -42,35 +42,35 @@ This project is currently under active development. Core features are being port
 
 ### Currently Implemented
 - **Memory Management System**
-  - Optimized SPI RAM Allocator for ArduinoJson 7.x compatibility
-  - Efficient buffer management to prevent memory-related crashes
-  - PSRAM utilization for large data structures
-- **Modern Web Dashboard**
-  - Responsive UI with GitHub-inspired dark theme
-  - Single-page application design
-  - WebSocket-based real-time communication with binary streaming for camera efficiency
-  - Mobile-friendly interface with collapsible sidebar
-- **Authentication System**
-  - Secure login mechanism for dashboard access
-  - Session management for up to 5 concurrent users
-- **File Management**
-  - List, upload, download, and delete files
-  - Support for both text and binary file transfers
-- **Communication**
-  - Real-time WebSocket communication
-  - Standardized Data Transfer Object (DTO) format
-  - Binary protocol for efficient camera streaming
+  - Optimized SPI RAM allocation for ArduinoJson 7.x integration
+  - Memory-safe buffer management system
+  - Efficient PSRAM utilization for data operations
+- **Web Interface**
+  - Responsive design with GitHub-inspired dark theme
+  - Single-page application architecture
+  - Binary-optimized WebSocket communication
+  - Mobile-optimized interface with collapsible navigation
+- **Access Control**
+  - Role-based authentication system
+  - Multi-user session management (up to 5 concurrent users)
+- **File System Management**
+  - Complete file system operations interface
+  - Support for text and binary file handling
+- **Communication Layer**
+  - WebSocket-based real-time messaging
+  - Standardized DTO communication protocol
+  - Binary-optimized camera streaming
 
-### Planned Features (In Development)
-The following features are planned to be ported from the ESP32-CAM project:
+### Planned Features
+The following enhancements are under development:
 
-- **Live Camera Streaming**: Real-time video feed with adjustable resolution and quality
-- **Servo Control System**: Head/Hand camera movement with speed control (0-200%)
-- **Motor Control**: Forward, backward, and turning movements for mobility
-- **Web Interface**: Responsive design with touch/keyboard controls
-- **System Monitoring**: CPU usage, memory, temperature, and WiFi statistics
-- **OLED/LCD Screen Support**: Status display and eye animations
-- **I2C Device Management**: Comprehensive bus management and scanning utilities
+- **Video System:** Real-time streaming with configurable quality settings
+- **Motion System:** Precision head/hand movement control (0-200% speed range)
+- **Navigation System:** Multi-directional movement capabilities
+- **Interface System:** Touch and keyboard-optimized controls
+- **Monitoring System:** Real-time performance metrics tracking
+- **Display System:** OLED/LCD status display with animation support
+- **I2C Framework:** Advanced device management and configuration
 
 ## Hardware Requirements
 
@@ -181,6 +181,7 @@ All WebSocket messages follow a standardized Data Transfer Object (DTO) format:
 
 ```json
 {
+  "version": "1.0",
   "type": "command_type",
   "data": {
     // Command-specific properties
@@ -193,10 +194,10 @@ All WebSocket messages follow a standardized Data Transfer Object (DTO) format:
 - **Motor Control**: `motor_command` - Control robot movement
 - **Camera Control**: `camera_command` - Start/stop streaming, change resolution
 - **System Status**: `system_status` - Request system information
-- **File Operations**: `list_files`, `upload_file`, `delete_file` - Manage files
-- **WiFi Management**: `get_wifi_networks`, `connect_wifi` - Configure WiFi
+- **File Operations**: `list_files`, `read_file`, `delete_file` - Manage files
+- **WiFi Management**: `wifi_list`, `connect_wifi` - Configure WiFi
 
-See the [`docs/DTO_FORMAT.md`](docs/DTO_FORMAT.md) file for complete communication protocol details.
+See the [`docs/dto_contract/README.md`](docs/dto_contract/README.md) file for complete communication protocol details.
 
 ## Project Structure
 
