@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cozmo IoT System</title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/config.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -586,6 +587,47 @@
 
                 <div class="card">
                     <div class="card-header">
+                        <h2 class="card-title">Configuration Manager</h2>
+                    </div>
+                    <div class="mb-4">
+                        <p>Edit device configuration settings below. Changes will be saved to config.json and applied immediately.</p>
+                    </div>
+                    <div id="config-form-container">
+                        <div id="config-editor-tabs" class="config-tabs">
+                            <button class="config-tab-button active" data-tab="tab-general">General</button>
+                            <button class="config-tab-button" data-tab="tab-motors">Motors & Servos</button>
+                            <button class="config-tab-button" data-tab="tab-sensors">Sensors</button>
+                            <button class="config-tab-button" data-tab="tab-connectivity">Connectivity</button>
+                            <button class="config-tab-button" data-tab="tab-advanced">Advanced</button>
+                        </div>
+                        
+                        <div id="config-editor-content" class="mt-4">
+                            <div id="tab-general" class="config-tab-content active">
+                                <!-- Loaded dynamically -->
+                            </div>
+                            <div id="tab-motors" class="config-tab-content">
+                                <!-- Loaded dynamically -->
+                            </div>
+                            <div id="tab-sensors" class="config-tab-content">
+                                <!-- Loaded dynamically -->
+                            </div>
+                            <div id="tab-connectivity" class="config-tab-content">
+                                <!-- Loaded dynamically -->
+                            </div>
+                            <div id="tab-advanced" class="config-tab-content">
+                                <!-- Loaded dynamically -->
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 mt-4">
+                            <button id="save-config" class="btn btn-primary">Save Configuration</button>
+                            <button id="reset-config" class="btn">Reset to Default</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
                         <h2 class="card-title">System Settings</h2>
                     </div>
 
@@ -655,6 +697,7 @@
 
     <script src="js/joy.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/config-manager.js"></script>
     <script>
       // Remove loading screen after CSS and JS are loaded
       function removeLoadingScreen() {

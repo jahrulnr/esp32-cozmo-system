@@ -6,7 +6,7 @@
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-#include "lib/Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocator.h"
 
 namespace Communication {
 

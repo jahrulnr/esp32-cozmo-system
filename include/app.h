@@ -28,6 +28,7 @@
 #include "lib/Utils/I2CManager.h"
 #include "lib/Utils/Sstring.h"
 #include "lib/Utils/CommandMapper.h"
+#include "lib/Utils/ConfigManager.h"
 
 struct gptRequest
 {
@@ -98,6 +99,7 @@ void setupGPT();
 void setupHealthCheck();
 void setupTasks();
 void setupCommandMapper();
+void setupConfigManager();
 void setupAutomation();
 void updateManualControlTime();
 bool isAutomationEnabled();

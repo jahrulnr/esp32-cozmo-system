@@ -1,6 +1,6 @@
 #include "Logger.h"
 #include <SPIFFS.h>
-#include "../Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocator.h"
 
 namespace Utils {
 

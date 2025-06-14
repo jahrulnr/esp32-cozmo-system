@@ -1,7 +1,7 @@
 #include "WiFiManager.h"
 #include "Config.h"
 
-#include "lib/Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocator.h"
 #include "lib/Utils/FileManager.h"
 
 namespace Communication {

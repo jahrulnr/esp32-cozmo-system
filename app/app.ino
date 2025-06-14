@@ -38,6 +38,7 @@ void setup() {
   
   // Initialize components
   setupPins();
+  setupConfigManager();
   setupScreen();
   setupWiFi();
   setupCamera();
