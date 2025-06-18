@@ -11,7 +11,7 @@ SPIHandler& SPIHandler::getInstance() {
 SPIHandler::SPIHandler() : 
   _txBuffer(nullptr), 
   _rxBuffer(nullptr), 
-  _bufferSize(256), // Default buffer size
+  _bufferSize(SPI_BUFFER_SIZE), // Default buffer size
   _receiveCallback(nullptr),
   _spi(nullptr), 
   _frequency(1000000), 
@@ -130,9 +130,13 @@ bool SPIHandler::send(const uint8_t* txData, size_t length) {
   
   // Select slave
   digitalWrite(_csPin, LOW);
+
+  delayMicroseconds(5);
   
   // Transfer data
   _spi->transferBytes((uint8_t*)txData, _rxBuffer, length);
+
+  delayMicroseconds(5);
   
   // Deselect slave
   digitalWrite(_csPin, HIGH);
@@ -141,16 +145,17 @@ bool SPIHandler::send(const uint8_t* txData, size_t length) {
   _spi->endTransaction();
   
   // Queue the received data for processing
-  SPIDataPacket* packet = new SPIDataPacket(_rxBuffer, length);
+  SPIDataPacket* packet = new SPIDataPacket(_rxBuffer, SPI_BUFFER_SIZE);
   _receiveQueue.push(packet);
   
   _logger->debug("SPIHandler: Send complete, queued response for processing");
+	delay(1);
   return true;
 }
 
 bool SPIHandler::sendCommand(Communication::SPICommand cmd) {
 	uint8_t command = (uint8_t) cmd;
-	return send(&command, 8);
+	return send(&command);
 }
 
 bool SPIHandler::receive(uint8_t* buffer, size_t length) {

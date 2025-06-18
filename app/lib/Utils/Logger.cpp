@@ -6,7 +6,7 @@ namespace Utils {
 
 Logger::Logger() : _serialEnabled(true), _fileEnabled(false), _fileName("/logs.txt"), 
                  _logLevel(LogLevel::INFO), _webSocket(nullptr), _logTaskRunning(false),
-                 _batchSize(5), _flushIntervalMs(500), _lastFlushTime(0) {
+                 _batchSize(50), _flushIntervalMs(500), _lastFlushTime(0) {
     // Create queue for log messages (larger size to handle high log volumes)
     _logQueue = xQueueCreate(50, sizeof(LogMessage*));
     
@@ -300,7 +300,7 @@ void Logger::logTask(void* parameter) {
                 batchData.shrinkToFit();
                 
                 // Send as a batch_log_message type for better frontend handling
-                logger->_webSocket->sendJsonMessage(-1, "batch_log_messages", batchData);
+                // logger->_webSocket->sendJsonMessage(-1, "batch_log_messages", batchData);
             }
             
             // Cleanup all messages

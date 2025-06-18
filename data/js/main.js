@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleWebSocketMessage(evt) {
         // Handle binary data (camera frames)
         if (evt.data instanceof ArrayBuffer || evt.data instanceof Blob) {
+            console.log("Binary received", evt)
             handleBinaryMessage(evt.data);
             return;
         }
@@ -223,10 +224,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle binary messages (camera frames)
     function handleBinaryMessage(data) {
-        // If we don't have frame header metadata, ignore this binary frame or assume it's a file upload response
+        // If we don't have frame header metadata, try to detect JPEG from magic bytes
         if (!frameHeader) {
+            console.log("Received binary data without header, size:", (data.size || data.byteLength));
+            
+            // Try to detect if this is a JPEG by checking the first few bytes
+            let isJpeg = false;
+            
+            if (data instanceof Blob) {
+                // Sample a small chunk to check header bytes
+                data.slice(0, 3).arrayBuffer().then(buffer => {
+                    const header = new Uint8Array(buffer);
+                    // Check JPEG magic bytes (FF D8 FF)
+                    if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
+                        console.log("Detected JPEG from magic bytes");
+                        const blob = new Blob([data], { type: 'image/jpeg' });
+                        updateImageSources(URL.createObjectURL(blob));
+                    } else {
+                        // Unknown format, try as generic binary
+                        console.log("Unknown binary format, first bytes:", header);
+                        updateImageSources(URL.createObjectURL(data));
+                    }
+                });
+            } else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
+                // For ArrayBuffer or views like Uint8Array
+                const header = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer, 0, 3);
+                if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
+                    console.log("Detected JPEG from magic bytes");
+                    const blob = new Blob([data], { type: 'image/jpeg' });
+                    updateImageSources(URL.createObjectURL(blob));
+                } else {
+                    // Unknown format, try as generic binary
+                    console.log("Unknown binary format, first bytes:", Array.from(header).map(b => b.toString(16)));
+                    updateImageSources(URL.createObjectURL(data));
+                }
+            } else {
+                // Fallback for unknown data type
+                updateImageSources(URL.createObjectURL(data));
+            }
             
             return;
+        }
+        
+        function updateImageSources(url) {
+            const cameraFeed = document.getElementById('camera-feed');
+            const cameraFeedMain = document.getElementById('camera-feed-main');
+            
+            if (cameraFeed) {
+                cameraFeed.onload = () => URL.revokeObjectURL(cameraFeed.src);
+                cameraFeed.src = url;
+            }
+            
+            if (cameraFeedMain) {
+                cameraFeedMain.onload = () => URL.revokeObjectURL(cameraFeedMain.src);
+                cameraFeedMain.src = url;
+            }
         }
         
         // Add frame to queue
@@ -262,8 +314,24 @@ document.addEventListener('DOMContentLoaded', () => {
         processingFrame = true;
         const frame = frameQueue.shift();
         
-        // Create a blob from the binary data
-        const blob = frame.data instanceof Blob ? frame.data : new Blob([frame.data]);
+        // Create a blob from the binary data with the correct MIME type
+        let mimeType = 'application/octet-stream';
+        
+        // If we have frame header with format info, use the appropriate MIME type
+        if (frame.header && frame.header.format) {
+            if (frame.header.format.toLowerCase() === 'jpeg') {
+                mimeType = 'image/jpeg';
+            } else if (frame.header.format.toLowerCase() === 'png') {
+                mimeType = 'image/png';
+            }
+        }
+        
+        // Create the blob with the correct MIME type
+        const blob = frame.data instanceof Blob ? 
+            new Blob([frame.data], { type: mimeType }) : 
+            new Blob([frame.data], { type: mimeType });
+            
+        console.log("Creating image URL with mime type:", mimeType, "size:", (frame.data.size || frame.data.byteLength));
         frame.url = URL.createObjectURL(blob);
         
         // Update the camera feed with the new image
@@ -2247,25 +2315,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initAccelCanvas();
     
     // Request initial distance data after a delay to ensure WebSocket is connected
-    setTimeout(() => {
-        if (document.getElementById('distance-value') && checkWebSocketConnection()) {
-            sendJsonMessage('distance_request', {});
+    // setTimeout(() => {
+    //     if (document.getElementById('distance-value') && checkWebSocketConnection()) {
+    //         sendJsonMessage('distance_request', {});
             
-        }
-    }, 2000);
+    //     }
+    // }, 2000);
     
     // Set up automatic regular distance updates
-    setInterval(() => {
-        // Only request distance updates if the sensor section is visible and WebSocket is connected
-        if (document.getElementById('distance-value') && 
-            document.getElementById('sensors-section').style.display !== 'none' &&
-            checkWebSocketConnection()) {
-            sendJsonMessage('distance_request', {});
-        }
+    // setInterval(() => {
+    //     // Only request distance updates if the sensor section is visible and WebSocket is connected
+    //     if (document.getElementById('distance-value') && 
+    //         document.getElementById('sensors-section').style.display !== 'none' &&
+    //         checkWebSocketConnection()) {
+    //         sendJsonMessage('distance_request', {});
+    //     }
 
-        // Periodically check system status
-        if (connected) {
-            sendJsonMessage('get_status', {});
-        }
-    }, 1000);
+    //     // Periodically check system status
+    //     if (connected) {
+    //         sendJsonMessage('get_status', {});
+    //     }
+    // }, 1000);
 });

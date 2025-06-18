@@ -1,5 +1,6 @@
 #include "app.h"
 #include <mbedtls/base64.h>
+#include <ArduinoJson.h>
 
 // External reference to slave camera data structure defined in app.ino
 extern struct SlaveCameraData slaveCameraData;
@@ -34,16 +35,16 @@ void onSPIMessageReceived(const uint8_t* data, size_t length) {
                 break;
                 
             case Communication::SPICommand::CAMERA_DATA_RESPONSE:
-                logger.info("Received camera data response");
+                logger.info("Received camera data response with %d bytes", length);
                 // Process camera metadata from slave
                 if (length >= 16) { // We need at least 16 bytes for the metadata
                     // Clean up previous data if any
                     if (slaveCameraData.imageData) {
-                        free(slaveCameraData.imageData);
+                        heap_caps_free(slaveCameraData.imageData);
                         slaveCameraData.imageData = nullptr;
                     }
                     if (slaveCameraData.blockReceived) {
-                        free(slaveCameraData.blockReceived);
+                        heap_caps_free(slaveCameraData.blockReceived);
                         slaveCameraData.blockReceived = nullptr;
                     }
                     
@@ -59,17 +60,17 @@ void onSPIMessageReceived(const uint8_t* data, size_t length) {
                                               data[13];
                     
                     // Allocate memory for the image data and block tracking
-                    slaveCameraData.imageData = (uint8_t*)malloc(slaveCameraData.totalSize);
-                    slaveCameraData.blockReceived = (bool*)calloc(slaveCameraData.totalBlocks, sizeof(bool));
+                    slaveCameraData.imageData = (uint8_t*)heap_caps_malloc(slaveCameraData.totalSize, MALLOC_CAP_DMA | MALLOC_CAP_DEFAULT);
+                    slaveCameraData.blockReceived = (bool*)heap_caps_calloc(slaveCameraData.totalBlocks, sizeof(bool), MALLOC_CAP_DMA | MALLOC_CAP_DEFAULT);
                     
                     if (!slaveCameraData.imageData || !slaveCameraData.blockReceived) {
-                        logger.error("Failed to allocate memory for camera data");
+                        logger.error("Failed to allocate memory for camera data! data size: %d", slaveCameraData.totalSize);
                         if (slaveCameraData.imageData) {
-                            free(slaveCameraData.imageData);
+                            heap_caps_free(slaveCameraData.imageData);
                             slaveCameraData.imageData = nullptr;
                         }
                         if (slaveCameraData.blockReceived) {
-                            free(slaveCameraData.blockReceived);
+                            heap_caps_free(slaveCameraData.blockReceived);
                             slaveCameraData.blockReceived = nullptr;
                         }
                         slaveCameraData.dataAvailable = false;
@@ -140,16 +141,17 @@ void onSPIMessageReceived(const uint8_t* data, size_t length) {
                         
                         // Signal that the frame is ready to be processed
                         // This could trigger a callback or set a flag for the main loop
-                    } else {
-                        // Request the next block
-                        // Find the next unreceived block
-                        for (uint16_t i = 0; i < slaveCameraData.totalBlocks; i++) {
-                            if (!slaveCameraData.blockReceived[i]) {
-                                requestCameraDataBlockFromSlave(i);
-                                break;
-                            }
-                        }
                     }
+                    // else {
+                    //     // Request the next block
+                    //     // Find the next unreceived block
+                    //     for (uint16_t i = 0; i < slaveCameraData.totalBlocks; i++) {
+                    //         if (!slaveCameraData.blockReceived[i]) {
+                    //             requestCameraDataBlockFromSlave(i);
+                    //             break;
+                    //         }
+                    //     }
+                    // }
                 }
                 break;
             
@@ -202,7 +204,7 @@ void setupSPI() {
     
     // Lower SPI frequency for better stability (100kHz)
     // Use SPI_MODE1 which may work better with certain SPI slaves
-    if (!spiHandler->init(SPI_CLOCK_DIV2, SPI_MODE1, SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, SPI_ESP32_SS)) {
+    if (!spiHandler->init(10 * 1000000, SPI_MODE1, SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, SPI_ESP32_SS)) {
         logger.error("Failed to initialize SPI");
         return;
     } else {
@@ -267,7 +269,7 @@ bool requestCameraDataBlockFromSlave(uint16_t blockNumber) {
     };
     
     Utils::Logger::getInstance().info("Requesting camera data block %d from slave", blockNumber);
-    return spiHandler->send(cmdData, sizeof(cmdData));
+    return spiHandler->send(cmdData);
 }
 
 /**
@@ -275,12 +277,12 @@ bool requestCameraDataBlockFromSlave(uint16_t blockNumber) {
  */
 void resetSlaveCameraData() {
     if (slaveCameraData.imageData) {
-        free(slaveCameraData.imageData);
+        heap_caps_free(slaveCameraData.imageData);
         slaveCameraData.imageData = nullptr;
     }
     
     if (slaveCameraData.blockReceived) {
-        free(slaveCameraData.blockReceived);
+        heap_caps_free(slaveCameraData.blockReceived);
         slaveCameraData.blockReceived = nullptr;
     }
     
@@ -343,10 +345,27 @@ bool isSlaveCameraDataJPEG() {
         return false;
     }
     
-    // Check for JPEG magic bytes
-    return (slaveCameraData.imageData[0] == 0xFF && 
-            slaveCameraData.imageData[1] == 0xD8 && 
-            slaveCameraData.imageData[2] == 0xFF);
+    // Check for JPEG magic bytes (SOI marker - Start Of Image)
+    // A valid JPEG starts with FF D8 (SOI) and typically has an FF Ex segment right after
+    if (slaveCameraData.totalSize >= 3) {
+        bool hasJpegHeader = (slaveCameraData.imageData[0] == 0xFF && 
+                             slaveCameraData.imageData[1] == 0xD8);
+        
+        if (hasJpegHeader) {
+            // Also check for the third byte which is typically 0xFF in a JPEG
+            // followed by a segment marker like APP0 (0xE0) or similar
+            bool hasSegmentMarker = (slaveCameraData.totalSize >= 3 && slaveCameraData.imageData[2] == 0xFF);
+            
+            Utils::Logger::getInstance().debug("JPEG validation: Header %s, Segment marker %s", 
+                hasJpegHeader ? "valid" : "invalid",
+                hasSegmentMarker ? "found" : "not found");
+                
+            // Even if the third byte is not 0xFF, we'll still accept it if the first two bytes are valid
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 /**
@@ -377,30 +396,63 @@ bool processSlaveCameraFrame() {
     // 3. Save it to storage if needed
     
     // For example, if there's a websocket connection, you could send the image:
-    if (webSocket && webSocket->count() > 0) {
-        // Create a base64 encoded version of the image
-        size_t base64Size = slaveCameraData.totalSize * 4 / 3 + 4; // Base64 overhead
-        char* base64Data = (char*)malloc(base64Size);
-        
-        if (base64Data) {
-            size_t outputLen = 0;
-            mbedtls_base64_encode((unsigned char*)base64Data, base64Size, &outputLen,
-                                 slaveCameraData.imageData, slaveCameraData.totalSize);
+    if (webSocket) {
+        if (isSlaveCameraDataJPEG() && slaveCameraData.totalSize > 0) {
+            // Log the last few bytes for debugging
+            char lastBytesStr[32] = {0};
+            for (int i = max(0, (int)slaveCameraData.totalSize - 10); i < slaveCameraData.totalSize; i++) {
+                char byteStr[8];
+                snprintf(byteStr, sizeof(byteStr), "%02X ", slaveCameraData.imageData[i]);
+                strcat(lastBytesStr, byteStr);
+            }
+            logger.debug("Last bytes of camera data: %s", lastBytesStr);
             
-            // Create a JSON message with the image data
-            Utils::SpiJsonDocument jsonData;
-            jsonData["data"] = base64Data;
-            jsonData["format"] = isSlaveCameraDataJPEG() ? "image/jpeg" : "application/octet-stream";
-            jsonData["width"] = slaveCameraData.width;
-            jsonData["height"] = slaveCameraData.height;
+            // JPEG data starts with specific marker (FF D8 FF) and ends with (FF D9)
+            // Check for proper end marker to ensure valid JPEG data
+            bool validJpegEnd = (slaveCameraData.totalSize >= 2 && 
+                               slaveCameraData.imageData[slaveCameraData.totalSize - 2] == 0xFF && 
+                               slaveCameraData.imageData[slaveCameraData.totalSize - 1] == 0xD9);
             
-            // Send to all connected clients
-            webSocket->sendJsonMessage(-1, "slave_camera_data", jsonData);
+            // If the JPEG end marker is missing, try to fix it
+            if (!validJpegEnd) {
+                logger.warning("Invalid JPEG data - missing end marker, attempting to fix");
+                
+                // Ensure we have room for the marker
+                if (slaveCameraData.totalSize + 2 <= slaveCameraData.blockSize * slaveCameraData.totalBlocks) {
+                    // Add the JPEG end marker
+                    slaveCameraData.imageData[slaveCameraData.totalSize] = 0xFF;
+                    slaveCameraData.imageData[slaveCameraData.totalSize + 1] = 0xD9;
+                    slaveCameraData.totalSize += 2;
+                    logger.info("Added JPEG end marker, new size: %d bytes", slaveCameraData.totalSize);
+                    validJpegEnd = true;
+                } else {
+                    logger.error("Cannot fix JPEG data - no room for end marker");
+                    return false;
+                }
+            }
             
-            free(base64Data);
+            // JSON header to tell client this is a JPEG image
+            Utils::SpiJsonDocument headerDoc;
+            headerDoc["type"] = "camera_frame";
+            headerDoc["data"]["format"] = "jpeg";
+            headerDoc["data"]["width"] = slaveCameraData.width;
+            headerDoc["data"]["height"] = slaveCameraData.height;
+            headerDoc["data"]["size"] = slaveCameraData.totalSize;
             
+            String headerJson;
+            serializeJson(headerDoc, headerJson);
+            webSocket->sendText(-1, headerJson);
+            delayMicroseconds(50);
+            
+            // Send the actual binary data
+            webSocket->sendBinary(-1, slaveCameraData.imageData, slaveCameraData.totalSize);
             logger.info("Sent slave camera data to web clients");
+        } else {
+            logger.warning("Cannot send slave camera data - invalid format");
+            return false;
         }
+    } else {
+        logger.warning("Failed to send slave camera data to web clients");
     }
     
     return true;

@@ -63,7 +63,7 @@ void setupTasks() {
     xTaskCreate([](void *param){
         while(1) {
             sendPingToSlave();
-            vTaskDelay(pdMS_TO_TICKS(5000)); // Ping every 5 seconds
+            vTaskDelay(pdMS_TO_TICKS(3000)); // Ping every 5 seconds
         }
     }, "pingDevices", 4096, NULL, 10, NULL);
 
@@ -131,7 +131,6 @@ void setupTasks() {
                     if (slaveCameraData.blockReceived && slaveCameraData.totalBlocks > 0) {
                         // Find first missing block
                         bool missingBlockFound = false;
-                        
                         for (uint16_t i = 0; i < slaveCameraData.totalBlocks; i++) {
                             if (!slaveCameraData.blockReceived[i]) {
                                 // Request this missing block
@@ -157,7 +156,7 @@ void setupTasks() {
             // Wait before next request
             vTaskDelay(pdMS_TO_TICKS(33)); // Request camera data every 1 second
         }
-    }, "slaveCameraRequest", 4096, NULL, 5, NULL);
+    }, "slaveCameraRequest", 1024 * 40, NULL, 5, NULL);
 
     delay(1000);
 
@@ -178,7 +177,7 @@ void sensorMonitorTask(void* parameter) {
     
     logger->info("Sensor monitoring task started");
     const int updateInterval = 3;
-    const int sendInterval = 200;
+    const int sendInterval = 1000;
     long currentUpdate = millis();
     SemaphoreHandle_t sensor_handle = xSemaphoreCreateMutex();
     

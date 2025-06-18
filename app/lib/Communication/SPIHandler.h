@@ -86,7 +86,7 @@ public:
    * @param length Length of data to transfer in bytes
    * @return true if sending was successful, false otherwise
    */
-  bool send(const uint8_t* txData, size_t length);
+  bool send(const uint8_t* txData, size_t length = SPI_BUFFER_SIZE);
   bool sendCommand(Communication::SPICommand cmd);
 
   /**
@@ -122,14 +122,14 @@ private:
    * @param length Length of data to receive in bytes
    * @return true if receiving was successful, false otherwise
    */
-  bool receive(uint8_t* buffer, size_t length);
+  bool receive(uint8_t* buffer, size_t length = SPI_BUFFER_SIZE);
   
   /**
    * @brief Handle received data internally or through callback
    * @param data Pointer to received data
    * @param length Length of received data
    */
-  void handleReceivedData(const uint8_t* data, size_t length);
+  void handleReceivedData(const uint8_t* data, size_t length = SPI_BUFFER_SIZE);
 
   // Buffer management
   uint8_t* _txBuffer;
