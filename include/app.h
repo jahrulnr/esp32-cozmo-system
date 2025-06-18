@@ -19,6 +19,7 @@
 #include "lib/Communication/WebServer.h"
 #include "lib/Communication/WebSocketHandler.h"
 #include "lib/Communication/GPTAdapter.h"
+#include "lib/Communication/SPIHandler.h"
 #include "lib/Screen/Screen.h"
 #include "lib/Utils/FileManager.h"
 #include "lib/Utils/HealthCheck.h"
@@ -29,6 +30,24 @@
 #include "lib/Utils/Sstring.h"
 #include "lib/Utils/CommandMapper.h"
 #include "lib/Utils/ConfigManager.h"
+
+// Structure to store slave camera data information
+struct SlaveCameraData {
+  bool dataAvailable;          // Whether camera data is available
+  uint16_t width;              // Image width
+  uint16_t height;             // Image height
+  uint32_t totalSize;          // Total size of the camera frame in bytes
+  uint16_t totalBlocks;        // Total number of blocks
+  uint16_t blockSize;          // Size of each block in bytes
+  uint16_t receivedBlocks;     // Number of blocks received so far
+  uint8_t* imageData;          // Buffer to store the assembled image
+  bool* blockReceived;         // Array to track which blocks have been received
+  bool frameComplete;          // Whether the frame is complete
+  uint8_t dataVersion;         // Version of the data format
+};
+
+// Declare external reference to the global SlaveCameraData instance
+extern SlaveCameraData slaveCameraData;
 
 struct gptRequest
 {
@@ -51,11 +70,13 @@ extern Communication::WiFiManager* wifiManager;
 extern Communication::WebServer* webServer;
 extern Communication::WebSocketHandler* webSocket;
 extern Communication::GPTAdapter* gptAdapter;
+extern Communication::SPIHandler* spiHandler;
 extern Screen::Screen* screen;
 extern Utils::FileManager* fileManager;
 extern Utils::HealthCheck* healthCheck;
 extern Utils::Logger* logger;
 extern Utils::CommandMapper* commandMapper;
+extern Utils::ConfigManager* configManager;
 extern bool g_isApOnlyMode;
 
 // Task handles
@@ -68,6 +89,18 @@ extern TaskHandle_t automationTaskHandle;
 extern bool g_automationEnabled;
 extern unsigned long g_lastManualControlTime;
 
+// SPI control
+bool sendPingToSlave();
+bool requestCameraDataFromSlave();
+bool requestCameraDataBlockFromSlave(uint16_t blockNumber);
+void resetSlaveCameraData();
+bool isSlaveCameraFrameComplete();
+uint8_t* getSlaveCameraImageData();
+uint32_t getSlaveCameraImageSize();
+void getSlaveCameraImageDimensions(uint16_t* width, uint16_t* height);
+bool isSlaveCameraDataJPEG();
+bool processSlaveCameraFrame();
+
 // Function prototypes
 void protectCozmo();
 void protectCozmoTask(void * param);
@@ -75,9 +108,11 @@ void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback callback);
+void setupSPI();
 
 // Forward declarations
 void setupPins();
+void setupSPI();
 void setupCamera();
 void startCameraStreaming();
 void stopCameraStreaming();

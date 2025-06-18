@@ -5,13 +5,6 @@ void setupWebServer() {
   if (WEBSERVER_ENABLED) {
     logger->info("Setting up web server...");
     
-    // Initialize SPIFFS for file operations
-    fileManager = new Utils::FileManager();
-    if (!fileManager->init()) {
-      logger->error("SPIFFS initialization failed");
-      return;
-    }
-    
     webServer = new Communication::WebServer();
     if (webServer->init(WEBSERVER_PORT)) {
       // Setup routes

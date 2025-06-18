@@ -2,21 +2,17 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "app.h"
 #include "FS.h"
 #include "SPIFFS.h"
 #include "SpiAllocator.h"
 #include "FileManager.h"
 
-// External references
-extern bool isAutomationEnabled();
-extern void setAutomationEnabled(bool enabled);
-
 namespace Utils {
 
 class ConfigManager {
 public:
-    static bool initialize();
+    ConfigManager();
+    static bool initialize(FileManager *fm);
     static bool loadConfig();
     static bool saveConfig(const String& configJson);
     static String getConfigAsJson();

@@ -161,7 +161,6 @@ std::vector<FileManager::FileInfo> FileManager::listFiles(String path) {
         file = root.openNextFile();
     }
     
-    
     root.close();
     
     // Sort directories alphabetically

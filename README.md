@@ -199,6 +199,19 @@ All WebSocket messages follow a standardized Data Transfer Object (DTO) format:
 
 See the [`docs/dto_contract/README.md`](docs/dto_contract/README.md) file for complete communication protocol details.
 
+## Communication Subsystems
+
+### SPI Communication
+The platform includes a robust SPI communication system for master-slave interaction:
+
+- **Multiple Device Support:** Register and communicate with multiple slave devices
+- **Ping Protocol:** Verify communication with connected devices
+- **Data Transfer:** Efficiently send and request data from slave devices
+- **Camera Data Transfer:** Request and receive camera/pixel data from slave devices
+- **Thread Safety:** Mutex-protected operations for reliable multi-threaded access
+
+See [Camera Data SPI Transfer Documentation](docs/camera_data_spi_transfer.md) for details on the camera data transfer protocol.
+
 ## Project Structure
 
 ```

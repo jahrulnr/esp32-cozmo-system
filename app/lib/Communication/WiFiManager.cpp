@@ -31,7 +31,7 @@ bool WiFiManager::init() {
         Serial.println("FileManager init successful in init()");
         Serial.println("Files in root directory:");
         
-        std::vector<Utils::FileManager::FileInfo> files = _fileManager.listFiles("/");
+        std::vector<Utils::FileManager::FileInfo> files = _fileManager.listFiles();
         for (const auto& fileInfo : files) {
             Serial.print("  ");
             Serial.print(fileInfo.name);

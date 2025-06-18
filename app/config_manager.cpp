@@ -3,7 +3,7 @@
 #include "lib/Utils/ConfigManager.h"
 
 void setupConfigManager() {
-    if (Utils::ConfigManager::initialize()) {
+    if (Utils::ConfigManager::initialize(fileManager)) {
         logger->info("ConfigManager initialized");
     } else {
         logger->error("Failed to initialize ConfigManager");

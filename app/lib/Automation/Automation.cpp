@@ -223,7 +223,8 @@ void Automation::loadTemplateBehaviors() {
         int startPos = 0;
         int nextPos = 0;
         while ((nextPos = templateDefault.indexOf('\n', startPos)) != -1) {
-            Utils::Sstring behavior = templateDefault.substring(startPos, nextPos).trim();
+            String behavior = templateDefault.toString().substring(startPos, nextPos);
+            behavior.trim();
             if (behavior.length() > 0) {
                 _templateBehaviors.push_back(behavior);
             }
@@ -231,7 +232,7 @@ void Automation::loadTemplateBehaviors() {
         }
         
         // Add the remaining text as the last behavior if it exists
-        Utils::Sstring lastBehavior = templateDefault.substring(startPos).trim();
+        Utils::Sstring lastBehavior = templateDefault.substring(startPos);
         if (lastBehavior.length() > 0) {
             _templateBehaviors.push_back(lastBehavior);
         }
@@ -480,14 +481,16 @@ bool Automation::saveBehaviorsToFile() {
     int startPos = 0;
     int nextPos = 0;
     while ((nextPos = defaultTemplates.indexOf('\n', startPos)) != -1) {
-        Utils::Sstring behavior = defaultTemplates.substring(startPos, nextPos).trim();
+        String behavior = defaultTemplates.toString().substring(startPos, nextPos);
+        behavior.trim();
         if (behavior.length() > 0) {
             defaultTemplatesList.push_back(behavior);
         }
         startPos = nextPos + 1;
     }
     
-    Utils::Sstring lastDefault = defaultTemplates.substring(startPos).trim();
+    String lastDefault = defaultTemplates.toString().substring(startPos);
+    lastDefault.trim();
     if (lastDefault.length() > 0) {
         defaultTemplatesList.push_back(lastDefault);
     }
@@ -497,7 +500,7 @@ bool Automation::saveBehaviorsToFile() {
         // Check if this behavior is in the default list
         bool isDefault = false;
         for (const auto& defaultBehavior : defaultTemplatesList) {
-            if (behavior.toString() == defaultBehavior.toString()) {
+            if (behavior.equals(defaultBehavior)) {
                 isDefault = true;
                 break;
             }
@@ -506,7 +509,7 @@ bool Automation::saveBehaviorsToFile() {
         if (isDefault) {
             defaultBehaviors.push_back(behavior);
         } else {
-            userBehaviors.push_back(behavior);
+            userBehaviors.push_back(behavior.toString());
         }
     }
     

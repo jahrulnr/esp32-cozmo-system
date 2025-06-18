@@ -135,6 +135,8 @@ public:
      */
     bool hasClientsForCameraFrames();
 
+    size_t count() const;
+
 private:
     AsyncWebServer* _server;
     AsyncWebSocket* _webSocket;

@@ -1,62 +1,23 @@
-#include "ConfigManager.h"
 #include <Arduino.h>
+#include "ConfigManager.h"
 
 namespace Utils {
 
 String ConfigManager::configPath = "/config/config.json";
 SpiJsonDocument ConfigManager::configDoc;
 SpiJsonDocument ConfigManager::defaultConfigDoc;
+FileManager* fileManager;
 
+ConfigManager::ConfigManager(){}
 
-bool ConfigManager::initialize() {
-    // Get a reference to FileManager (either global or local)
-    Utils::FileManager* fm = getFileManager();
-    if (!fm) {
-        Serial.println("Failed to get FileManager");
-        return false;
-    }
+bool ConfigManager::initialize(FileManager *fm) {
+    fileManager = fm;
     
     setDefaultConfig();
     return loadConfig();
 }
 
 void ConfigManager::setDefaultConfig() {
-    // Set default configuration values based on Config.h
-    JsonObject dev = defaultConfigDoc["development"];
-    dev["enabled"] = true;
-
-    JsonObject cozmo = defaultConfigDoc["cozmo"];
-    cozmo["protect"] = true;
-    
-    JsonObject automation = cozmo["automation"];
-    automation["enabled"] = true;
-    automation["inactivity_timeout"] = 10000;
-    automation["check_interval"] = 1000;
-    automation["max_behaviors"] = 50;
-    automation["max_behavior_length"] = 512;
-
-    JsonObject camera = defaultConfigDoc["camera"];
-    camera["enabled"] = false;
-    camera["frame_size"] = "FRAMESIZE_VGA";
-    camera["quality"] = 12;
-    camera["fps"] = 15;
-
-    JsonObject motor = defaultConfigDoc["motor"];
-    motor["enabled"] = true;
-    motor["left_pin1"] = 12;
-    motor["left_pin2"] = 13;
-    motor["right_pin1"] = 10;
-    motor["right_pin2"] = 11;
-
-    JsonObject servo = defaultConfigDoc["servo"];
-    servo["enabled"] = true;
-    servo["head_pin"] = 14;
-    servo["hand_pin"] = 12;
-    servo["default_head_angle"] = 90;
-    servo["default_hand_angle"] = 180;
-
-    // ... add other default configurations ...
-
     JsonObject misc = defaultConfigDoc["misc"];
     misc["serial_baud_rate"] = 115200;
     misc["debug_enabled"] = true;
@@ -175,18 +136,6 @@ bool ConfigManager::applyConfigToSystem() {
     if (configDoc["camera"]) {
         JsonObject camera = configDoc["camera"].as<JsonObject>();
         // Update camera settings (if application supports runtime update)
-    }
-    
-    // 5. Automation configuration
-    if (configDoc["cozmo"] && configDoc["cozmo"]["automation"]) {
-        JsonObject automation = configDoc["cozmo"]["automation"].as<JsonObject>();
-        
-        // Example of updating a runtime configuration value
-        if (automation["enabled"]) {
-            bool automationEnabled = automation["enabled"].as<bool>();
-            // Call global function to update automation state
-            setAutomationEnabled(automationEnabled);
-        }
     }
     
     // For configurations that require restart, we could create a flag file

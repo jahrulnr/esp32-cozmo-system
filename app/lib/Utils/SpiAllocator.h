@@ -12,17 +12,21 @@ namespace Utils {
  * the limited internal RAM. Useful for large JSON documents.
  * 
  * Usage example:
- * SpiJsonDocument<size> doc;  // Uses external SPI RAM
+ * Utils::SpiJsonDocument doc;  // Uses external SPI RAM
  * doc["key"] = "value";
  */
 struct SpiRamAllocator : ArduinoJson::Allocator {
+    uint32_t getMemoryType() const {
+        return ESP.getFreePsram() > 0 ? MALLOC_CAP_SPIRAM : MALLOC_CAP_INTERNAL | MALLOC_CAP_32BIT | MALLOC_CAP_8BIT;
+    }
+
     /**
-     * @brief Allocate memory from SPI RAM
+     * @brief Allocate memory from SPI RAM with fallback to internal RAM
      * @param size Size of memory to allocate
      * @return Pointer to allocated memory
      */
     void* allocate(size_t size) override {
-        return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        return heap_caps_malloc(size, getMemoryType());
     }
 
     /**
@@ -40,7 +44,7 @@ struct SpiRamAllocator : ArduinoJson::Allocator {
      * @return Pointer to reallocated memory
      */
     void* reallocate(void* ptr, size_t new_size) override {
-        return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
+        return heap_caps_realloc(ptr, new_size, getMemoryType());
     }
 
     /**

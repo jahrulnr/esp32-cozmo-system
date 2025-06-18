@@ -16,6 +16,9 @@
 		"functional": "cpp",
 		"vector": "cpp",
 		"regex": "cpp",
-		"atomic": "cpp"
+		"atomic": "cpp",
+		"cstdlib": "cpp",
+		"memory_resource": "cpp",
+		"memory": "cpp"
 	}
 }
