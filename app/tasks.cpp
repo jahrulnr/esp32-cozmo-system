@@ -60,12 +60,12 @@ void setupTasks() {
     }
 
     // Task to ping the slave device periodically
-    xTaskCreate([](void *param){
-        while(1) {
-            sendPingToSlave();
-            vTaskDelay(pdMS_TO_TICKS(3000)); // Ping every 5 seconds
-        }
-    }, "pingDevices", 4096, NULL, 10, NULL);
+    // xTaskCreate([](void *param){
+    //     while(1) {
+    //         sendPingToSlave();
+    //         vTaskDelay(pdMS_TO_TICKS(3000)); // Ping every 5 seconds
+    //     }
+    // }, "pingDevices", 4096, NULL, 10, NULL);
 
     // Task to request camera data from the slave device periodically 
     // and process complete frames
@@ -78,21 +78,8 @@ void setupTasks() {
         unsigned long now = millis();
         
         while(1) {
-
-            if (ready) {
-                // Request new camera data
-                bool requestSent = requestCameraDataFromSlave();
-                if (requestSent) {
-                    logger->debug("Camera data requested from slave");
-                    ready = false;
-                    now = millis();
-                } else {
-                    logger->warning("Failed to request camera data from slave");
-                }
-            }
-            
-            // Check if a complete frame is available
             if (isSlaveCameraFrameComplete()) {
+                ready = true;
                 logger->info("Complete slave camera frame received");
                 
                 // Get frame information
@@ -103,20 +90,47 @@ void setupTasks() {
                 logger->info("Camera frame details - Size: %u bytes, Resolution: %dx%d", 
                             imageSize, width, height);
                 
-                if (isSlaveCameraDataJPEG()) {
-                    logger->info("Frame format: JPEG");
-                } else {
-                    logger->info("Frame format: Raw data");
-                }
-                
                 // Process the frame (just logs in this implementation)
                 processSlaveCameraFrame();
-                
-                // After processing, reset the camera data to free memory
-                // If you want to keep the last frame, comment out this line
+
                 resetSlaveCameraData();
-                ready = true;
             } 
+            else if (ready) {
+                // Request new camera data
+                bool requestSent = requestCameraDataFromSlave();
+                if (requestSent) {
+                    ready = false;
+                    now = millis();
+                    logger->debug("Camera data requested from slave");
+                } else {
+                    logger->warning("Failed to request camera data from slave");
+                }
+            }
+            else if (slaveCameraData.dataAvailable && !slaveCameraData.frameComplete) {
+                if (slaveCameraData.blockReceived && slaveCameraData.totalBlocks > 0) {
+                    bool missingBlockFound = false;
+                    for (uint16_t i = 0; i < slaveCameraData.totalBlocks; i++) {
+                        if (!slaveCameraData.blockReceived[i]) {
+
+                            // Request this missing block
+                            logger->debug("Requesting missing block %d of %d", i, slaveCameraData.totalBlocks);
+                            requestCameraDataBlockFromSlave(i);
+                            missingBlockFound = true;
+                            break; // Only request one block at a time
+                        }
+                    }
+                    
+                    if (!missingBlockFound) {
+                        if (slaveCameraData.receivedBlocks == slaveCameraData.totalBlocks) {
+                            logger->info("All blocks received but frame not marked complete. Marking as complete.");
+                            slaveCameraData.frameComplete = true;
+                            ready = true;
+                        }
+                    }
+                }
+            } else if (!slaveCameraData.dataAvailable) {
+                ready = true;
+            }
             else if (millis() - now >= requestTimeout) {
                 ready = true;
                 logger->warning("Timeout: Request camera data from slave");
@@ -124,39 +138,30 @@ void setupTasks() {
                 // Reset any partial data that might be there
                 resetSlaveCameraData();
             } 
-            else {
-                // Follow up request for missing blocks
-                if (slaveCameraData.dataAvailable && !slaveCameraData.frameComplete) {
-                    // Check if we have block information
-                    if (slaveCameraData.blockReceived && slaveCameraData.totalBlocks > 0) {
-                        // Find first missing block
-                        bool missingBlockFound = false;
-                        for (uint16_t i = 0; i < slaveCameraData.totalBlocks; i++) {
-                            if (!slaveCameraData.blockReceived[i]) {
-                                // Request this missing block
-                                logger->debug("Requesting missing block %d of %d", i, slaveCameraData.totalBlocks);
-                                requestCameraDataBlockFromSlave(i);
-                                missingBlockFound = true;
-                                break; // Only request one block at a time
-                            }
-                        }
-                        
-                        if (!missingBlockFound) {
-                            // All blocks marked as received, but frame not marked complete?
-                            // This should not happen, but just in case:
-                            if (slaveCameraData.receivedBlocks == slaveCameraData.totalBlocks) {
-                                logger->info("All blocks received but frame not marked complete. Marking as complete.");
-                                slaveCameraData.frameComplete = true;
-                            }
-                        }
-                    }
-                }
+            
+            vTaskDelay(pdMS_TO_TICKS(50)); 
+        }
+    }, "slaveCameraRequest", 1024 * 40, NULL, 19, NULL);
+
+    xTaskCreate([](void * param){
+        // Wait a bit before starting to ensure system is fully initialized
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        while(1) {
+            if (!spiHandler) vTaskDelete(NULL);
+
+            // Process any pending SPI messages in the queue
+            int messagesProcessed = 0;
+            while (messagesProcessed < 10 && spiHandler->processNextReceive()) {
+                messagesProcessed++;
             }
             
-            // Wait before next request
-            vTaskDelay(pdMS_TO_TICKS(33)); // Request camera data every 1 second
+            if (messagesProcessed > 0) {
+                logger->debug("Processed %d SPI messages", messagesProcessed);
+            }
+
+            vTaskDelay(pdMS_TO_TICKS(33));
         }
-    }, "slaveCameraRequest", 1024 * 40, NULL, 5, NULL);
+    }, "spiHandler", 4096, NULL, 10, NULL);
 
     delay(1000);
 

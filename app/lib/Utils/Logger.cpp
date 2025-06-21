@@ -25,7 +25,7 @@ Logger::~Logger() {
     // Clean up resources
     if (_logTaskRunning) {
         _logTaskRunning = false;
-        vTaskDelay(pdMS_TO_TICKS(100));  // Give time for task to exit
+        vTaskDelay(pdMS_TO_TICKS(100));
         vTaskDelete(_logTaskHandle);
     }
     

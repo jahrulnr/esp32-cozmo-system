@@ -56,7 +56,7 @@ void setup() {
   // Initialize Logger
   logger = &Utils::Logger::getInstance();
   logger->init(true, true, "/logs.txt");
-  logger->setLogLevel(Utils::LogLevel::DEBUG);
+  logger->setLogLevel(Utils::LogLevel::INFO);
   logger->info("Logger initialized");
 
   fileManager = new Utils::FileManager();
@@ -112,25 +112,6 @@ void loop() {
 
   if (screen)
       screen->mutexUpdate();
-  
-  // Process any pending SPI messages in the queue
-  if (spiHandler) {
-    // Process up to 10 messages per loop iteration to avoid blocking too long
-    int messagesProcessed = 0;
-    while (messagesProcessed < 10 && spiHandler->processNextReceive()) {
-      messagesProcessed++;
-    }
-    
-    if (messagesProcessed > 0) {
-      logger->debug("Processed %d SPI messages", messagesProcessed);
-    }
-  }
-
-  // if (now == 0) now = millis();
-  // if (millis() - now >= cameraInterval) {
-  //   requestCameraFrame();
-  //   now = millis();
-  // }
 
   vTaskDelay(pdMS_TO_TICKS(33)); // ~30 times per second (1000ms / 30 ≈ 33ms)
 }

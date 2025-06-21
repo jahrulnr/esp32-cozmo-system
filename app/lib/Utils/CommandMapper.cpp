@@ -366,11 +366,11 @@ void CommandMapper::initCommandHandlers() {
         if (_motors && _screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Happy();
             _motors->move(Motors::MotorControl::LEFT, 500);
-            delay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
             _motors->move(Motors::MotorControl::RIGHT, 500);
-            delay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
             _motors->move(Motors::MotorControl::LEFT, 500);
-            delay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
             _motors->stop();
             _logger->debug("Performed spin dance");
             return true;
@@ -381,13 +381,13 @@ void CommandMapper::initCommandHandlers() {
     _commandHandlers["LOOK_AROUND"] = [this](const String& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->LookLeft();
-            delay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
             _screen->getFace()->LookRight();
-            delay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
             _screen->getFace()->LookTop();
-            delay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
             _screen->getFace()->LookBottom();
-            delay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
             _screen->getFace()->LookFront();
             _logger->debug("Looked around");
             return true;

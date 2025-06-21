@@ -149,7 +149,7 @@ bool SPIHandler::send(const uint8_t* txData, size_t length) {
   _receiveQueue.push(packet);
   
   _logger->debug("SPIHandler: Send complete, queued response for processing");
-	delay(1);
+	delayMicroseconds(50);
   return true;
 }
 
