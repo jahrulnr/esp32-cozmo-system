@@ -13,13 +13,14 @@
 #include "lib/Sensors/DistanceSensor.h"
 #include "lib/Sensors/CliffDetector.h"
 #include "lib/Sensors/TemperatureSensor.h"
+#include "lib/Sensors/MicrophoneSensor.h"
 #include "lib/Motors/MotorControl.h"
 #include "lib/Motors/ServoControl.h"
 #include "lib/Communication/WiFiManager.h"
 #include "lib/Communication/WebServer.h"
 #include "lib/Communication/WebSocketHandler.h"
 #include "lib/Communication/GPTAdapter.h"
-#include "lib/Communication/SPIHandler.h"
+// #include "lib/Communication/SPIHandler.h"
 #include "lib/Screen/Screen.h"
 #include "lib/Utils/FileManager.h"
 #include "lib/Utils/HealthCheck.h"
@@ -27,9 +28,12 @@
 #include "lib/Utils/SpiAllocator.h"
 #include "lib/Utils/I2CScanner.h"
 #include "lib/Utils/I2CManager.h"
+#include "lib/Utils/IOExtern.h"
 #include "lib/Utils/Sstring.h"
 #include "lib/Utils/CommandMapper.h"
 #include "lib/Utils/ConfigManager.h"
+#include "lib/Audio/PWMSpeaker.h"
+#include "lib/Audio/I2SSpeaker.h"
 
 // Structure to store slave camera data information
 struct SlaveCameraData {
@@ -64,19 +68,23 @@ extern Sensors::DistanceSensor* distanceSensor;
 extern Sensors::CliffDetector* cliffLeftDetector;
 extern Sensors::CliffDetector* cliffRightDetector;
 extern Sensors::TemperatureSensor* temperatureSensor;
+extern Sensors::MicrophoneSensor* microphoneSensor;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
+extern Audio::PWMSpeaker* pwmSpeaker;
+extern Audio::I2SSpeaker* i2sSpeaker;
 extern Communication::WiFiManager* wifiManager;
 extern Communication::WebServer* webServer;
 extern Communication::WebSocketHandler* webSocket;
 extern Communication::GPTAdapter* gptAdapter;
-extern Communication::SPIHandler* spiHandler;
+// extern Communication::SPIHandler* spiHandler;
 extern Screen::Screen* screen;
 extern Utils::FileManager* fileManager;
 extern Utils::HealthCheck* healthCheck;
 extern Utils::Logger* logger;
 extern Utils::CommandMapper* commandMapper;
 extern Utils::ConfigManager* configManager;
+extern Utils::IOExtern ioExpander;
 extern bool g_isApOnlyMode;
 
 // Task handles
@@ -86,20 +94,11 @@ extern TaskHandle_t gptTaskHandle;
 extern TaskHandle_t automationTaskHandle;
 
 // Automation control
-extern bool g_automationEnabled;
-extern unsigned long g_lastManualControlTime;
+extern bool _enableAutomation;
+extern unsigned long _lastManualControlTime;
 
 // SPI control
-bool sendPingToSlave();
-bool requestCameraDataFromSlave();
-bool requestCameraDataBlockFromSlave(uint16_t blockNumber);
-void resetSlaveCameraData();
-bool isSlaveCameraFrameComplete();
-uint8_t* getSlaveCameraImageData();
-uint32_t getSlaveCameraImageSize();
-void getSlaveCameraImageDimensions(uint16_t* width, uint16_t* height);
-bool isSlaveCameraDataJPEG();
-bool processSlaveCameraFrame();
+// bool sendPingToSlave();
 
 // Function prototypes
 void protectCozmo();
@@ -109,10 +108,10 @@ void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback callback);
 void setupSPI();
+void setupExtender();
 
 // Forward declarations
-void setupPins();
-void setupSPI();
+// void setupSPI();
 void setupCamera();
 void startCameraStreaming();
 void stopCameraStreaming();
@@ -123,8 +122,37 @@ void setupOrientation();
 void setupDistanceSensor();
 void setupCliffDetector();
 void setupTemperatureSensor();
+void setupMicrophone();
+void setupSpeakers();
 void checkTemperature();
 bool cliffDetected();
+void checkMicrophone();
+int getCurrentSoundLevel();
+int getPeakSoundLevel();
+bool isSoundDetected();
+void calibrateMicrophone();
+void setMicrophoneGain(int gainLevel);
+void playSpeakerTone(int frequency, int duration, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void playSpeakerBeep(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void playSpeakerConfirmation(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void playSpeakerError(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void playSpeakerStartup(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void playSpeakerNotification(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void stopSpeaker();
+void setSpeakerVolume(int volume);
+bool isSpeakerPlaying();
+void playBehaviorSound(const String& behavior);
+bool getSpeakerStatus();
+String getSpeakerType();
+bool playSpeakerAudioFile(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleRate = 16000, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+bool createAudioFile(const String& filePath, const int16_t* samples, size_t sampleCount, uint32_t sampleRate = 16000);
+
+// MP3 audio functions
+bool playSpeakerMP3File(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+bool getMP3FileInfo(const String& filePath, int* sampleRate = nullptr, int* channels = nullptr, int* bitRate = nullptr, int* duration = nullptr);
+bool convertMP3ToAudioFile(const String& mp3FilePath, const String& audioFilePath);
+
 void setupScreen();
 void setupWiFi();
 bool isApOnlyMode();

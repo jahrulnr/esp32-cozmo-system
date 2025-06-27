@@ -273,6 +273,9 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
             ::screen->drawCenteredText(30, voiceMessage);
             ::screen->mutexUpdate();
             
+            // Play appropriate sound for the behavior
+            playBehaviorSound(behavior.toString());
+            
             // Extract and execute commands
             int commandCount = _commandMapper->executeCommandString(behavior.toString());
             

@@ -394,6 +394,213 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
+
+    // Microphone commands
+    _commandHandlers["MIC_CALIBRATE"] = [this](const String& param) -> bool {
+        calibrateMicrophone();
+        _logger->debug("Microphone calibration initiated");
+        return true;
+    };
+
+    _commandHandlers["MIC_GAIN_LOW"] = [this](const String& param) -> bool {
+        setMicrophoneGain(LOW);
+        _logger->debug("Microphone gain set to LOW (40dB)");
+        return true;
+    };
+
+    _commandHandlers["MIC_GAIN_MID"] = [this](const String& param) -> bool {
+        setMicrophoneGain(HIGH);
+        _logger->debug("Microphone gain set to MID (50dB)");
+        return true;
+    };
+
+    _commandHandlers["MIC_GAIN_HIGH"] = [this](const String& param) -> bool {
+        setMicrophoneGain(2); // Floating pin for 60dB
+        _logger->debug("Microphone gain set to HIGH (60dB)");
+        return true;
+    };
+
+    // Audio/Speaker commands
+    _commandHandlers["PLAY_BEEP"] = [this](const String& param) -> bool {
+        int volume = param.isEmpty() ? 50 : param.toInt();
+        volume = constrain(volume, 0, 100);
+        playSpeakerBeep(volume);
+        _logger->debug("Played beep at volume " + String(volume));
+        return true;
+    };
+
+    _commandHandlers["PLAY_TONE"] = [this](const String& param) -> bool {
+        // Format: frequency,duration,volume (e.g., "440,1000,50")
+        if (param.isEmpty()) {
+            playSpeakerTone(440, 1000, 50); // Default 440Hz for 1s at 50% volume
+        } else {
+            int commaIndex1 = param.indexOf(',');
+            int commaIndex2 = param.lastIndexOf(',');
+            
+            int frequency = 440;
+            int duration = 1000;
+            int volume = 50;
+            
+            if (commaIndex1 > 0) {
+                frequency = param.substring(0, commaIndex1).toInt();
+                if (commaIndex2 > commaIndex1) {
+                    duration = param.substring(commaIndex1 + 1, commaIndex2).toInt();
+                    volume = param.substring(commaIndex2 + 1).toInt();
+                } else {
+                    duration = param.substring(commaIndex1 + 1).toInt();
+                }
+            } else {
+                frequency = param.toInt();
+            }
+            
+            frequency = constrain(frequency, 20, 20000);
+            duration = constrain(duration, 10, 10000);
+            volume = constrain(volume, 0, 100);
+            
+            playSpeakerTone(frequency, duration, volume);
+        }
+        _logger->debug("Played tone");
+        return true;
+    };
+
+    _commandHandlers["PLAY_CONFIRMATION"] = [this](const String& param) -> bool {
+        int volume = param.isEmpty() ? 50 : param.toInt();
+        volume = constrain(volume, 0, 100);
+        playSpeakerConfirmation(volume);
+        _logger->debug("Played confirmation sound at volume " + String(volume));
+        return true;
+    };
+
+    _commandHandlers["PLAY_ERROR"] = [this](const String& param) -> bool {
+        int volume = param.isEmpty() ? 50 : param.toInt();
+        volume = constrain(volume, 0, 100);
+        playSpeakerError(volume);
+        _logger->debug("Played error sound at volume " + String(volume));
+        return true;
+    };
+
+    _commandHandlers["PLAY_NOTIFICATION"] = [this](const String& param) -> bool {
+        int volume = param.isEmpty() ? 50 : param.toInt();
+        volume = constrain(volume, 0, 100);
+        playSpeakerNotification(volume);
+        _logger->debug("Played notification sound at volume " + String(volume));
+        return true;
+    };
+
+    _commandHandlers["PLAY_AUDIO_FILE"] = [this](const String& param) -> bool {
+        // Format: filepath,volume (e.g., "/sounds/alert.czmo,60")
+        if (param.isEmpty()) {
+            _logger->warning("PLAY_AUDIO_FILE requires filepath parameter");
+            return false;
+        }
+        
+        String filePath;
+        int volume = 50;
+        
+        int commaIndex = param.lastIndexOf(',');
+        if (commaIndex > 0) {
+            filePath = param.substring(0, commaIndex);
+            volume = param.substring(commaIndex + 1).toInt();
+        } else {
+            filePath = param;
+        }
+        
+        volume = constrain(volume, 0, 100);
+        
+        bool success = playSpeakerAudioFile(filePath, volume);
+        if (success) {
+            _logger->debug("Playing audio file: " + filePath + " at volume " + String(volume));
+        } else {
+            _logger->error("Failed to play audio file: " + filePath);
+        }
+        return success;
+    };
+
+    _commandHandlers["STOP_AUDIO"] = [this](const String& param) -> bool {
+        stopSpeaker();
+        _logger->debug("Stopped audio playback");
+        return true;
+    };
+
+    _commandHandlers["SET_VOLUME"] = [this](const String& param) -> bool {
+        int volume = param.isEmpty() ? 50 : param.toInt();
+        volume = constrain(volume, 0, 100);
+        setSpeakerVolume(volume);
+        _logger->debug("Set speaker volume to " + String(volume));
+        return true;
+    };
+
+    _commandHandlers["PLAY_MP3_FILE"] = [this](const String& param) -> bool {
+        // Format: filepath,volume (e.g., "/sounds/music.mp3,60")
+        if (param.isEmpty()) {
+            _logger->warning("PLAY_MP3_FILE requires filepath parameter");
+            return false;
+        }
+        
+        String filePath;
+        int volume = 50;
+        
+        int commaIndex = param.lastIndexOf(',');
+        if (commaIndex > 0) {
+            filePath = param.substring(0, commaIndex);
+            volume = param.substring(commaIndex + 1).toInt();
+        } else {
+            filePath = param;
+        }
+        
+        volume = constrain(volume, 0, 100);
+        
+        bool success = playSpeakerMP3File(filePath, volume);
+        if (success) {
+            _logger->debug("Playing MP3 file: " + filePath + " at volume " + String(volume));
+        } else {
+            _logger->error("Failed to play MP3 file: " + filePath);
+        }
+        return success;
+    };
+
+    _commandHandlers["MP3_INFO"] = [this](const String& param) -> bool {
+        if (param.isEmpty()) {
+            _logger->warning("MP3_INFO requires filepath parameter");
+            return false;
+        }
+        
+        int sampleRate, channels, bitRate, duration;
+        bool success = getMP3FileInfo(param, &sampleRate, &channels, &bitRate, &duration);
+        
+        if (success) {
+            _logger->info("MP3 Info: " + param + " - " + String(sampleRate) + "Hz, " + 
+                         String(channels) + "ch, " + String(bitRate) + "kbps, " + String(duration) + "s");
+        } else {
+            _logger->error("Failed to get MP3 info for: " + param);
+        }
+        return success;
+    };
+
+    _commandHandlers["CONVERT_MP3"] = [this](const String& param) -> bool {
+        // Format: source.mp3,destination.czmo
+        if (param.isEmpty()) {
+            _logger->warning("CONVERT_MP3 requires source,destination parameters");
+            return false;
+        }
+        
+        int commaIndex = param.indexOf(',');
+        if (commaIndex <= 0) {
+            _logger->warning("CONVERT_MP3 format: source.mp3,destination.czmo");
+            return false;
+        }
+        
+        String sourcePath = param.substring(0, commaIndex);
+        String destPath = param.substring(commaIndex + 1);
+        
+        bool success = convertMP3ToAudioFile(sourcePath, destPath);
+        if (success) {
+            _logger->debug("Converted MP3: " + sourcePath + " -> " + destPath);
+        } else {
+            _logger->error("Failed to convert MP3: " + sourcePath);
+        }
+        return success;
+    };
 }
 
 bool CommandMapper::executeCommand(const String& commandStr) {

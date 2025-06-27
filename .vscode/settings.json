@@ -19,6 +19,16 @@
 		"atomic": "cpp",
 		"cstdlib": "cpp",
 		"memory_resource": "cpp",
-		"memory": "cpp"
+		"memory": "cpp",
+		"charconv": "cpp",
+		"optional": "cpp",
+		"format": "cpp",
+		"ratio": "cpp",
+		"system_error": "cpp",
+		"array": "cpp",
+		"tuple": "cpp",
+		"type_traits": "cpp",
+		"utility": "cpp",
+		"cstdint": "cpp"
 	}
 }

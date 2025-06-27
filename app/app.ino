@@ -2,7 +2,6 @@
 #include <soc/soc.h>
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "app.h"
-#include "lib/Communication/SPIHandler.h"
 
 Automation::Automation* automation = nullptr;
 Sensors::Camera* camera = nullptr;
@@ -11,13 +10,16 @@ Sensors::DistanceSensor* distanceSensor = nullptr;
 Sensors::CliffDetector* cliffLeftDetector = nullptr;
 Sensors::CliffDetector* cliffRightDetector = nullptr;
 Sensors::TemperatureSensor* temperatureSensor = nullptr;
+Sensors::MicrophoneSensor* microphoneSensor = nullptr;
 Motors::MotorControl* motors = nullptr;
 Motors::ServoControl* servos = nullptr;
+Audio::PWMSpeaker* pwmSpeaker = nullptr;
+Audio::I2SSpeaker* i2sSpeaker = nullptr;
 Communication::WiFiManager* wifiManager = nullptr;
 Communication::WebServer* webServer = nullptr;
 Communication::WebSocketHandler* webSocket = nullptr;
 Communication::GPTAdapter* gptAdapter = nullptr;
-Communication::SPIHandler* spiHandler = nullptr;
+// Communication::SPIHandler* spiHandler = nullptr;
 Screen::Screen* screen = nullptr;
 Utils::FileManager* fileManager = nullptr;
 Utils::HealthCheck* healthCheck = nullptr;
@@ -41,17 +43,12 @@ SlaveCameraData slaveCameraData = {
 };
 
 void setup() {
-  psramInit();
-  if(psramAddToHeap()) {
-    gpio_install_isr_service(ESP_INTR_FLAG_SHARED);
-    heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
-  }
+  gpio_install_isr_service(ESP_INTR_FLAG_SHARED);
+  heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
   Serial.println("\n\nCozmo System Starting...");
-
-  Serial.printf("Psram: %d\n", ESP.getFreePsram());
   
   // Initialize Logger
   logger = &Utils::Logger::getInstance();
@@ -68,18 +65,20 @@ void setup() {
   setCpuFrequencyMhz(240);
   
   // Initialize components
-  setupPins();
   // setupConfigManager();
-  setupSPI(); // Initialize SPI buses and devices
-  setupScreen();
-  setupWiFi();
+  // setupSPI(); // Initialize SPI buses and devices
   setupCamera();
+  setupScreen();
+  setupExtender();
+  setupWiFi();
   setupMotors();
   setupServos();
   setupOrientation();
   setupDistanceSensor();
   setupCliffDetector();
   setupTemperatureSensor();
+  setupMicrophone();
+  setupSpeakers();
   setupWebServer();
   setupWebSocket();
   setupGPT();
@@ -93,6 +92,10 @@ void setup() {
     servos->setScreen(screen);
   
   logger->info("System initialization complete");
+
+  if (!playSpeakerMP3File("/audio/boot.mp3")){
+    logger->error("failed to play /audio/boot.mp3");
+  }
   
   if (screen) {
     screen->clear();
@@ -104,14 +107,7 @@ void setup() {
   setupTasks();
 }
 
-unsigned long now = 0;
-unsigned long cameraInterval = 1000;
 void loop() {
-  if (healthCheck)
-    healthCheck->update();
-
-  if (screen)
-      screen->mutexUpdate();
-
-  vTaskDelay(pdMS_TO_TICKS(33)); // ~30 times per second (1000ms / 30 ≈ 33ms)
+  vTaskDelay(pdMS_TO_TICKS(1000)); 
+  vTaskDelete(NULL);
 }

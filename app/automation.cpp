@@ -4,8 +4,8 @@
 
 // Global variables for automation control (kept for compatibility)
 TaskHandle_t automationTaskHandle = NULL;
-bool g_automationEnabled = AUTOMATION_ENABLED;
-unsigned long g_lastManualControlTime = 0;
+bool _enableAutomation = AUTOMATION_ENABLED;
+unsigned long _lastManualControlTime = 0;
 int g_automationBehaviorIndex = 0;
 
 // Initialize and start automation
@@ -20,7 +20,7 @@ void updateManualControlTime() {
     if (automation) {
         automation->updateManualControlTime();
     }
-    g_lastManualControlTime = millis(); // Update global var for compatibility
+    _lastManualControlTime = millis(); // Update global var for compatibility
 }
 
 // Get automation enabled status
@@ -28,7 +28,7 @@ bool isAutomationEnabled() {
     if (automation) {
         return automation->isEnabled();
     }
-    return g_automationEnabled;
+    return _enableAutomation;
 }
 
 // Set automation enabled status
@@ -36,5 +36,5 @@ void setAutomationEnabled(bool enabled) {
     if (automation) {
         automation->setEnabled(enabled);
     }
-    g_automationEnabled = enabled; // Update global var for compatibility
+    _enableAutomation = enabled; // Update global var for compatibility
 }

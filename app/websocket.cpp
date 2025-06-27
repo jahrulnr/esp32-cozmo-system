@@ -187,6 +187,14 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 statusData["spiffs_total"] = String(SPIFFS.totalBytes() / 1024) + " KB"; // KB
                 statusData["spiffs_used"] = String((SPIFFS.totalBytes() - SPIFFS.usedBytes()) / 1024) + " KB"; // KB
                 statusData["temperature"] = temperatureSensor->readTemperature();
+                statusData["microphone"]["enabled"] = microphoneSensor != nullptr;
+                if (microphoneSensor && microphoneSensor->isInitialized()) {
+                  statusData["microphone"]["level"] = getCurrentSoundLevel();
+                  statusData["microphone"]["detected"] = isSoundDetected();
+                }
+                statusData["speaker"]["enabled"] = getSpeakerStatus();
+                statusData["speaker"]["type"] = getSpeakerType();
+                statusData["speaker"]["playing"] = isSpeakerPlaying();
                 statusData["uptime"] = millis() / 1000;
 
                 webSocket->sendJsonMessage(clientId, "system_status", statusData);
@@ -364,7 +372,50 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   webSocket->sendError(clientId, 404, "Distance sensor not available");
                 }
               }
-              else if(type == "servo_update" && servos) {
+              else if (type == "microphone_request") {
+                if (microphoneSensor && microphoneSensor->isInitialized()) {
+                  Utils::SpiJsonDocument sensorData;
+                  sensorData["microphone"]["level"] = getCurrentSoundLevel();
+                  sensorData["microphone"]["peak"] = getPeakSoundLevel();
+                  sensorData["microphone"]["detected"] = isSoundDetected();
+
+                  webSocket->sendJsonMessage(clientId, "sensor_data", sensorData);
+                } else {
+                  webSocket->sendError(clientId, 404, "Microphone sensor not available");
+                }
+              }
+              else if (type == "speaker_control") {
+                String action = data["action"] | "";
+                int volume = data["volume"] | 50;
+                
+                if (action == "beep") {
+                  playSpeakerBeep(volume);
+                  webSocket->sendOk(clientId, "Speaker beep played");
+                } else if (action == "confirm") {
+                  playSpeakerConfirmation(volume);
+                  webSocket->sendOk(clientId, "Confirmation sound played");
+                } else if (action == "error") {
+                  playSpeakerError(volume);
+                  webSocket->sendOk(clientId, "Error sound played");
+                } else if (action == "notify") {
+                  playSpeakerNotification(volume);
+                  webSocket->sendOk(clientId, "Notification sound played");
+                } else if (action == "tone") {
+                  int frequency = data["frequency"] | 1000;
+                  int duration = data["duration"] | 500;
+                  playSpeakerTone(frequency, duration, volume);
+                  webSocket->sendOk(clientId, "Tone played");
+                } else if (action == "stop") {
+                  stopSpeaker();
+                  webSocket->sendOk(clientId, "Speaker stopped");
+                } else if (action == "volume") {
+                  setSpeakerVolume(volume);
+                  webSocket->sendOk(clientId, "Volume set to " + String(volume));
+                } else {
+                  webSocket->sendError(clientId, 400, "Unknown speaker action: " + action);
+                }
+              }
+              else if (type == "servo_update" && servos) {
                 String servoType = data["type"] | "";
                 int position = data["position"] | 0;
 
@@ -445,7 +496,7 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               }
               // Set automation state
               else if (type == "automation_control") {
-                bool enabled = data["enabled"] | g_automationEnabled;  // Default to current state if not specified
+                bool enabled = data["enabled"] | _enableAutomation;  // Default to current state if not specified
                 
                 // Update automation state
                 setAutomationEnabled(enabled);
