@@ -24,13 +24,14 @@ void setupTasks() {
     
     // Create camera streaming task
     if (camera) {
-        xTaskCreate(
+        xTaskCreateUniversal(
             cameraStreamTask,        // Task function
             "CameraStream",          // Task name
             40 * 1024,               // Stack size
             NULL,                    // Parameters
-            12,                      // Priority
-            &cameraStreamTaskHandle  // Task handle
+            8 ,                      // Priority
+            &cameraStreamTaskHandle,  // Task handle
+            0
         );
         
         logger->info("Camera streaming task initialized");
@@ -39,22 +40,23 @@ void setupTasks() {
     }
 
     if (screen) {
-        xTaskCreate([](void *param){
+        xTaskCreateUniversal([](void *param){
             while(1) {
                 screen->mutexUpdate();
                 vTaskDelay(pdMS_TO_TICKS(33)); 
             }
-        }, "screenUpdate", 4096, NULL, 5, NULL);
+        }, "screenUpdate", 4096, NULL, 5, NULL, 0);
     }
     
     // Create sensor monitoring task
-    xTaskCreate(
+    xTaskCreateUniversal(
         sensorMonitorTask,         // Task function
         "SensorMonitor",           // Task name
         4096,                      // Stack size
         NULL,                      // Parameters
         5,                         // Priority
-        &sensorMonitorTaskHandle   // Task handle
+        &sensorMonitorTaskHandle,  // Task handle
+        0
     );
     
     // Initialize automation variables
@@ -76,7 +78,7 @@ void setupTasks() {
     // }, "pingDevices", 4096, NULL, 10, NULL);
 
     if (SPEAKER_ENABLED) {
-        xTaskCreatePinnedToCore([](void *param){
+        xTaskCreateUniversal([](void *param){
             while(1) {
                 if (isSpeakerPlaying()) {
                     vTaskDelay(pdMS_TO_TICKS(5000));

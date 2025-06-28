@@ -28,7 +28,7 @@ Utils::ConfigManager* configManager = nullptr;
 
 void setup() {
   // gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
-  heap_caps_malloc_extmem_enable(2048);
+  heap_caps_malloc_extmem_enable(4096);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);

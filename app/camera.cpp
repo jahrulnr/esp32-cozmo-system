@@ -79,30 +79,7 @@ void cameraStreamTask(void* parameter) {
     
     if (fb) {
       webSocket->sendBinary(-1, fb->buf, fb->len);
-      
-      // Return frame buffer immediately after use
       esp_camera_fb_return(fb);
-      
-      // Check memory status and adapt if needed
-      uint32_t freeHeap = ESP.getFreeHeap();
-      if (freeHeap < LOW_MEMORY_THRESHOLD) {
-        consecutiveLowMemory++;
-        
-        // If memory is consistently low, increase interval gradually
-        if (consecutiveLowMemory > 5) {
-          adaptiveInterval = _min(500u, adaptiveInterval + 20); // Cap at 500ms
-          logger->warning("Low memory detected, slowing camera stream to " + 
-                          String(adaptiveInterval) + "ms");
-          consecutiveLowMemory = 0;
-        }
-      } else {
-        consecutiveLowMemory = 0;
-        
-        // If memory is good, gradually return to normal interval
-        if (adaptiveInterval > camera->getStreamingInterval()) {
-          adaptiveInterval = _max(camera->getStreamingInterval(), adaptiveInterval - 10);
-        }
-      }
       logger->info("capturing image");
       // Wait for the next frame using adaptive interval
       vTaskDelay(adaptiveInterval / portTICK_PERIOD_MS);

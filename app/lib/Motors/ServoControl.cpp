@@ -188,7 +188,7 @@ void ServoControl::setHand(int angle) {
     angle = constrain(angle, 0, 180);
     // reverse
     angle = 180 - angle;
-    int targetAngle = constrain(angle, 90, 130);
+    int targetAngle = constrain(angle, 90, 133);
     
     if (_useIoExtender && _ioExtender) {
         // Software PWM implementation for I/O extender

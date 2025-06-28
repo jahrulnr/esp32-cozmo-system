@@ -3,6 +3,8 @@
 // DOM Elements
 const loginPage = document.getElementById('login-page');
 const mainApp = document.getElementById('main-app');
+const cameraFeed = document.getElementById('camera-feed');
+const cameraFeedMain = document.getElementById('camera-feed-main');
 const consoleOutput = document.getElementById('console-output');
 const recentLogs = document.getElementById('recent-logs');
 const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -217,54 +219,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle binary messages (camera frames)
     function handleBinaryMessage(data) { 
-        if (data instanceof Blob) {
-            // Sample a small chunk to check header bytes
-            data.slice(0, 3).arrayBuffer().then(buffer => {
-                const header = new Uint8Array(buffer);
-                // Check JPEG magic bytes (FF D8 FF)
-                if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
-                    console.log("Detected JPEG from magic bytes");
-                    const blob = new Blob([data], { type: 'image/jpeg' });
-                    updateImageSources(URL.createObjectURL(blob));
-                } else {
-                    // Unknown format, try as generic binary
-                    console.log("Unknown binary format, first bytes:", header);
-                    updateImageSources(URL.createObjectURL(data));
-                }
-            });
-        } else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
-            // For ArrayBuffer or views like Uint8Array
-            const header = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer, 0, 3);
-            if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
-                console.log("Detected JPEG from magic bytes");
-                const blob = new Blob([data], { type: 'image/jpeg' });
-                updateImageSources(URL.createObjectURL(blob));
-            } else {
-                // Unknown format, try as generic binary
-                console.log("Unknown binary format, first bytes:", Array.from(header).map(b => b.toString(16)));
-                updateImageSources(URL.createObjectURL(data));
-            }
-        } else {
-            // Fallback for unknown data type
-            updateImageSources(URL.createObjectURL(data));
-        }
-        
-        return;
+        updateImageSources(URL.createObjectURL(data));
     }
     
     function updateImageSources(url) {
-        const cameraFeed = document.getElementById('camera-feed');
-        const cameraFeedMain = document.getElementById('camera-feed-main');
-        
         if (cameraFeed) {
-            cameraFeed.onload = () => URL.revokeObjectURL(cameraFeed.src);
             cameraFeed.src = url;
         }
         
         if (cameraFeedMain) {
-            cameraFeedMain.onload = () => URL.revokeObjectURL(cameraFeedMain.src);
             cameraFeedMain.src = url;
         }
+
+        setTimeout(()=>{
+            URL.revokeObjectURL(url);
+        }, 100)
     }
 
     // Login functions
