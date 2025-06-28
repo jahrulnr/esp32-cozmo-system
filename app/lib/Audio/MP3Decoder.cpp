@@ -160,8 +160,12 @@ bool MP3Decoder::decodeInternal(const uint8_t* mp3Data, size_t mp3Size, int16_t*
         }
         
         // Decode frame
-        result = MP3Decode(_decoder, (unsigned char**)&readPtr, (int*)&bytesLeft, 
-                          pcmData + totalPCMSamples, 0);
+        try {
+            result = MP3Decode(_decoder, (unsigned char**)&readPtr, (int*)&bytesLeft, 
+                            pcmData + totalPCMSamples, 0);
+        } catch(...) {
+            result = 0;
+        }
         
         if (result != 0) {
             if (result == ERR_MP3_INDATA_UNDERFLOW) {

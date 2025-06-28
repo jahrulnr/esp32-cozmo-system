@@ -3,7 +3,7 @@
 
 namespace Sensors {
 
-Camera::Camera() : _resolution(CAMERA_FRAME_SIZE), _initialized(false), _streamingInterval(200) {
+Camera::Camera() : _resolution(CAMERA_FRAME_SIZE), _initialized(false), _streamingInterval(30) {
 }
 
 Camera::~Camera() {

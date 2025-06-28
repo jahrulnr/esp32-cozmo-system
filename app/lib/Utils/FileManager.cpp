@@ -16,6 +16,22 @@ bool FileManager::init(bool enableSDMMC, bool use1bitMode, bool formatIfMountFai
         return false;
     }
     _initialized = true;
+
+    Serial.println("FileManager init successful in init()");
+    Serial.println("Files in SPIFFS root directory:");
+    
+    std::vector<Utils::FileManager::FileInfo> files = listFiles();
+    for (const auto& fileInfo : files) {
+        Serial.print("  ");
+        Serial.print(fileInfo.name);
+        if (fileInfo.isDirectory) {
+            Serial.println("/");
+        } else {
+            Serial.print(" (");
+            Serial.print(fileInfo.size);
+            Serial.println(" bytes)");
+        }
+    }
     
     // Initialize SD_MMC if requested and on ESP32S3
     if (enableSDMMC) {
@@ -43,6 +59,19 @@ bool FileManager::init(bool enableSDMMC, bool use1bitMode, bool formatIfMountFai
         if (SD_MMC.begin("/sdcard", use1bitMode, formatIfMountFailed, sdmmcFreq)) {
             _sdmmcInitialized = true;
             Serial.println("SD_MMC initialized successfully");
+            Serial.println("Files in MMC root directory:");
+            std::vector<Utils::FileManager::FileInfo> files = listFiles("/", STORAGE_SD_MMC);
+            for (const auto& fileInfo : files) {
+                Serial.print("  ");
+                Serial.print(fileInfo.name);
+                if (fileInfo.isDirectory) {
+                    Serial.println("/");
+                } else {
+                    Serial.print(" (");
+                    Serial.print(fileInfo.size);
+                    Serial.println(" bytes)");
+                }
+            }
         } else {
             Serial.println("SD_MMC initialization failed");
         }

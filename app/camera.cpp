@@ -78,17 +78,6 @@ void cameraStreamTask(void* parameter) {
     camera_fb_t* fb = esp_camera_fb_get();
     
     if (fb) {
-      // Create a small JSON header with metadata
-      Utils::SpiJsonDocument header;
-      header["width"] = fb->width;
-      header["height"] = fb->height;
-      header["format"] = fb->format == PIXFORMAT_JPEG ? "jpeg" : String(fb->format);
-      header["size"] = fb->len;
-      
-      // First send the metadata as JSON text frame with DTO v1.0 format
-      webSocket->sendJsonMessage(-1, "camera_frame_header", header);
-      
-      // Then send the binary frame data
       webSocket->sendBinary(-1, fb->buf, fb->len);
       
       // Return frame buffer immediately after use

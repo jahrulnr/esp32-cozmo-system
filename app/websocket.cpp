@@ -247,7 +247,7 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 if (action == "start" && camera) {
                   // Set streaming interval if provided
                   if (!data["interval"].isUnbound()) {
-                    uint32_t interval = data["interval"] | 200;
+                    uint32_t interval = data["interval"] | 33;
                     camera->setStreamingInterval(interval);
                   }
 
@@ -664,40 +664,43 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 String path = data["path"] | "/";
                 String storageType = data["storage_type"] | "STORAGE_SPIFFS";
 
-                // Use FileManager to list files
-                static Utils::FileManager fileManager;
-                if (!fileManager.init()) {
-                  logger->error("Failed to initialize FileManager");
-                  webSocket->sendError(clientId, 500, "Failed to initialize file system");
-                  break;
-                }
-
                 Utils::SpiJsonDocument filesData;
                 JsonArray files = filesData.to<JsonArray>();
 
                 // Convert string storage type to enum
                 Utils::FileManager::StorageType storage = Utils::FileManager::STORAGE_SPIFFS;
-                if (storageType == "STORAGE_SD_MMC") {
+                if (storageType.equals("STORAGE_SD_MMC")) {
                   storage = Utils::FileManager::STORAGE_SD_MMC;
                 }
 
-                // Get files using the FileManager with specified storage
-                std::vector<Utils::FileManager::FileInfo> fileList = fileManager.listFiles(path, storage);
-                for (const auto& file : fileList) {
-                  JsonObject fileObj = files.add<JsonObject>();
-                  fileObj["name"] = file.name;
-                  fileObj["path"] = file.dir;
-                  fileObj["size"] = file.size;
-                  fileObj["type"] = file.isDirectory ? "directory" : "file";
+                if (fileManager) {
+                  // Get files using the FileManager with specified storage
+                  std::vector<Utils::FileManager::FileInfo> fileList = fileManager->listFiles(path, storage);
+                  Serial.println("Files in SPIFFS root directory:");
+                  for (const auto& file : fileList) {
+                      Serial.print("  ");
+                      Serial.print(file.name);
+                      if (file.isDirectory) {
+                          Serial.println("/");
+                      } else {
+                          Serial.print(" (");
+                          Serial.print(file.size);
+                          Serial.println(" bytes)");
+                      }
+                    JsonObject fileObj = files.add<JsonObject>();
+                    fileObj["name"] = file.name;
+                    fileObj["path"] = file.dir;
+                    fileObj["size"] = file.size;
+                    fileObj["type"] = file.isDirectory ? "directory" : "file";
+                  }
                 }
 
                 // Add storage info to response
-                JsonObject responseData = filesData.to<JsonObject>();
-                responseData["files"] = files;
-                responseData["storage_type"] = storageType;
-                responseData["path"] = path;
+                filesData["files"] = files;
+                filesData["storage_type"] = storageType;
+                filesData["path"] = path;
 
-                webSocket->sendJsonMessage(clientId, "list_files", responseData);
+                webSocket->sendJsonMessage(clientId, "list_files", filesData);
               }
               // Delete file
               else if (type == "delete_file") {

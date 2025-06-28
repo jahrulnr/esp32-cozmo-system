@@ -7,7 +7,7 @@ bool g_isApOnlyMode = false;
 void setupWiFi() {
   if (WIFI_ENABLED) {
     logger->info("Setting up WiFi...");
-    wifiManager = new Communication::WiFiManager();
+    wifiManager = new Communication::WiFiManager(fileManager);
     wifiManager->init();
     
     // Get config (already loaded from file or defaults in constructor)

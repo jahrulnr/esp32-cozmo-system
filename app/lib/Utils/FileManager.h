@@ -41,7 +41,7 @@ public:
      * @param sdmmcFreq SD_MMC frequency in MHz (default: 20)
      * @return true if initialization was successful, false otherwise
      */
-    bool init(bool enableSDMMC = false, 
+    bool init(bool enableSDMMC = true, 
               bool use1bitMode = true, bool formatIfMountFailed = false, uint32_t sdmmcFreq = 20);
 
     /**

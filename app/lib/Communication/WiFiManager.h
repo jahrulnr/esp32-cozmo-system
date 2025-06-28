@@ -24,7 +24,7 @@ public:
         String apPassword;
     };
 
-    WiFiManager();
+    WiFiManager(Utils::FileManager *fileManager);
     ~WiFiManager();
 
     /**
@@ -115,7 +115,7 @@ private:
     bool _initialized;
     bool _isAP;
     WiFiConfig _config;
-    Utils::FileManager _fileManager;
+    Utils::FileManager *_fileManager;
 };
 
 } // namespace Communication

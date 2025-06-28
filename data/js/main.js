@@ -18,12 +18,6 @@ const breadcrumb = document.getElementById('breadcrumb');
 const printTime = document.querySelectorAll('.print-time');
 const servoHeadSlider = document.getElementById('servo-head-slider');
 const servoHandSlider = document.getElementById('servo-hand-slider');
-    
-// Variables for frame processing
-let frameHeader = null;
-let frameQueue = [];
-const MAX_FRAME_QUEUE = 2; // Limit queued frames to avoid memory issues
-let processingFrame = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Configuration
@@ -143,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleWebSocketMessage(evt) {
         // Handle binary data (camera frames)
         if (evt.data instanceof ArrayBuffer || evt.data instanceof Blob) {
-            console.log("Binary received", evt)
             handleBinaryMessage(evt.data);
             return;
         }
@@ -209,8 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleWifiConfig(msg.data);
             } else if (msg.type === 'wifi_config_update') {
                 handleWifiConfigUpdate(msg.data);
-            } else if (msg.type === 'camera_frame_header') {
-                handleCameraFrameHeader(msg.data);
             } else if (msg.type === 'logout_response') {
                 handleLogoutResponse(msg.data);
             } else if (msg.type === 'automation_status') {
@@ -225,145 +216,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle binary messages (camera frames)
-    function handleBinaryMessage(data) {
-        // If we don't have frame header metadata, try to detect JPEG from magic bytes
-        if (!frameHeader) {
-            console.log("Received binary data without header, size:", (data.size || data.byteLength));
-            
-            // Try to detect if this is a JPEG by checking the first few bytes
-            let isJpeg = false;
-            
-            if (data instanceof Blob) {
-                // Sample a small chunk to check header bytes
-                data.slice(0, 3).arrayBuffer().then(buffer => {
-                    const header = new Uint8Array(buffer);
-                    // Check JPEG magic bytes (FF D8 FF)
-                    if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
-                        console.log("Detected JPEG from magic bytes");
-                        const blob = new Blob([data], { type: 'image/jpeg' });
-                        updateImageSources(URL.createObjectURL(blob));
-                    } else {
-                        // Unknown format, try as generic binary
-                        console.log("Unknown binary format, first bytes:", header);
-                        updateImageSources(URL.createObjectURL(data));
-                    }
-                });
-            } else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
-                // For ArrayBuffer or views like Uint8Array
-                const header = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer, 0, 3);
+    function handleBinaryMessage(data) { 
+        if (data instanceof Blob) {
+            // Sample a small chunk to check header bytes
+            data.slice(0, 3).arrayBuffer().then(buffer => {
+                const header = new Uint8Array(buffer);
+                // Check JPEG magic bytes (FF D8 FF)
                 if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
                     console.log("Detected JPEG from magic bytes");
                     const blob = new Blob([data], { type: 'image/jpeg' });
                     updateImageSources(URL.createObjectURL(blob));
                 } else {
                     // Unknown format, try as generic binary
-                    console.log("Unknown binary format, first bytes:", Array.from(header).map(b => b.toString(16)));
+                    console.log("Unknown binary format, first bytes:", header);
                     updateImageSources(URL.createObjectURL(data));
                 }
+            });
+        } else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
+            // For ArrayBuffer or views like Uint8Array
+            const header = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer, 0, 3);
+            if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
+                console.log("Detected JPEG from magic bytes");
+                const blob = new Blob([data], { type: 'image/jpeg' });
+                updateImageSources(URL.createObjectURL(blob));
             } else {
-                // Fallback for unknown data type
+                // Unknown format, try as generic binary
+                console.log("Unknown binary format, first bytes:", Array.from(header).map(b => b.toString(16)));
                 updateImageSources(URL.createObjectURL(data));
             }
-            
-            return;
+        } else {
+            // Fallback for unknown data type
+            updateImageSources(URL.createObjectURL(data));
         }
         
-        function updateImageSources(url) {
-            const cameraFeed = document.getElementById('camera-feed');
-            const cameraFeedMain = document.getElementById('camera-feed-main');
-            
-            if (cameraFeed) {
-                cameraFeed.onload = () => URL.revokeObjectURL(cameraFeed.src);
-                cameraFeed.src = url;
-            }
-            
-            if (cameraFeedMain) {
-                cameraFeedMain.onload = () => URL.revokeObjectURL(cameraFeedMain.src);
-                cameraFeedMain.src = url;
-            }
-        }
-        
-        // Add frame to queue
-        frameQueue.push({
-            data: data,
-            header: frameHeader
-        });
-        
-        // Limit queue size
-        while (frameQueue.length > MAX_FRAME_QUEUE) {
-            const oldFrame = frameQueue.shift();
-            if (oldFrame.url) {
-                URL.revokeObjectURL(oldFrame.url);
-            }
-        }
-        
-        // Clear the frame header to avoid reusing it for a wrong frame
-        frameHeader = null;
-        
-        // Process frame if not already processing
-        if (!processingFrame) {
-            processNextFrame();
-        }
+        return;
     }
     
-    // Process next frame in queue
-    function processNextFrame() {
-        if (frameQueue.length === 0) {
-            processingFrame = false;
-            return;
-        }
-        
-        processingFrame = true;
-        const frame = frameQueue.shift();
-        
-        // Create a blob from the binary data with the correct MIME type
-        let mimeType = 'application/octet-stream';
-        
-        // If we have frame header with format info, use the appropriate MIME type
-        if (frame.header && frame.header.format) {
-            if (frame.header.format.toLowerCase() === 'jpeg') {
-                mimeType = 'image/jpeg';
-            } else if (frame.header.format.toLowerCase() === 'png') {
-                mimeType = 'image/png';
-            }
-        }
-        
-        // Create the blob with the correct MIME type
-        const blob = frame.data instanceof Blob ? 
-            new Blob([frame.data], { type: mimeType }) : 
-            new Blob([frame.data], { type: mimeType });
-            
-        console.log("Creating image URL with mime type:", mimeType, "size:", (frame.data.size || frame.data.byteLength));
-        frame.url = URL.createObjectURL(blob);
-        
-        // Update the camera feed with the new image
+    function updateImageSources(url) {
         const cameraFeed = document.getElementById('camera-feed');
         const cameraFeedMain = document.getElementById('camera-feed-main');
         
-        // Function to handle image load completion
-        const onImageLoad = function() {
-            URL.revokeObjectURL(this.src);
-            
-            // Process next frame with a small delay
-            setTimeout(() => {
-                processNextFrame();
-            }, 10);
-        };
-        
         if (cameraFeed) {
-            cameraFeed.onload = onImageLoad;
-            cameraFeed.src = frame.url;
+            cameraFeed.onload = () => URL.revokeObjectURL(cameraFeed.src);
+            cameraFeed.src = url;
         }
         
         if (cameraFeedMain) {
-            cameraFeedMain.onload = onImageLoad;
-            cameraFeedMain.src = frame.url;
-        }
-        
-        // If neither element exists, move on to next frame
-        if (!cameraFeed && !cameraFeedMain) {
-            URL.revokeObjectURL(frame.url);
-            processNextFrame();
+            cameraFeedMain.onload = () => URL.revokeObjectURL(cameraFeedMain.src);
+            cameraFeedMain.src = url;
         }
     }
 
@@ -586,11 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error(`Error updating ${type} joystick display:`, error);
         }
-    }
-    
-    function updateCameraFrame(data) {
-        // Store frame metadata for the next binary message (used for camera_frame messages)
-        frameHeader = data;
     }
     
     function toggleCamera() {
@@ -1537,7 +1432,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Missing function implementations
     let currentPath = '/';
-    let currentStorageMode = 'STORAGE_SPIFFS'; // Default to SPIFFS
+    let currentStorageMode = 'STORAGE_SPIFFS'; 
 
     function fetchWifiNetworks() {
         sendJsonMessage('get_wifi_networks', {});
@@ -1552,10 +1447,11 @@ document.addEventListener('DOMContentLoaded', () => {
             path: currentPath,
             storage_type: currentStorageMode 
         });
+
         logToConsole(`Loading files from ${currentPath} (${currentStorageMode})...`, 'info');
-        
-        // Update storage status
-        updateStorageStatus();
+
+         // Update storage status
+        // updateStorageStatus();
     }
 
     function updateStorageStatus() {
@@ -1715,23 +1611,80 @@ document.addEventListener('DOMContentLoaded', () => {
             fileItem.className = 'file-item';
             
             const isDirectory = file.type === 'directory' || file.name.endsWith('/');
-            
             const iconClass = isDirectory ? 'fas fa-folder' : getFileIcon(file.name);
+            const fileName = file.name;
+            const filePath = file.path;
+            const fullname = filePath + fileName;
+            
+            // Get file extension for icon
+            let fileIcon = iconClass;
+            if (!isDirectory) {
+                const extension = fileName.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension)) {
+                    fileIcon = 'fas fa-file-image';
+                } else if (['txt', 'log', 'md'].includes(extension)) {
+                    fileIcon = 'fas fa-file-alt';
+                } else if (['html', 'htm', 'css', 'js'].includes(extension)) {
+                    fileIcon = 'fas fa-file-code';
+                } else if (['json', 'xml', 'csv'].includes(extension)) {
+                    fileIcon = 'fas fa-file-code';
+                }
+            }
             
             fileItem.innerHTML = `
                 <i class="file-icon ${iconClass}"></i>
-                <div class="file-name">${file.name}</div>
-                <div class="file-size">${isDirectory ? '' : formatFileSize(file.size)}</div>
+                <div class="file-name">${fileName}</div>
+                <div class="file-size pe-2">${file.size ? formatFileSize(file.size) : ''}</div>
                 <div class="file-actions">
-                    ${!isDirectory ? '<button class="btn btn-sm" onclick="readFile(\'' + (file.path || currentPath) + '/' + file.name + '\')"><i class="fas fa-eye"></i></button>' : ''}
-                    <button class="btn btn-sm btn-danger" onclick="deleteFile('${(file.path || currentPath)}/${file.name}')"><i class="fas fa-trash"></i></button>
+                    ${isDirectory ? 
+                        `<button class="btn btn-sm file-open" data-path="${fullname}">Open</button>` :
+                        `<button class="btn btn-sm file-view" data-path="${fullname}">View</button>
+                         <button class="btn btn-sm file-download" data-path="${fullname}">Download</button>`
+                    }
+                    <button class="btn btn-sm btn-danger file-delete" data-path="${fullname}">Delete</button>
                 </div>
             `;
             
-            if (isDirectory) {
-                fileItem.addEventListener('click', () => {
-                    const newPath = (file.path || currentPath) + '/' + file.name;
-                    fetchFiles(newPath, currentStorageMode);
+            // Add event listeners
+            const openBtn = fileItem.querySelector('.file-open');
+            if (openBtn) {
+                openBtn.addEventListener('click', () => {
+                    fetchFiles(openBtn.getAttribute('data-path'));
+                });
+            }
+            
+            const viewBtn = fileItem.querySelector('.file-view');
+            if (viewBtn) {
+                viewBtn.addEventListener('click', () => {
+                    readFile(viewBtn.getAttribute('data-path'));
+                });
+            }
+            
+            const downloadBtn = fileItem.querySelector('.file-download');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = `/download?path=${encodeURIComponent(downloadBtn.getAttribute('data-path'))}`;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            }
+            
+            const deleteBtn = fileItem.querySelector('.file-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm(`Delete ${fileName}?`)) {
+                        sendJsonMessage('delete_file', { path: deleteBtn.getAttribute('data-path') });
+                        logToConsole(`Deleting ${fileName}...`, 'info');
+                        // Update storage info after deleting a file
+                        setTimeout(() => {
+                            fetchFiles(currentPath);
+                            fetchStorageInfo();
+                        }, 1000);
+                    }
                 });
             }
             
@@ -1739,7 +1692,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Helper function to get file icon based on extension
+    // Format file size for display
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
     function getFileIcon(filename) {
         const ext = filename.split('.').pop().toLowerCase();
         
@@ -1770,7 +1731,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         return iconMap[ext] || 'fas fa-file';
     }
-
+    
     // Read file content
     function readFile(filePath) {
         sendJsonMessage('read_file', { path: filePath });
@@ -1897,24 +1858,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!fileInput || !fileInput.files.length) return;
         
         const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('storage_type', currentStorageMode)
+        formData.append('file', file);
         
-        // Send file upload request via WebSocket with storage mode
-        sendJsonMessage('upload_file', {
-            name: file.name,
-            size: file.size,
-            path: currentPath,
-            storage_type: currentStorageMode
-        });
-        
-        // Send binary data
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            if (websocket && websocket.readyState === WebSocket.OPEN) {
-                websocket.send(e.target.result);
-                logToConsole(`File ${file.name} uploaded to ${currentStorageMode}`, 'success');
+        fetch('/upload?path='+currentPath, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                logToConsole(`File ${file.name} uploaded successfully`, 'success');
+                fetchFiles(currentPath); // Refresh file list
+                fetchStorageInfo(); // Update storage info
+            } else {
+                logToConsole(`Upload failed: ${data.message}`, 'error');
             }
-        };
-        reader.readAsArrayBuffer(file);
+        })
+        .catch(error => {
+            logToConsole(`Upload error: ${error.message}`, 'error');
+        });
         
         // Clear the input
         fileInput.value = '';
@@ -2009,7 +1973,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshFiles = document.getElementById('refresh-btn');
     if (refreshFiles) {
         refreshFiles.addEventListener('click', () => {
-            fetchFiles(currentPath, currentStorageMode);
+            fetchFiles(currentPath);
             fetchStorageInfo();
         });
     }
@@ -2370,13 +2334,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Function to handle camera frame header data
-    function handleCameraFrameHeader(data) {
-        // Store frame header information for the next binary message (used for camera_frame_header messages)
-        // This serves the same purpose as updateCameraFrame but for a different message type
-        frameHeader = data;
-    }
-    
     // Function to check for saved authentication token
     function checkSavedAuth() {
         try {
@@ -2513,17 +2470,3 @@ document.addEventListener('DOMContentLoaded', () => {
     //     }
     // }, 1000);
 });
-
-// Delete file function
-    function deleteFile(filePath) {
-        if (!confirm(`Are you sure you want to delete "${filePath}"?`)) {
-            return;
-        }
-        
-        sendJsonMessage('delete_file', {
-            path: filePath,
-            storage_type: currentStorageMode
-        });
-        
-        logToConsole(`Deleting file: ${filePath} from ${currentStorageMode}`, 'info');
-    }
