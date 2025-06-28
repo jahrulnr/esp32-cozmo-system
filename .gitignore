@@ -4,6 +4,7 @@
 .vscode/launch.json
 .vscode/ipch
 
+*.ino.cpp
 data/config/wifi.json
 **/Config.h
 clouds
