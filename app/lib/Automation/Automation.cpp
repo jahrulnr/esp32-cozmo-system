@@ -48,10 +48,10 @@ void Automation::start() {
     );
 
     if (_fileManager && !_fileManager->exists("/config/templates_update.txt")) {
-        xTaskCreate(
+        xTaskCreatePinnedToCore(
             [](void * param){
+                vTaskDelay(pdMS_TO_TICKS(20099));
                 if (WiFi.isConnected()) {
-                    vTaskDelay(pdMS_TO_TICKS(11000));
                     Automation* automation = static_cast<Automation*>(param);
                     automation->fetchAndAddNewBehaviors();                
                 }
@@ -60,8 +60,9 @@ void Automation::start() {
             "automationUpdate",    // Task name
             8192,           // Stack size in words
             this,           // Parameter passed to the task
-            1,              // Priority
-            NULL
+            0,              // Priority
+            NULL,
+            0
         );
     }
     

@@ -35,24 +35,6 @@
 #include "lib/Audio/PWMSpeaker.h"
 #include "lib/Audio/I2SSpeaker.h"
 
-// Structure to store slave camera data information
-struct SlaveCameraData {
-  bool dataAvailable;          // Whether camera data is available
-  uint16_t width;              // Image width
-  uint16_t height;             // Image height
-  uint32_t totalSize;          // Total size of the camera frame in bytes
-  uint16_t totalBlocks;        // Total number of blocks
-  uint16_t blockSize;          // Size of each block in bytes
-  uint16_t receivedBlocks;     // Number of blocks received so far
-  uint8_t* imageData;          // Buffer to store the assembled image
-  bool* blockReceived;         // Array to track which blocks have been received
-  bool frameComplete;          // Whether the frame is complete
-  uint8_t dataVersion;         // Version of the data format
-};
-
-// Declare external reference to the global SlaveCameraData instance
-extern SlaveCameraData slaveCameraData;
-
 struct gptRequest
 {
 	String prompt;
@@ -85,6 +67,7 @@ extern Utils::CommandMapper* commandMapper;
 extern Utils::ConfigManager* configManager;
 extern Utils::IOExtern ioExpander;
 extern bool g_isApOnlyMode;
+extern bool _cameraStreaming;
 
 // Task handles
 extern TaskHandle_t cameraStreamTaskHandle;

@@ -57,6 +57,8 @@ void cameraStreamTask(void* parameter) {
     vTaskDelete(NULL);
     return;
   }
+
+  vTaskDelay(pdMS_TO_TICKS(15000));
   
   logger->info("Camera streaming task started");
   
@@ -64,57 +66,60 @@ void cameraStreamTask(void* parameter) {
   const uint32_t LOW_MEMORY_THRESHOLD = 30000; // 30KB
   uint32_t consecutiveLowMemory = 0;
   uint32_t adaptiveInterval = camera->getStreamingInterval();
+  _cameraStreaming = false;
   
   while (true) {
     // Only process frames when streaming is enabled and clients are connected
-    if (_cameraStreaming && webSocket->hasClients() && webSocket->hasClientsForCameraFrames()) {
+    if (!_cameraStreaming) {
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+      continue;
+    }
       // Capture frame
-      camera_fb_t* fb = esp_camera_fb_get();
+    camera_fb_t* fb = esp_camera_fb_get();
+    
+    if (fb) {
+      // Create a small JSON header with metadata
+      Utils::SpiJsonDocument header;
+      header["width"] = fb->width;
+      header["height"] = fb->height;
+      header["format"] = fb->format == PIXFORMAT_JPEG ? "jpeg" : String(fb->format);
+      header["size"] = fb->len;
       
-      if (fb) {
-        // Create a small JSON header with metadata
-        Utils::SpiJsonDocument header;
-        header["width"] = fb->width;
-        header["height"] = fb->height;
-        header["format"] = fb->format == PIXFORMAT_JPEG ? "jpeg" : String(fb->format);
-        header["size"] = fb->len;
+      // First send the metadata as JSON text frame with DTO v1.0 format
+      webSocket->sendJsonMessage(-1, "camera_frame_header", header);
+      
+      // Then send the binary frame data
+      webSocket->sendBinary(-1, fb->buf, fb->len);
+      
+      // Return frame buffer immediately after use
+      esp_camera_fb_return(fb);
+      
+      // Check memory status and adapt if needed
+      uint32_t freeHeap = ESP.getFreeHeap();
+      if (freeHeap < LOW_MEMORY_THRESHOLD) {
+        consecutiveLowMemory++;
         
-        // First send the metadata as JSON text frame with DTO v1.0 format
-        webSocket->sendJsonMessage(-1, "camera_frame_header", header);
-        
-        // Then send the binary frame data
-        webSocket->sendBinary(-1, fb->buf, fb->len);
-        
-        // Return frame buffer immediately after use
-        esp_camera_fb_return(fb);
-        
-        // Check memory status and adapt if needed
-        uint32_t freeHeap = ESP.getFreeHeap();
-        if (freeHeap < LOW_MEMORY_THRESHOLD) {
-          consecutiveLowMemory++;
-          
-          // If memory is consistently low, increase interval gradually
-          if (consecutiveLowMemory > 5) {
-            adaptiveInterval = _min(500u, adaptiveInterval + 20); // Cap at 500ms
-            logger->warning("Low memory detected, slowing camera stream to " + 
-                            String(adaptiveInterval) + "ms");
-            consecutiveLowMemory = 0;
-          }
-        } else {
+        // If memory is consistently low, increase interval gradually
+        if (consecutiveLowMemory > 5) {
+          adaptiveInterval = _min(500u, adaptiveInterval + 20); // Cap at 500ms
+          logger->warning("Low memory detected, slowing camera stream to " + 
+                          String(adaptiveInterval) + "ms");
           consecutiveLowMemory = 0;
-          
-          // If memory is good, gradually return to normal interval
-          if (adaptiveInterval > camera->getStreamingInterval()) {
-            adaptiveInterval = _max(camera->getStreamingInterval(), adaptiveInterval - 10);
-          }
         }
-        logger->info("capturing image");
-        // Wait for the next frame using adaptive interval
-        vTaskDelay(adaptiveInterval / portTICK_PERIOD_MS);
       } else {
-        logger->info("capture image failed");
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        consecutiveLowMemory = 0;
+        
+        // If memory is good, gradually return to normal interval
+        if (adaptiveInterval > camera->getStreamingInterval()) {
+          adaptiveInterval = _max(camera->getStreamingInterval(), adaptiveInterval - 10);
+        }
       }
+      logger->info("capturing image");
+      // Wait for the next frame using adaptive interval
+      vTaskDelay(adaptiveInterval / portTICK_PERIOD_MS);
+    } else {
+      logger->info("capture image failed");
+      vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
   }
 }

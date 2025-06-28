@@ -560,8 +560,18 @@
 
                 <div class="card">
                     <div class="file-header">
-                        <div id="breadcrumb" class="breadcrumb">
-                            <span class="breadcrumb-item">Root</span>
+                        <div class="file-header-left">
+                            <div id="breadcrumb" class="breadcrumb">
+                                <span class="breadcrumb-item">Root</span>
+                            </div>
+                            <div class="storage-selector mt-2">
+                                <label class="form-label" style="margin-right: 8px;">Storage:</label>
+                                <select id="storage-mode" class="form-control" style="width: auto; display: inline-block;">
+                                    <option value="STORAGE_SPIFFS">SPIFFS (Internal Flash)</option>
+                                    <option value="STORAGE_SD_MMC">SD/MMC Card</option>
+                                </select>
+                                <span id="storage-status" class="badge badge-success" style="margin-left: 8px;">Connected</span>
+                            </div>
                         </div>
                         <div class="file-actions">
                             <input type="file" id="file-upload" style="display: none;">

@@ -17,7 +17,7 @@ void setupTasks() {
             "protectCozmo",         // Task name
             4 * 1024,               // Stack size
             NULL,                   // Parameters
-            1,                      // Priority
+            10,                      // Priority
             NULL                    // Task handle
         );
     #endif
@@ -27,9 +27,9 @@ void setupTasks() {
         xTaskCreate(
             cameraStreamTask,        // Task function
             "CameraStream",          // Task name
-            60 * 1024,               // Stack size
+            40 * 1024,               // Stack size
             NULL,                    // Parameters
-            1,                       // Priority
+            12,                      // Priority
             &cameraStreamTaskHandle  // Task handle
         );
         
@@ -44,7 +44,7 @@ void setupTasks() {
                 screen->mutexUpdate();
                 vTaskDelay(pdMS_TO_TICKS(33)); 
             }
-        }, "screenUpdate", 4096, NULL, 8, NULL);
+        }, "screenUpdate", 4096, NULL, 5, NULL);
     }
     
     // Create sensor monitoring task
@@ -53,7 +53,7 @@ void setupTasks() {
         "SensorMonitor",           // Task name
         4096,                      // Stack size
         NULL,                      // Parameters
-        10,                         // Priority
+        5,                         // Priority
         &sensorMonitorTaskHandle   // Task handle
     );
     
@@ -76,19 +76,19 @@ void setupTasks() {
     // }, "pingDevices", 4096, NULL, 10, NULL);
 
     if (SPEAKER_ENABLED) {
-        xTaskCreate([](void *param){
+        xTaskCreatePinnedToCore([](void *param){
             while(1) {
                 if (isSpeakerPlaying()) {
-                    vTaskDelay(pdMS_TO_TICKS(3000));
+                    vTaskDelay(pdMS_TO_TICKS(5000));
                     continue;
                 }
 
                 if (playSpeakerRandomMP3()){
                     logger->info("success play a random mp3");
                 }
-                vTaskDelay(pdMS_TO_TICKS(5000)); 
+                vTaskDelay(pdMS_TO_TICKS(10000)); 
             }
-        }, "autoSound", 8 * 1024, NULL, 8, NULL);
+        }, "autoSound", 4 * 1024, NULL, 5, NULL, 0);
     }
 
     delay(1000);

@@ -195,6 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateMotorStatus(msg.data);
             } else if (msg.type === 'storage_info') {
                 updateStorageInfo(msg.data);
+            } else if (msg.type === 'storage_status') {
+                updateStorageStatus(msg.data);
             } else if (msg.type === 'file_content') {
                 displayFileContent(msg.data);
             } else if (msg.type === 'task_list') {
@@ -429,8 +431,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Load specific data based on the section
         if (id === 'files-section') {
-            fetchFiles(currentPath || '/');
+            fetchFiles(currentPath || '/', currentStorageMode);
             fetchStorageInfo();
+            updateStorageStatus();
         }
     }
 
@@ -1418,6 +1421,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Storage status display for different storage types
+    function updateStorageStatus(data) {
+        const storageStatus = document.getElementById('storage-status');
+        if (storageStatus) {
+            const isAvailable = data.available;
+            const status = data.status;
+            
+            storageStatus.textContent = status;
+            
+            // Update badge color based on availability
+            storageStatus.className = 'badge ' + (isAvailable ? 'badge-success' : 'badge-danger');
+        }
+        
+        // Log storage status change
+        const storageTypeName = data.storage_type === 'STORAGE_SPIFFS' ? 'SPIFFS' : 'SD/MMC';
+        logToConsole(`${storageTypeName} storage status: ${data.status}`, isAvailable ? 'info' : 'warning');
+    }
+    
     function fetchStorageInfo() {
         sendJsonMessage('storage_info', {});
     }
@@ -1516,16 +1537,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Missing function implementations
     let currentPath = '/';
+    let currentStorageMode = 'STORAGE_SPIFFS'; // Default to SPIFFS
 
     function fetchWifiNetworks() {
         sendJsonMessage('get_wifi_networks', {});
         logToConsole('Scanning for WiFi networks...', 'info');
     }
 
-    function fetchFiles(path) {
+    function fetchFiles(path, storageMode) {
         currentPath = path || '/';
-        sendJsonMessage('list_files', { path: currentPath });
-        logToConsole(`Loading files from ${currentPath}...`, 'info');
+        currentStorageMode = storageMode || currentStorageMode;
+        
+        sendJsonMessage('list_files', { 
+            path: currentPath,
+            storage_type: currentStorageMode 
+        });
+        logToConsole(`Loading files from ${currentPath} (${currentStorageMode})...`, 'info');
+        
+        // Update storage status
+        updateStorageStatus();
+    }
+
+    function updateStorageStatus() {
+        const storageStatus = document.getElementById('storage-status');
+        if (storageStatus) {
+            // Request storage status from server
+            sendJsonMessage('get_storage_status', { 
+                storage_type: currentStorageMode 
+            });
+        }
+    }
+
+    function switchStorageMode(newMode) {
+        if (newMode !== currentStorageMode) {
+            currentStorageMode = newMode;
+            logToConsole(`Switching to storage mode: ${newMode}`, 'info');
+            
+            // Reset path to root when switching storage
+            currentPath = '/';
+            fetchFiles(currentPath, currentStorageMode);
+            
+            // Update breadcrumb
+            updateBreadcrumb('/');
+        }
+    }
+
+    function updateBreadcrumb(path) {
+        const breadcrumb = document.getElementById('breadcrumb');
+        if (!breadcrumb) return;
+        
+        breadcrumb.innerHTML = '';
+        
+        // Add storage type indicator
+        const storageIndicator = document.createElement('span');
+        storageIndicator.className = 'breadcrumb-item storage-indicator';
+        storageIndicator.textContent = currentStorageMode === 'STORAGE_SPIFFS' ? 'SPIFFS' : 'SD/MMC';
+        storageIndicator.style.fontWeight = 'bold';
+        storageIndicator.style.color = 'var(--color-accent)';
+        breadcrumb.appendChild(storageIndicator);
+        
+        // Add separator
+        const separator = document.createElement('span');
+        separator.className = 'breadcrumb-separator';
+        separator.textContent = ' > ';
+        breadcrumb.appendChild(separator);
+        
+        // Build path segments
+        const segments = path.split('/').filter(segment => segment);
+        
+        // Root segment
+        const rootItem = document.createElement('span');
+        rootItem.className = 'breadcrumb-item';
+        rootItem.textContent = 'Root';
+        rootItem.style.cursor = 'pointer';
+        rootItem.onclick = () => fetchFiles('/', currentStorageMode);
+        breadcrumb.appendChild(rootItem);
+        
+        // Path segments
+        let currentSegmentPath = '';
+        segments.forEach((segment, index) => {
+            currentSegmentPath += '/' + segment;
+            
+            const separator = document.createElement('span');
+            separator.className = 'breadcrumb-separator';
+            separator.textContent = ' / ';
+            breadcrumb.appendChild(separator);
+            
+            const segmentItem = document.createElement('span');
+            segmentItem.className = 'breadcrumb-item';
+            segmentItem.textContent = segment;
+            segmentItem.style.cursor = 'pointer';
+            
+            const segmentPath = currentSegmentPath;
+            segmentItem.onclick = () => fetchFiles(segmentPath, currentStorageMode);
+            
+            breadcrumb.appendChild(segmentItem);
+        });
     }
 
     function populateWifiList(networks) {
@@ -1572,29 +1679,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function populateFileList(files) {
+    function populateFileList(data) {
         if (!fileList) return;
         
         fileList.innerHTML = '';
         
-        // Add breadcrumb
-        if (breadcrumb) {
-            const pathParts = currentPath.split('/').filter(part => part);
-            breadcrumb.innerHTML = '<span class="breadcrumb-item" data-path="/">Root</span>';
-            
-            let currentBreadcrumbPath = '';
-            pathParts.forEach(part => {
-                currentBreadcrumbPath += '/' + part;
-                breadcrumb.innerHTML += ` / <span class="breadcrumb-item" data-path="${currentBreadcrumbPath}">${part}</span>`;
-            });
-            
-            // Add click handlers to breadcrumb items
-            breadcrumb.querySelectorAll('.breadcrumb-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const path = item.getAttribute('data-path');
-                    fetchFiles(path);
-                });
-            });
+        // Handle both old format (array) and new format (object with files array)
+        let files = Array.isArray(data) ? data : (data.files || []);
+        let path = data.path || currentPath;
+        let storageType = data.storage_type || currentStorageMode;
+        
+        // Update current path and storage mode if provided
+        if (data.path) currentPath = data.path;
+        if (data.storage_type) currentStorageMode = data.storage_type;
+        
+        // Update breadcrumb with new path
+        updateBreadcrumb(path);
+        
+        // Update storage mode selector if it exists
+        const storageModeSelect = document.getElementById('storage-mode');
+        if (storageModeSelect && storageModeSelect.value !== storageType) {
+            storageModeSelect.value = storageType;
         }
         
         if (!files || files.length === 0) {
@@ -1610,80 +1715,23 @@ document.addEventListener('DOMContentLoaded', () => {
             fileItem.className = 'file-item';
             
             const isDirectory = file.type === 'directory' || file.name.endsWith('/');
-            const icon = isDirectory ? 'fas fa-folder' : 'fas fa-file';
-            const fileName = file.name;
-            const filePath = file.path;
-            const fullname = filePath + fileName;
             
-            // Get file extension for icon
-            let fileIcon = icon;
-            if (!isDirectory) {
-                const extension = fileName.split('.').pop().toLowerCase();
-                if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension)) {
-                    fileIcon = 'fas fa-file-image';
-                } else if (['txt', 'log', 'md'].includes(extension)) {
-                    fileIcon = 'fas fa-file-alt';
-                } else if (['html', 'htm', 'css', 'js'].includes(extension)) {
-                    fileIcon = 'fas fa-file-code';
-                } else if (['json', 'xml', 'csv'].includes(extension)) {
-                    fileIcon = 'fas fa-file-code';
-                }
-            }
+            const iconClass = isDirectory ? 'fas fa-folder' : getFileIcon(file.name);
             
             fileItem.innerHTML = `
-                <i class="file-icon ${fileIcon}"></i>
-                <div class="file-name">${fileName}</div>
-                <div class="file-size pe-2">${file.size ? formatFileSize(file.size) : ''}</div>
+                <i class="file-icon ${iconClass}"></i>
+                <div class="file-name">${file.name}</div>
+                <div class="file-size">${isDirectory ? '' : formatFileSize(file.size)}</div>
                 <div class="file-actions">
-                    ${isDirectory ? 
-                        `<button class="btn btn-sm file-open" data-path="${fullname}">Open</button>` :
-                        `<button class="btn btn-sm file-view" data-path="${fullname}">View</button>
-                         <button class="btn btn-sm file-download" data-path="${fullname}">Download</button>`
-                    }
-                    <button class="btn btn-sm btn-danger file-delete" data-path="${fullname}">Delete</button>
+                    ${!isDirectory ? '<button class="btn btn-sm" onclick="readFile(\'' + (file.path || currentPath) + '/' + file.name + '\')"><i class="fas fa-eye"></i></button>' : ''}
+                    <button class="btn btn-sm btn-danger" onclick="deleteFile('${(file.path || currentPath)}/${file.name}')"><i class="fas fa-trash"></i></button>
                 </div>
             `;
             
-            // Add event listeners
-            const openBtn = fileItem.querySelector('.file-open');
-            if (openBtn) {
-                openBtn.addEventListener('click', () => {
-                    fetchFiles(openBtn.getAttribute('data-path'));
-                });
-            }
-            
-            const viewBtn = fileItem.querySelector('.file-view');
-            if (viewBtn) {
-                viewBtn.addEventListener('click', () => {
-                    readFile(viewBtn.getAttribute('data-path'));
-                });
-            }
-            
-            const downloadBtn = fileItem.querySelector('.file-download');
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', () => {
-                    // Create download link
-                    const link = document.createElement('a');
-                    link.href = `/download?path=${encodeURIComponent(downloadBtn.getAttribute('data-path'))}`;
-                    link.download = fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                });
-            }
-            
-            const deleteBtn = fileItem.querySelector('.file-delete');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', () => {
-                    if (confirm(`Delete ${fileName}?`)) {
-                        sendJsonMessage('delete_file', { path: deleteBtn.getAttribute('data-path') });
-                        logToConsole(`Deleting ${fileName}...`, 'info');
-                        // Update storage info after deleting a file
-                        setTimeout(() => {
-                            fetchFiles(currentPath);
-                            fetchStorageInfo();
-                        }, 1000);
-                    }
+            if (isDirectory) {
+                fileItem.addEventListener('click', () => {
+                    const newPath = (file.path || currentPath) + '/' + file.name;
+                    fetchFiles(newPath, currentStorageMode);
                 });
             }
             
@@ -1691,15 +1739,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Format file size for display
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    // Helper function to get file icon based on extension
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        
+        const iconMap = {
+            'jpg': 'fas fa-image',
+            'jpeg': 'fas fa-image',
+            'png': 'fas fa-image',
+            'gif': 'fas fa-image',
+            'bmp': 'fas fa-image',
+            'svg': 'fas fa-image',
+            'mp3': 'fas fa-music',
+            'wav': 'fas fa-music',
+            'mp4': 'fas fa-video',
+            'avi': 'fas fa-video',
+            'txt': 'fas fa-file-text',
+            'md': 'fas fa-file-text',
+            'json': 'fas fa-file-code',
+            'js': 'fas fa-file-code',
+            'html': 'fas fa-file-code',
+            'css': 'fas fa-file-code',
+            'cpp': 'fas fa-file-code',
+            'h': 'fas fa-file-code',
+            'py': 'fas fa-file-code',
+            'zip': 'fas fa-file-archive',
+            'rar': 'fas fa-file-archive',
+            'pdf': 'fas fa-file-pdf'
+        };
+        
+        return iconMap[ext] || 'fas fa-file';
     }
-    
+
     // Read file content
     function readFile(filePath) {
         sendJsonMessage('read_file', { path: filePath });
@@ -1826,26 +1897,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!fileInput || !fileInput.files.length) return;
         
         const file = fileInput.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
         
-        fetch('/upload?path='+currentPath, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                logToConsole(`File ${file.name} uploaded successfully`, 'success');
-                fetchFiles(currentPath); // Refresh file list
-                fetchStorageInfo(); // Update storage info
-            } else {
-                logToConsole(`Upload failed: ${data.message}`, 'error');
-            }
-        })
-        .catch(error => {
-            logToConsole(`Upload error: ${error.message}`, 'error');
+        // Send file upload request via WebSocket with storage mode
+        sendJsonMessage('upload_file', {
+            name: file.name,
+            size: file.size,
+            path: currentPath,
+            storage_type: currentStorageMode
         });
+        
+        // Send binary data
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(e.target.result);
+                logToConsole(`File ${file.name} uploaded to ${currentStorageMode}`, 'success');
+            }
+        };
+        reader.readAsArrayBuffer(file);
         
         // Clear the input
         fileInput.value = '';
@@ -1940,9 +2009,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshFiles = document.getElementById('refresh-btn');
     if (refreshFiles) {
         refreshFiles.addEventListener('click', () => {
-            fetchFiles(currentPath);
+            fetchFiles(currentPath, currentStorageMode);
             fetchStorageInfo();
         });
+    }
+    
+    // Storage mode selector
+    const storageModeSelect = document.getElementById('storage-mode');
+    if (storageModeSelect) {
+        storageModeSelect.addEventListener('change', (e) => {
+            const newMode = e.target.value;
+            switchStorageMode(newMode);
+        });
+        
+        // Initialize with current value
+        storageModeSelect.value = currentStorageMode;
     }
     
     // File viewer controls
@@ -2432,3 +2513,17 @@ document.addEventListener('DOMContentLoaded', () => {
     //     }
     // }, 1000);
 });
+
+// Delete file function
+    function deleteFile(filePath) {
+        if (!confirm(`Are you sure you want to delete "${filePath}"?`)) {
+            return;
+        }
+        
+        sendJsonMessage('delete_file', {
+            path: filePath,
+            storage_type: currentStorageMode
+        });
+        
+        logToConsole(`Deleting file: ${filePath} from ${currentStorageMode}`, 'info');
+    }

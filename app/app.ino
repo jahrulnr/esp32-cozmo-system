@@ -26,23 +26,8 @@ Utils::Logger* logger = nullptr;
 Utils::CommandMapper* commandMapper = nullptr;
 Utils::ConfigManager* configManager = nullptr;
 
-// Initialize the global slave camera data struct
-SlaveCameraData slaveCameraData = {
-  false,  // dataAvailable
-  0,      // width
-  0,      // height
-  0,      // totalSize
-  0,      // totalBlocks
-  0,      // blockSize
-  0,      // receivedBlocks
-  nullptr, // imageData
-  nullptr, // blockReceived
-  false,   // frameComplete
-  0        // dataVersion
-};
-
 void setup() {
-  gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
+  // gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
   heap_caps_malloc_extmem_enable(2048);
 
   // Initialize Serial
@@ -75,7 +60,6 @@ void setup() {
   setupDistanceSensor();
   setupCliffDetector();
   setupTemperatureSensor();
-  setupCamera();
   setupMicrophone();
   setupSpeakers();
   setupWebServer();
@@ -83,6 +67,7 @@ void setup() {
   setupGPT();
   setupCommandMapper();
   setupAutomation();
+  setupCamera();
 
   if (motors && screen)
     motors->setScreen(screen);
@@ -104,6 +89,6 @@ void setup() {
 }
 
 void loop() {
-  vTaskDelay(pdMS_TO_TICKS(1000)); 
+  vTaskDelay(pdMS_TO_TICKS(2000)); 
   vTaskDelete(NULL);
 }

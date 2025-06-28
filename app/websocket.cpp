@@ -217,6 +217,29 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 webSocket->sendJsonMessage(clientId, "storage_info", storageData);
                 logger->debug("Sent storage information to client #" + String(clientId));
               }
+              // Get storage status for specific storage type
+              else if (type == "get_storage_status") {
+                String storageType = data["storage_type"] | "STORAGE_SPIFFS";
+                
+                Utils::SpiJsonDocument statusData;
+                statusData["storage_type"] = storageType;
+                
+                if (storageType == "STORAGE_SPIFFS") {
+                  statusData["available"] = true;
+                  statusData["status"] = "Connected";
+                  statusData["type"] = "Internal Flash";
+                } else if (storageType == "STORAGE_SD_MMC") {
+                  // Initialize FileManager to check SD/MMC availability
+                  static Utils::FileManager fileManager;
+                  bool sdAvailable = fileManager.isSDMMCAvailable();
+                  
+                  statusData["available"] = sdAvailable;
+                  statusData["status"] = sdAvailable ? "Connected" : "Not Available";
+                  statusData["type"] = "SD/MMC Card";
+                }
+                
+                webSocket->sendJsonMessage(clientId, "storage_status", statusData);
+              }
               // Camera control
               else if (type == "camera_command") {
                 String action = data["action"] | "";
@@ -639,6 +662,7 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               // File operations
               else if (type == "list_files") {
                 String path = data["path"] | "/";
+                String storageType = data["storage_type"] | "STORAGE_SPIFFS";
 
                 // Use FileManager to list files
                 static Utils::FileManager fileManager;
@@ -651,8 +675,14 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 Utils::SpiJsonDocument filesData;
                 JsonArray files = filesData.to<JsonArray>();
 
-                // Get files using the FileManager
-                std::vector<Utils::FileManager::FileInfo> fileList = fileManager.listFiles(path);
+                // Convert string storage type to enum
+                Utils::FileManager::StorageType storage = Utils::FileManager::STORAGE_SPIFFS;
+                if (storageType == "STORAGE_SD_MMC") {
+                  storage = Utils::FileManager::STORAGE_SD_MMC;
+                }
+
+                // Get files using the FileManager with specified storage
+                std::vector<Utils::FileManager::FileInfo> fileList = fileManager.listFiles(path, storage);
                 for (const auto& file : fileList) {
                   JsonObject fileObj = files.add<JsonObject>();
                   fileObj["name"] = file.name;
@@ -661,11 +691,18 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   fileObj["type"] = file.isDirectory ? "directory" : "file";
                 }
 
-                webSocket->sendJsonMessage(clientId, "list_files", filesData);
+                // Add storage info to response
+                JsonObject responseData = filesData.to<JsonObject>();
+                responseData["files"] = files;
+                responseData["storage_type"] = storageType;
+                responseData["path"] = path;
+
+                webSocket->sendJsonMessage(clientId, "list_files", responseData);
               }
               // Delete file
               else if (type == "delete_file") {
                 String path = data["path"] | "";
+                String storageType = data["storage_type"] | "STORAGE_SPIFFS";
 
                 // Use FileManager for file operations
                 static Utils::FileManager fileManager;
@@ -677,13 +714,22 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
 
                 bool success = false;
                 if (path.length() > 0) {
-                  success = fileManager.deleteFile(path);
-                  logger->info("File delete " + String(success ? "successful" : "failed") + ": " + path);
+                  // Convert string storage type to enum
+                  Utils::FileManager::StorageType storage = Utils::FileManager::STORAGE_SPIFFS;
+                  if (storageType == "STORAGE_SD_MMC") {
+                    storage = Utils::FileManager::STORAGE_SD_MMC;
+                  }
+                  
+                  success = fileManager.deleteFile(path, storage);
+                  logger->info("File delete " + String(success ? "successful" : "failed") + 
+                               ": " + path + " from " + storageType);
                 }
 
                 Utils::SpiJsonDocument response;
                 response["success"] = success;
                 response["message"] = success ? "File deleted" : "Failed to delete file";
+                response["path"] = path;
+                response["storage_type"] = storageType;
 
                 webSocket->sendJsonMessage(clientId, "file_operation", response);
               }

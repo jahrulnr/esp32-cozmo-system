@@ -91,7 +91,7 @@ void checkMicrophone() {
   loudSoundDetected = microphoneSensor->isSoundDetected(LOUD_SOUND_THRESHOLD);
   
   // Voice Activity Detection (VAD) for recording
-  checkVoiceActivity(currentTime);
+  // checkVoiceActivity(currentTime);
   
   // Log sound levels periodically for debugging
   static unsigned long lastLogTime = 0;
