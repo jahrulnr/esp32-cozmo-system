@@ -2,6 +2,7 @@
 #define INIT_H
 
 #include "Config.h"
+#include <vector>
 
 // Include core libraries
 #include <AsyncWebSocket.h>
@@ -23,7 +24,6 @@
 // #include "lib/Communication/SPIHandler.h"
 #include "lib/Screen/Screen.h"
 #include "lib/Utils/FileManager.h"
-#include "lib/Utils/HealthCheck.h"
 #include "lib/Utils/Logger.h"
 #include "lib/Utils/SpiAllocator.h"
 #include "lib/Utils/I2CScanner.h"
@@ -80,7 +80,6 @@ extern Communication::GPTAdapter* gptAdapter;
 // extern Communication::SPIHandler* spiHandler;
 extern Screen::Screen* screen;
 extern Utils::FileManager* fileManager;
-extern Utils::HealthCheck* healthCheck;
 extern Utils::Logger* logger;
 extern Utils::CommandMapper* commandMapper;
 extern Utils::ConfigManager* configManager;
@@ -132,6 +131,14 @@ int getPeakSoundLevel();
 bool isSoundDetected();
 void calibrateMicrophone();
 void setMicrophoneGain(int gainLevel);
+void checkVoiceActivity(unsigned long currentTime);
+void startVoiceRecording(unsigned long currentTime);
+void stopVoiceRecording(unsigned long currentTime);
+void processVoiceRecording(unsigned long duration);
+bool isVoiceRecording();
+bool isVoiceDetected();
+void triggerVoiceRecording();
+void stopVoiceRecordingManual();
 void playSpeakerTone(int frequency, int duration, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 void playSpeakerBeep(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 void playSpeakerConfirmation(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
@@ -140,18 +147,25 @@ void playSpeakerStartup(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 void playSpeakerNotification(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 void stopSpeaker();
 void setSpeakerVolume(int volume);
+int getSpeakerVolume();
 bool isSpeakerPlaying();
 void playBehaviorSound(const String& behavior);
 bool getSpeakerStatus();
 String getSpeakerType();
 bool playSpeakerAudioFile(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
-void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleRate = 16000, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
-bool createAudioFile(const String& filePath, const int16_t* samples, size_t sampleCount, uint32_t sampleRate = 16000);
+void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleRate = I2S_SPEAKER_SAMPLE_RATE, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+bool createAudioFile(const String& filePath, const int16_t* samples, size_t sampleCount, uint32_t sampleRate = I2S_SPEAKER_SAMPLE_RATE);
 
 // MP3 audio functions
 bool playSpeakerMP3File(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 bool getMP3FileInfo(const String& filePath, int* sampleRate = nullptr, int* channels = nullptr, int* bitRate = nullptr, int* duration = nullptr);
 bool convertMP3ToAudioFile(const String& mp3FilePath, const String& audioFilePath);
+
+// Random MP3 playback functions
+bool playSpeakerRandomMP3(int volume, Utils::FileManager::StorageType storageType);
+bool playSpeakerRandomMP3(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+std::vector<String> getAvailableMP3Files(Utils::FileManager::StorageType storageType);
+std::vector<String> getAvailableMP3Files();
 
 void setupScreen();
 void setupWiFi();
@@ -159,7 +173,6 @@ bool isApOnlyMode();
 void setupWebServer();
 void setupWebSocket();
 void setupGPT();
-void setupHealthCheck();
 void setupTasks();
 void setupCommandMapper();
 void setupConfigManager();

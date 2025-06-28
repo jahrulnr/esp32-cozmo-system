@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <vector>
 #include "app.h"
 #include "lib/Audio/MP3Decoder.h"
 
@@ -195,6 +196,25 @@ void setSpeakerVolume(int volume) {
   #endif
 }
 
+// Get current speaker volume
+int getSpeakerVolume() {
+  #if SPEAKER_ENABLED
+  #if SPEAKER_TYPE_PWM
+  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
+    return pwmSpeaker->getVolume();
+  }
+  #endif
+  
+  #if SPEAKER_TYPE_I2S
+  if (i2sSpeaker && i2sSpeaker->isInitialized()) {
+    return i2sSpeaker->getVolume();
+  }
+  #endif
+  #endif
+  
+  return 0;
+}
+
 bool isSpeakerPlaying() {
   #if SPEAKER_ENABLED
   #if SPEAKER_TYPE_PWM
@@ -299,7 +319,12 @@ bool playSpeakerAudioFile(const String& filePath, int volume) {
   
   #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
+    Audio::MP3Decoder decoder;
+    Audio::MP3Decoder::MP3Info *info;
+    decoder.getFileInfo(filePath, info);
+
     // For I2S speaker, play as raw audio data
+    if (info) i2sSpeaker->setSampleRate(info->sampleRate);
     i2sSpeaker->playAudioData(audioData, dataSize, volume);
     return true;
   }
@@ -497,4 +522,112 @@ bool convertMP3ToAudioFile(const String& mp3FilePath, const String& audioFilePat
   logger->warning("Speakers disabled - cannot convert MP3 file");
   return false;
   #endif
+}
+
+// Play random MP3 file from /audio/ directory (excluding boot.mp3)
+bool playSpeakerRandomMP3(int volume, Utils::FileManager::StorageType storageType) {
+  #if SPEAKER_ENABLED
+  logger->info("Playing random MP3 file from /audio/ directory at volume " + String(volume));
+
+  if (!fileManager) {
+    logger->error("FileManager not available for random MP3 playback");
+    return false;
+  }
+  
+  // Get list of files in /audio/ directory
+  std::vector<Utils::FileManager::FileInfo> audioFiles = fileManager->listFiles("/audio", storageType);
+  std::vector<String> mp3Files;
+  
+  // Filter for MP3 files (excluding boot.mp3)
+  for (const auto& file : audioFiles) {
+    if (!file.isDirectory) {
+      String fileName = file.name;
+      fileName.toLowerCase();
+      
+      // Check if it's an MP3 file and not boot.mp3
+      if (fileName.endsWith(".mp3") && fileName != "boot.mp3") {
+        // Store full path
+        String fullPath = "/audio/" + file.name;
+        mp3Files.push_back(fullPath);
+        logger->debug("Found MP3 file: " + fullPath);
+      }
+    }
+  }
+  
+  // Check if we found any MP3 files
+  if (mp3Files.empty()) {
+    logger->warning("No MP3 files found in /audio/ directory (excluding boot.mp3)");
+    return false;
+  }
+  
+  // Select random MP3 file
+  randomSeed(millis()); // Seed random number generator
+  int randomIndex = random(0, mp3Files.size());
+  String selectedFile = mp3Files[randomIndex];
+  
+  logger->info("Selected random MP3: " + selectedFile + " (" + String(randomIndex + 1) + "/" + String(mp3Files.size()) + ")");
+  
+  // Play the selected MP3 file
+  #if SPEAKER_TYPE_I2S
+  if (i2sSpeaker && i2sSpeaker->isInitialized()) {
+    return i2sSpeaker->playMP3File(selectedFile, volume);
+  }
+  #endif
+  
+  #if SPEAKER_TYPE_PWM
+  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
+    return pwmSpeaker->playMP3File(selectedFile, volume);
+  }
+  #endif
+  
+  logger->error("No speaker available for random MP3 playback");
+  return false;
+  
+  #else
+  logger->warning("Speakers disabled - cannot play random MP3 file");
+  return false;
+  #endif
+}
+
+// Play random MP3 file from /audio/ directory with default storage (SPIFFS)
+bool playSpeakerRandomMP3(int volume) {
+  return playSpeakerRandomMP3(volume, Utils::FileManager::STORAGE_SPIFFS);
+}
+
+// Get list of available MP3 files in /audio/ directory (excluding boot.mp3)
+std::vector<String> getAvailableMP3Files(Utils::FileManager::StorageType storageType) {
+  std::vector<String> mp3Files;
+  
+  #if SPEAKER_ENABLED
+  if (!fileManager) {
+    logger->error("FileManager not available");
+    return mp3Files;
+  }
+  
+  // Get list of files in /audio/ directory
+  std::vector<Utils::FileManager::FileInfo> audioFiles = fileManager->listFiles("/audio", storageType);
+  
+  // Filter for MP3 files (excluding boot.mp3)
+  for (const auto& file : audioFiles) {
+    if (!file.isDirectory) {
+      String fileName = file.name;
+      fileName.toLowerCase();
+      
+      // Check if it's an MP3 file and not boot.mp3
+      if (fileName.endsWith(".mp3") && fileName != "boot.mp3") {
+        String fullPath = "/audio/" + file.name;
+        mp3Files.push_back(fullPath);
+      }
+    }
+  }
+  
+  logger->info("Found " + String(mp3Files.size()) + " MP3 files in /audio/ directory (excluding boot.mp3)");
+  #endif
+  
+  return mp3Files;
+}
+
+// Get list of available MP3 files with default storage (SPIFFS)
+std::vector<String> getAvailableMP3Files() {
+  return getAvailableMP3Files(Utils::FileManager::STORAGE_SPIFFS);
 }

@@ -130,6 +130,49 @@ public:
      */
     bool removeDir(const String& path, StorageType storageType = STORAGE_SPIFFS);
 
+    // Stream reading methods
+    /**
+     * Open file for streaming read operations
+     * @param path The file path
+     * @param storageType Storage type (optional, uses default if not specified)
+     * @return File handle for streaming operations
+     */
+    File openFileForReading(const String& path, StorageType storageType = STORAGE_SPIFFS);
+
+    /**
+     * Read a chunk of data from file stream
+     * @param file Open file handle
+     * @param buffer Buffer to store read data
+     * @param size Number of bytes to read
+     * @return Number of bytes actually read
+     */
+    size_t readStream(File& file, uint8_t* buffer, size_t size);
+
+    /**
+     * Read a specific range from file (start to end)
+     * @param path The file path
+     * @param start Starting byte position
+     * @param end Ending byte position (exclusive)
+     * @param buffer Buffer to store read data
+     * @param storageType Storage type (optional, uses default if not specified)
+     * @return Number of bytes actually read
+     */
+    size_t readStream(const String& path, size_t start, size_t end, uint8_t* buffer, StorageType storageType = STORAGE_SPIFFS);
+
+    /**
+     * Seek to position in file stream
+     * @param file Open file handle
+     * @param position Position to seek to
+     * @return true if successful
+     */
+    bool seekFile(File& file, size_t position);
+
+    /**
+     * Close file handle
+     * @param file File handle to close
+     */
+    void closeFile(File& file);
+
 private:
     bool _initialized;
     bool _sdInitialized;

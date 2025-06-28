@@ -12,14 +12,13 @@ void setupTasks() {
 
     #if PROTECT_COZMO
     // protect cozmo
-    xTaskCreatePinnedToCore(
+    xTaskCreate(
             protectCozmoTask,       // Task function
             "protectCozmo",         // Task name
             4 * 1024,               // Stack size
             NULL,                   // Parameters
             1,                      // Priority
-            NULL,                    // Task handle
-            1
+            NULL                    // Task handle
         );
     #endif
     
@@ -28,7 +27,7 @@ void setupTasks() {
         xTaskCreate(
             cameraStreamTask,        // Task function
             "CameraStream",          // Task name
-            80 * 1024,               // Stack size
+            60 * 1024,               // Stack size
             NULL,                    // Parameters
             1,                       // Priority
             &cameraStreamTaskHandle  // Task handle
@@ -75,6 +74,22 @@ void setupTasks() {
     //         vTaskDelay(pdMS_TO_TICKS(3000)); // Ping every 5 seconds
     //     }
     // }, "pingDevices", 4096, NULL, 10, NULL);
+
+    if (SPEAKER_ENABLED) {
+        xTaskCreate([](void *param){
+            while(1) {
+                if (isSpeakerPlaying()) {
+                    vTaskDelay(pdMS_TO_TICKS(3000));
+                    continue;
+                }
+
+                if (playSpeakerRandomMP3()){
+                    logger->info("success play a random mp3");
+                }
+                vTaskDelay(pdMS_TO_TICKS(5000)); 
+            }
+        }, "autoSound", 8 * 1024, NULL, 8, NULL);
+    }
 
     delay(1000);
     logger->info("Tasks initialized");
@@ -170,7 +185,30 @@ void sensorMonitorTask(void* parameter) {
                 jsonData["microphone"]["level"] = getCurrentSoundLevel();
                 jsonData["microphone"]["peak"] = getPeakSoundLevel();
                 jsonData["microphone"]["detected"] = isSoundDetected();
+                jsonData["microphone"]["initialized"] = true;
+                jsonData["microphone"]["recording"] = isVoiceRecording();
+                jsonData["microphone"]["voice_detected"] = isVoiceDetected();
+            } else {
+                jsonData["microphone"]["level"] = 0;
+                jsonData["microphone"]["peak"] = 0;
+                jsonData["microphone"]["detected"] = false;
+                jsonData["microphone"]["initialized"] = false;
+                jsonData["microphone"]["recording"] = false;
+                jsonData["microphone"]["voice_detected"] = false;
             }
+
+            // Speaker status
+            #if SPEAKER_ENABLED
+            jsonData["speaker"]["enabled"] = true;
+            jsonData["speaker"]["playing"] = isSpeakerPlaying();
+            jsonData["speaker"]["volume"] = getSpeakerVolume();
+            jsonData["speaker"]["type"] = getSpeakerType();
+            #else
+            jsonData["speaker"]["enabled"] = false;
+            jsonData["speaker"]["playing"] = false;
+            jsonData["speaker"]["volume"] = 0;
+            jsonData["speaker"]["type"] = "None";
+            #endif
 
             // Servo positions
             if (servos) {

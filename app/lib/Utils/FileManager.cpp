@@ -321,4 +321,83 @@ bool FileManager::removeDir(const String& path, StorageType storageType) {
     return fs.rmdir(path);
 }
 
+File FileManager::openFileForReading(const String& path, StorageType storageType) {
+    if (!_initialized) {
+        return File();
+    }
+    
+    // Check if SD_MMC is requested but not available
+    if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
+        Serial.println("SD_MMC not available, falling back to SPIFFS");
+        storageType = STORAGE_SPIFFS;
+    }
+    
+    fs::FS& fs = getFileSystem(storageType);
+    return fs.open(path, "r");
+}
+
+size_t FileManager::readStream(File& file, uint8_t* buffer, size_t size) {
+    if (!file || !buffer || size == 0) {
+        return 0;
+    }
+    return file.readBytes((char*)buffer, size);
+}
+
+size_t FileManager::readStream(const String& path, size_t start, size_t end, uint8_t* buffer, StorageType storageType) {
+    if (!_initialized || !buffer || start >= end) {
+        return 0;
+    }
+    
+    // Check if SD_MMC is requested but not available
+    if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
+        Serial.println("SD_MMC not available, falling back to SPIFFS");
+        storageType = STORAGE_SPIFFS;
+    }
+    
+    fs::FS& fs = getFileSystem(storageType);
+    File file = fs.open(path, "r");
+    if (!file) {
+        Serial.println("Failed to open file for streaming: " + path);
+        return 0;
+    }
+    
+    // Check file size
+    size_t fileSize = file.size();
+    if (start >= fileSize) {
+        file.close();
+        return 0;
+    }
+    
+    // Adjust end position if it exceeds file size
+    if (end > fileSize) {
+        end = fileSize;
+    }
+    
+    // Seek to start position
+    if (!file.seek(start)) {
+        file.close();
+        return 0;
+    }
+    
+    // Read the requested range
+    size_t bytesToRead = end - start;
+    size_t bytesRead = file.readBytes((char*)buffer, bytesToRead);
+    
+    file.close();
+    return bytesRead;
+}
+
+bool FileManager::seekFile(File& file, size_t position) {
+    if (!file) {
+        return false;
+    }
+    return file.seek(position);
+}
+
+void FileManager::closeFile(File& file) {
+    if (file) {
+        file.close();
+    }
+}
+
 } // namespace Utils

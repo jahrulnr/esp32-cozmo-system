@@ -16,14 +16,14 @@ void setupCamera() {
 }
 
 // Global flags for camera streaming control
-bool g_cameraStreaming = false;
+bool _cameraStreaming = false;
 
 /**
  * Start camera streaming
  */
 void startCameraStreaming() {
-  if (!g_cameraStreaming && camera) {
-    g_cameraStreaming = true;
+  if (!_cameraStreaming && camera) {
+    _cameraStreaming = true;
     logger->info("Camera streaming started");
   }
 }
@@ -32,8 +32,8 @@ void startCameraStreaming() {
  * Stop camera streaming
  */
 void stopCameraStreaming() {
-  if (g_cameraStreaming) {
-    g_cameraStreaming = false;
+  if (_cameraStreaming) {
+    _cameraStreaming = false;
     logger->info("Camera streaming stopped");
   }
 }
@@ -42,7 +42,7 @@ void stopCameraStreaming() {
  * Check if camera is streaming
  */
 bool isCameraStreaming() {
-  return g_cameraStreaming;
+  return _cameraStreaming;
 }
 
 /**
@@ -67,7 +67,7 @@ void cameraStreamTask(void* parameter) {
   
   while (true) {
     // Only process frames when streaming is enabled and clients are connected
-    if (g_cameraStreaming && webSocket->hasClients() && webSocket->hasClientsForCameraFrames()) {
+    if (_cameraStreaming && webSocket->hasClients() && webSocket->hasClientsForCameraFrames()) {
       // Capture frame
       camera_fb_t* fb = esp_camera_fb_get();
       

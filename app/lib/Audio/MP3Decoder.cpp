@@ -14,11 +14,11 @@ MP3Decoder::~MP3Decoder() {
     }
     
     if (_inputBuffer) {
-        free(_inputBuffer);
+        heap_caps_free(_inputBuffer);
     }
     
     if (_outputBuffer) {
-        free(_outputBuffer);
+        heap_caps_free(_outputBuffer);
     }
 }
 
@@ -38,8 +38,8 @@ bool MP3Decoder::init() {
     _outputBuffer = (int16_t*)heap_caps_malloc(OUTPUT_BUFFER_SIZE * sizeof(int16_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_DEFAULT);
     
     if (!_inputBuffer || !_outputBuffer) {
-        if (_inputBuffer) free(_inputBuffer);
-        if (_outputBuffer) free(_outputBuffer);
+        if (_inputBuffer) heap_caps_free(_inputBuffer);
+        if (_outputBuffer) heap_caps_free(_outputBuffer);
         if (_decoder) MP3FreeDecoder(_decoder);
         _inputBuffer = nullptr;
         _outputBuffer = nullptr;
@@ -80,14 +80,14 @@ bool MP3Decoder::decodeFile(const String& filePath, int16_t** pcmBuffer, size_t*
     file.close();
     
     if (bytesRead != fileSize) {
-        free(mp3Data);
+        heap_caps_free(mp3Data);
         return false;
     }
     
     // Decode the MP3 data
     bool result = decodeInternal(mp3Data, fileSize, pcmBuffer, pcmSize, info);
     
-    free(mp3Data);
+    heap_caps_free(mp3Data);
     return result;
 }
 
@@ -153,7 +153,7 @@ bool MP3Decoder::decodeInternal(const uint8_t* mp3Data, size_t mp3Size, int16_t*
             estimatedPCMSize *= 2;
             int16_t* newBuffer = (int16_t*)heap_caps_realloc(pcmData, estimatedPCMSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_DEFAULT);
             if (!newBuffer) {
-                free(pcmData);
+                heap_caps_free(pcmData);
                 return false;
             }
             pcmData = newBuffer;
@@ -169,7 +169,8 @@ bool MP3Decoder::decodeInternal(const uint8_t* mp3Data, size_t mp3Size, int16_t*
             } else {
                 // Other error, but continue trying to decode
                 readPtr++;
-                bytesLeft--;
+                if (bytesLeft > 0)
+                    bytesLeft--;
                 continue;
             }
         }
@@ -178,7 +179,7 @@ bool MP3Decoder::decodeInternal(const uint8_t* mp3Data, size_t mp3Size, int16_t*
     }
     
     if (totalPCMSamples == 0) {
-        free(pcmData);
+        heap_caps_free(pcmData);
         return false;
     }
     
@@ -223,7 +224,7 @@ bool MP3Decoder::getFileInfo(const String& filePath, MP3Info* info) {
     file.close();
     
     if (bytesRead == 0) {
-        free(buffer);
+        heap_caps_free(buffer);
         return false;
     }
     
@@ -233,7 +234,7 @@ bool MP3Decoder::getFileInfo(const String& filePath, MP3Info* info) {
     
     int offset = MP3FindSyncWord((unsigned char*)readPtr, bytesLeft);
     if (offset < 0) {
-        free(buffer);
+        heap_caps_free(buffer);
         return false;
     }
     
@@ -243,7 +244,7 @@ bool MP3Decoder::getFileInfo(const String& filePath, MP3Info* info) {
     MP3FrameInfo frameInfo;
     int result = MP3GetNextFrameInfo(_decoder, &frameInfo, (unsigned char*)readPtr);
     
-    free(buffer);
+    heap_caps_free(buffer);
     
     if (result != 0) {
         return false;
@@ -253,7 +254,10 @@ bool MP3Decoder::getFileInfo(const String& filePath, MP3Info* info) {
     info->channels = frameInfo.nChans;
     info->bitRate = frameInfo.bitrate;
     info->valid = true;
-    
+
+    // Print MP3 info for debugging
+    Serial.printf("MP3 Info: SampleRate=%d Hz, Channels=%d, BitRate=%d kbps\n", info->sampleRate, info->channels, info->bitRate);
+
     // Estimate duration (rough calculation)
     if (frameInfo.bitrate > 0) {
         info->duration = (fileSize * 8) / frameInfo.bitrate;
@@ -266,7 +270,7 @@ bool MP3Decoder::getFileInfo(const String& filePath, MP3Info* info) {
 
 void MP3Decoder::freePCMBuffer(int16_t* pcmBuffer) {
     if (pcmBuffer) {
-        free(pcmBuffer);
+        heap_caps_free(pcmBuffer);
     }
 }
 

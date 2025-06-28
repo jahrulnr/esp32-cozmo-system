@@ -125,6 +125,13 @@ public:
     void setVolume(int volume);
 
     /**
+     * Get the current volume
+     * 
+     * @return Current volume level (0-100)
+     */
+    int getVolume() const;
+
+    /**
      * Check if the speaker is currently playing
      * 
      * @return true if playing, false otherwise

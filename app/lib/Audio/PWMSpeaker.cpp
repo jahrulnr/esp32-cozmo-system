@@ -130,6 +130,10 @@ void PWMSpeaker::setVolume(int volume) {
     _defaultVolume = constrain(volume, 0, 100);
 }
 
+int PWMSpeaker::getVolume() const {
+    return _defaultVolume;
+}
+
 bool PWMSpeaker::isPlaying() {
     if (_playing && millis() >= _playEndTime) {
         stop();

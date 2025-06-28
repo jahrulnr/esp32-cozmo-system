@@ -79,10 +79,6 @@
     "data_log_path": "/data/gpt_interactions.txt",
     "learning_enabled": true
   },
-  "health_check": {
-    "enabled": true,
-    "interval": 10000
-  },
   "misc": {
     "serial_baud_rate": 115200,
     "debug_enabled": true

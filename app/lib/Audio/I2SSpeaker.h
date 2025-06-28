@@ -1,8 +1,16 @@
 #pragma once
 
 #include <Arduino.h>
+#include "Config.h"
 #include <driver/i2s_std.h>
+#include <driver/i2s_pdm.h>
+#include <driver/i2s_tdm.h>
 #include <driver/i2s.h>
+
+// Forward declaration
+namespace Utils {
+    class FileManager;
+}
 
 namespace Audio {
 
@@ -45,7 +53,7 @@ public:
      * @param duration Duration in milliseconds
      * @param volume Volume level (0-100)
      */
-    void playTone(int frequency, int duration, int volume = 50);
+    void playTone(int frequency, int duration, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play raw audio data
@@ -54,7 +62,7 @@ public:
      * @param dataSize Size of audio data in bytes
      * @param volume Volume level (0-100)
      */
-    void playAudioData(const uint8_t* data, size_t dataSize, int volume = 50);
+    void playAudioData(const uint8_t* data, size_t dataSize, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play audio file from SPIFFS
@@ -63,7 +71,7 @@ public:
      * @param volume Volume level (0-100)
      * @return true if successful, false otherwise
      */
-    bool playAudioFile(const String& filePath, int volume = 50);
+    bool playAudioFile(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play MP3 file from SPIFFS
@@ -72,49 +80,78 @@ public:
      * @param volume Volume level (0-100)
      * @return true if successful, false otherwise
      */
-    bool playMP3File(const String& filePath, int volume = 50);
+    bool playMP3File(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+
+    /**
+     * Play MP3 file using streaming (memory efficient for large files)
+     * 
+     * @param filePath Path to the MP3 file
+     * @param volume Volume level (0-100)
+     * @param fileManager FileManager instance for file operations
+     * @return true if successful, false otherwise
+     */
+    bool playMP3FileStreaming(const String& filePath, int volume, Utils::FileManager& fileManager);
+
+    /**
+     * Play WAV file (supports PCM 16-bit)
+     * 
+     * @param filePath Path to the WAV file
+     * @param volume Volume level (0-100)
+     * @return true if successful, false otherwise
+     */
+    bool playWAVFile(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+
+    /**
+     * Play WAV file using streaming (memory efficient for large files)
+     * 
+     * @param filePath Path to the WAV file
+     * @param volume Volume level (0-100)
+     * @param fileManager FileManager instance for file operations
+     * @return true if successful, false otherwise
+     */
+    bool playWAVFileStreaming(const String& filePath, int volume, Utils::FileManager& fileManager);
 
     /**
      * Play a simple beep
      * 
      * @param volume Volume level (0-100)
      */
-    void beep(int volume = 50);
+    void beep(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play a double beep
      * 
      * @param volume Volume level (0-100)
      */
-    void doubleBeep(int volume = 50);
+    void doubleBeep(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play a confirmation sound (rising tones)
      * 
      * @param volume Volume level (0-100)
      */
-    void playConfirmation(int volume = 50);
+    void playConfirmation(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play an error sound (descending tones)
      * 
      * @param volume Volume level (0-100)
      */
-    void playError(int volume = 50);
+    void playError(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play a startup sound
      * 
      * @param volume Volume level (0-100)
      */
-    void playStartup(int volume = 50);
+    void playStartup(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play a notification sound
      * 
      * @param volume Volume level (0-100)
      */
-    void playNotification(int volume = 50);
+    void playNotification(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Stop any currently playing sound
@@ -127,6 +164,13 @@ public:
      * @param volume Volume level (0-100)
      */
     void setVolume(int volume);
+
+    /**
+     * Get the current volume
+     * 
+     * @return Current volume level (0-100)
+     */
+    int getVolume() const;
 
     /**
      * Check if the speaker is currently playing
@@ -197,6 +241,11 @@ private:
      * @param volume Volume level (0-100)
      */
     void applyVolume(int16_t* samples, size_t sampleCount, int volume);
+
+    int _memType = MALLOC_CAP_DEFAULT;
+    int getMemoryType() const {
+        return _memType;
+    }
 };
 
 } // namespace Audio

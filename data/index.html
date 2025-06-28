@@ -387,6 +387,83 @@
                     </div>
                 </div>
 
+                <!-- Audio Sensors -->
+                <div class="grid mt-4">
+                    <!-- Microphone -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Microphone</h2>
+                        </div>
+                        <div class="sensor-grid">
+                            <div>
+                                <div>Sound Level</div>
+                                <div class="sensor-value" id="microphone-level">0</div>
+                            </div>
+                            <div>
+                                <div>Peak Level</div>
+                                <div class="sensor-value" id="microphone-peak">0</div>
+                            </div>
+                            <div>
+                                <div>Sound Detected</div>
+                                <div class="sensor-value" id="microphone-detected">No</div>
+                            </div>
+                            <div>
+                                <div>Status</div>
+                                <div class="sensor-value" id="microphone-status">Disabled</div>
+                            </div>
+                            <div>
+                                <div>Recording</div>
+                                <div class="sensor-value" id="microphone-recording">No</div>
+                            </div>
+                            <div>
+                                <div>Voice Activity</div>
+                                <div class="sensor-value" id="microphone-voice">No</div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="progress">
+                                <div id="microphone-level-bar" style="width: 0%; background-color: #4CAF50;"></div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Sound Level Indicator</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Speaker -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Speaker</h2>
+                        </div>
+                        <div class="sensor-grid">
+                            <div>
+                                <div>Status</div>
+                                <div class="sensor-value" id="speaker-enabled">Disabled</div>
+                            </div>
+                            <div>
+                                <div>Playing</div>
+                                <div class="sensor-value" id="speaker-playing">No</div>
+                            </div>
+                            <div>
+                                <div>Volume</div>
+                                <div class="sensor-value" id="speaker-volume">0%</div>
+                            </div>
+                            <div>
+                                <div>Type</div>
+                                <div class="sensor-value" id="speaker-type">None</div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="progress">
+                                <div id="speaker-volume-bar" style="width: 0%; background-color: #2196F3;"></div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Volume Level</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Other Sensors -->
                 <div class="card mt-4">
                     <div class="card-header">

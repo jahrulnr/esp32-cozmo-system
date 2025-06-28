@@ -715,6 +715,101 @@ document.addEventListener('DOMContentLoaded', () => {
                 servoHandSlider.value = data.servo.hand;
             }
         }
+
+        // Update microphone data if available
+        if (data.microphone) {
+            const micLevel = document.getElementById('microphone-level');
+            const micPeak = document.getElementById('microphone-peak');
+            const micDetected = document.getElementById('microphone-detected');
+            const micStatus = document.getElementById('microphone-status');
+            const micRecording = document.getElementById('microphone-recording');
+            const micVoice = document.getElementById('microphone-voice');
+            const micLevelBar = document.getElementById('microphone-level-bar');
+            
+            if (micLevel) micLevel.textContent = data.microphone.level || 0;
+            if (micPeak) micPeak.textContent = data.microphone.peak || 0;
+            if (micDetected) {
+                const detected = data.microphone.detected;
+                micDetected.textContent = detected ? "Yes" : "No";
+                micDetected.style.color = detected ? "var(--color-warning)" : "var(--color-success)";
+            }
+            if (micStatus) {
+                const initialized = data.microphone.initialized;
+                micStatus.textContent = initialized ? "Active" : "Disabled";
+                micStatus.style.color = initialized ? "var(--color-success)" : "var(--color-muted)";
+            }
+            if (micRecording) {
+                const recording = data.microphone.recording;
+                micRecording.textContent = recording ? "Yes" : "No";
+                micRecording.style.color = recording ? "var(--color-danger)" : "var(--color-muted)";
+                micRecording.style.fontWeight = recording ? "bold" : "normal";
+            }
+            if (micVoice) {
+                const voiceDetected = data.microphone.voice_detected;
+                micVoice.textContent = voiceDetected ? "Yes" : "No";
+                micVoice.style.color = voiceDetected ? "var(--color-info)" : "var(--color-muted)";
+            }
+            if (micLevelBar) {
+                // Scale the sound level to percentage (assuming max level around 4095 for 12-bit ADC)
+                const levelPercent = Math.min((data.microphone.level || 0) / 4095 * 100, 100);
+                micLevelBar.style.width = levelPercent + '%';
+                
+                // Change color based on sound level and recording status
+                if (data.microphone.recording) {
+                    micLevelBar.style.backgroundColor = '#f44336'; // Red when recording
+                } else if (levelPercent > 70) {
+                    micLevelBar.style.backgroundColor = '#ff9800'; // Orange for loud
+                } else if (levelPercent > 40) {
+                    micLevelBar.style.backgroundColor = '#2196f3'; // Blue for medium
+                } else {
+                    micLevelBar.style.backgroundColor = '#4caf50'; // Green for quiet
+                }
+            }
+        }
+
+        // Update speaker data if available
+        if (data.speaker) {
+            const speakerEnabled = document.getElementById('speaker-enabled');
+            const speakerPlaying = document.getElementById('speaker-playing');
+            const speakerVolume = document.getElementById('speaker-volume');
+            const speakerType = document.getElementById('speaker-type');
+            const speakerVolumeBar = document.getElementById('speaker-volume-bar');
+            
+            if (speakerEnabled) {
+                const enabled = data.speaker.enabled;
+                speakerEnabled.textContent = enabled ? "Enabled" : "Disabled";
+                speakerEnabled.style.color = enabled ? "var(--color-success)" : "var(--color-muted)";
+            }
+            if (speakerPlaying) {
+                const playing = data.speaker.playing;
+                speakerPlaying.textContent = playing ? "Yes" : "No";
+                speakerPlaying.style.color = playing ? "var(--color-info)" : "var(--color-muted)";
+            }
+            if (speakerVolume) {
+                const volume = data.speaker.volume || 0;
+                speakerVolume.textContent = volume + '%';
+            }
+            if (speakerType) {
+                // Get speaker type from the type field, defaulting to "None"
+                const type = data.speaker.type || "None";
+                speakerType.textContent = type;
+            }
+            if (speakerVolumeBar) {
+                const volume = data.speaker.volume || 0;
+                speakerVolumeBar.style.width = volume + '%';
+                
+                // Change color based on volume level
+                if (volume > 80) {
+                    speakerVolumeBar.style.backgroundColor = '#f44336'; // Red for very loud
+                } else if (volume > 50) {
+                    speakerVolumeBar.style.backgroundColor = '#ff9800'; // Orange for loud
+                } else if (volume > 20) {
+                    speakerVolumeBar.style.backgroundColor = '#2196f3'; // Blue for medium
+                } else {
+                    speakerVolumeBar.style.backgroundColor = '#4caf50'; // Green for quiet
+                }
+            }
+        }
     }
     
     // Update the radar visualization with distance data

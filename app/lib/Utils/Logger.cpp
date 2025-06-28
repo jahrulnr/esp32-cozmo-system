@@ -14,7 +14,7 @@ Logger::Logger() : _serialEnabled(true), _fileEnabled(false), _fileName("/logs.t
     xTaskCreate(
         logTask,
         "LoggerTask",
-        4096,  // Stack size
+        4 * 1024,  // Stack size
         this,  // Pass this instance as parameter
         1,     // Priority
         &_logTaskHandle
@@ -277,7 +277,7 @@ void Logger::logTask(void* parameter) {
         bool timeToFlush = (currentTime - logger->_lastFlushTime) >= logger->_flushIntervalMs;
         
         // Try to get a message with very short timeout to avoid blocking
-        if (xQueueReceive(logger->_logQueue, &msg, timeToFlush ? 0 : pdMS_TO_TICKS(1000)) == pdTRUE) {
+        if (xQueueReceive(logger->_logQueue, &msg, timeToFlush ? pdMS_TO_TICKS(100) : pdMS_TO_TICKS(1000)) == pdTRUE) {
             if (msg != nullptr) {
                 // Add to batch
                 logBatch.push_back(msg);

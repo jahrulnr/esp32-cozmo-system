@@ -68,6 +68,8 @@ void Face::Update() {
 }
 
 void Face::Draw(U8G2_SSD1306_128X64_NONAME_F_HW_I2C *_u8g2) {
+	if (!_u8g2) return;
+
 	// Clear the display
 	_u8g2->clearBuffer();
 	// Draw left eye

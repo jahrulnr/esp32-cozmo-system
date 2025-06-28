@@ -38,14 +38,13 @@ void Automation::start() {
     loadTemplateBehaviors();
     
     // Create the task
-    xTaskCreatePinnedToCore(
+    xTaskCreate(
         taskFunction,    // Function that implements the task
         "automation",    // Task name
         8192,           // Stack size in words
         this,           // Parameter passed to the task
         1,              // Priority
-        &_taskHandle,   // Task handle
-        0
+        &_taskHandle   // Task handle
     );
 
     if (_fileManager && !_fileManager->exists("/config/templates_update.txt")) {
@@ -265,25 +264,12 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
         // Display the message on the screen if available
         // The screen class already handles internal mutex locking in its mutexX methods
         if (::screen && !voiceMessage.isEmpty()) {
-            // Save the current face to restore after showing the message
-            Face* face = ::screen->getFace();
-            
-            // Display the vocalization message
-            ::screen->mutexClear();
-            ::screen->drawCenteredText(30, voiceMessage);
-            ::screen->mutexUpdate();
-            
-            // Play appropriate sound for the behavior
             playBehaviorSound(behavior.toString());
-            
-            // Extract and execute commands
-            int commandCount = _commandMapper->executeCommandString(behavior.toString());
-            
-            // Give the message some time to be visible, if it's not a long running action
+            _commandMapper->executeCommandString(behavior.toString());
             vTaskDelay(pdMS_TO_TICKS(1000));
         } else {
             // Just execute the commands without showing the message
-            int commandCount = _commandMapper->executeCommandString(behavior.toString());
+            _commandMapper->executeCommandString(behavior.toString());
         }
         
         if (_logger) {

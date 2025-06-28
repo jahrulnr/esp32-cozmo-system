@@ -22,7 +22,6 @@ Communication::GPTAdapter* gptAdapter = nullptr;
 // Communication::SPIHandler* spiHandler = nullptr;
 Screen::Screen* screen = nullptr;
 Utils::FileManager* fileManager = nullptr;
-Utils::HealthCheck* healthCheck = nullptr;
 Utils::Logger* logger = nullptr;
 Utils::CommandMapper* commandMapper = nullptr;
 Utils::ConfigManager* configManager = nullptr;
@@ -43,8 +42,8 @@ SlaveCameraData slaveCameraData = {
 };
 
 void setup() {
-  gpio_install_isr_service(ESP_INTR_FLAG_SHARED);
-  heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
+  gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
+  heap_caps_malloc_extmem_enable(2048);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
@@ -67,7 +66,6 @@ void setup() {
   // Initialize components
   // setupConfigManager();
   // setupSPI(); // Initialize SPI buses and devices
-  setupCamera();
   setupScreen();
   setupExtender();
   setupWiFi();
@@ -77,6 +75,7 @@ void setup() {
   setupDistanceSensor();
   setupCliffDetector();
   setupTemperatureSensor();
+  setupCamera();
   setupMicrophone();
   setupSpeakers();
   setupWebServer();
@@ -84,7 +83,6 @@ void setup() {
   setupGPT();
   setupCommandMapper();
   setupAutomation();
-  setupHealthCheck();
 
   if (motors && screen)
     motors->setScreen(screen);
@@ -92,10 +90,6 @@ void setup() {
     servos->setScreen(screen);
   
   logger->info("System initialization complete");
-
-  if (!playSpeakerMP3File("/audio/boot.mp3")){
-    logger->error("failed to play /audio/boot.mp3");
-  }
   
   if (screen) {
     screen->clear();
@@ -103,6 +97,8 @@ void setup() {
     screen->drawCenteredText(40, "Ready!");
     screen->update();
   }
+  
+  playSpeakerMP3File("/audio/boot.mp3");
 
   setupTasks();
 }
