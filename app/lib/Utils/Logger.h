@@ -5,7 +5,8 @@
 #include <freertos/task.h>
 #include <freertos/queue.h>
 #include <vector>
-#include "../../lib/Communication/WebSocketHandler.h"
+#include <cstdarg>
+#include "lib/Communication/WebSocketHandler.h"
 
 namespace Utils {
 
@@ -64,34 +65,57 @@ public:
     void setLogLevel(LogLevel level);
     
     /**
-     * Log a debug message
-     * @param message The message to log
+     * Get current log level
+     * @return The current minimum log level
      */
-    void debug(const String& message);
+    LogLevel getLogLevel() const;
     
     /**
-     * Log an info message
-     * @param message The message to log
+     * Check if a specific log level is enabled
+     * @param level The log level to check
+     * @return true if the specified log level is enabled, false otherwise
      */
-    void info(const String& message);
+    bool isLogLevelEnabled(LogLevel level) const;
     
     /**
-     * Log a warning message
-     * @param message The message to log
+     * Log a formatted debug message (printf-style)
+     * @param format The format string with placeholders like %d, %s, etc.
+     * @param ... Variable arguments to fill the format
      */
-    void warning(const String& message);
+    void debug(const char* format, ...);
+    void debug(const String& format, ...);
     
     /**
-     * Log an error message
-     * @param message The message to log
+     * Log a formatted info message (printf-style)
+     * @param format The format string with placeholders like %d, %s, etc.
+     * @param ... Variable arguments to fill the format
      */
-    void error(const String& message);
+    void info(const char* format, ...);
+    void info(const String& format, ...);
     
     /**
-     * Log a critical message
-     * @param message The message to log
+     * Log a formatted warning message (printf-style)
+     * @param format The format string with placeholders like %d, %s, etc.
+     * @param ... Variable arguments to fill the format
      */
-    void critical(const String& message);
+    void warning(const char* format, ...);
+    void warning(const String& format, ...);
+    
+    /**
+     * Log a formatted error message (printf-style)
+     * @param format The format string with placeholders like %d, %s, etc.
+     * @param ... Variable arguments to fill the format
+     */
+    void error(const char* format, ...);
+    void error(const String& format, ...);
+    
+    /**
+     * Log a formatted critical message (printf-style)
+     * @param format The format string with placeholders like %d, %s, etc.
+     * @param ... Variable arguments to fill the format
+     */
+    void critical(const char* format, ...);
+    void critical(const String& format, ...);
     
     /**
      * Log a message with a specific level
@@ -99,6 +123,14 @@ public:
      * @param message The message to log
      */
     void log(LogLevel level, const String& message);
+    
+    /**
+     * Log a formatted message with a specific level (printf-style)
+     * @param level The log level
+     * @param format The format string with placeholders like %d, %s, etc.
+     * @param ... Variable arguments to fill the format
+     */
+    void log(LogLevel level, const char* format, ...);
 
 private:
     Logger();
@@ -132,6 +164,14 @@ private:
     
     // Convert log level to lowercase string (for frontend display)
     String logLevelToLowerString(LogLevel level);
+    
+    /**
+     * Helper method to format a string with variable arguments
+     * @param format The format string with placeholders
+     * @param args Variable argument list
+     * @return Formatted string
+     */
+    String formatString(const char* format, va_list args);
 };
 
 } // namespace Utils

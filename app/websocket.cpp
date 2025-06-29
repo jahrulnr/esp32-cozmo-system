@@ -187,6 +187,14 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 statusData["spiffs_total"] = String(SPIFFS.totalBytes() / 1024) + " KB"; // KB
                 statusData["spiffs_used"] = String((SPIFFS.totalBytes() - SPIFFS.usedBytes()) / 1024) + " KB"; // KB
                 statusData["temperature"] = temperatureSensor->readTemperature();
+                statusData["microphone"]["enabled"] = microphoneSensor != nullptr;
+                if (microphoneSensor && microphoneSensor->isInitialized()) {
+                  statusData["microphone"]["level"] = getCurrentSoundLevel();
+                  statusData["microphone"]["detected"] = isSoundDetected();
+                }
+                statusData["speaker"]["enabled"] = getSpeakerStatus();
+                statusData["speaker"]["type"] = getSpeakerType();
+                statusData["speaker"]["playing"] = isSpeakerPlaying();
                 statusData["uptime"] = millis() / 1000;
 
                 webSocket->sendJsonMessage(clientId, "system_status", statusData);
@@ -209,6 +217,29 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 webSocket->sendJsonMessage(clientId, "storage_info", storageData);
                 logger->debug("Sent storage information to client #" + String(clientId));
               }
+              // Get storage status for specific storage type
+              else if (type == "get_storage_status") {
+                String storageType = data["storage_type"] | "STORAGE_SPIFFS";
+                
+                Utils::SpiJsonDocument statusData;
+                statusData["storage_type"] = storageType;
+                
+                if (storageType == "STORAGE_SPIFFS") {
+                  statusData["available"] = true;
+                  statusData["status"] = "Connected";
+                  statusData["type"] = "Internal Flash";
+                } else if (storageType == "STORAGE_SD_MMC") {
+                  // Initialize FileManager to check SD/MMC availability
+                  static Utils::FileManager fileManager;
+                  bool sdAvailable = fileManager.isSDMMCAvailable();
+                  
+                  statusData["available"] = sdAvailable;
+                  statusData["status"] = sdAvailable ? "Connected" : "Not Available";
+                  statusData["type"] = "SD/MMC Card";
+                }
+                
+                webSocket->sendJsonMessage(clientId, "storage_status", statusData);
+              }
               // Camera control
               else if (type == "camera_command") {
                 String action = data["action"] | "";
@@ -216,7 +247,7 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 if (action == "start" && camera) {
                   // Set streaming interval if provided
                   if (!data["interval"].isUnbound()) {
-                    uint32_t interval = data["interval"] | 200;
+                    uint32_t interval = data["interval"] | 33;
                     camera->setStreamingInterval(interval);
                   }
 
@@ -364,7 +395,50 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   webSocket->sendError(clientId, 404, "Distance sensor not available");
                 }
               }
-              else if(type == "servo_update" && servos) {
+              else if (type == "microphone_request") {
+                if (microphoneSensor && microphoneSensor->isInitialized()) {
+                  Utils::SpiJsonDocument sensorData;
+                  sensorData["microphone"]["level"] = getCurrentSoundLevel();
+                  sensorData["microphone"]["peak"] = getPeakSoundLevel();
+                  sensorData["microphone"]["detected"] = isSoundDetected();
+
+                  webSocket->sendJsonMessage(clientId, "sensor_data", sensorData);
+                } else {
+                  webSocket->sendError(clientId, 404, "Microphone sensor not available");
+                }
+              }
+              else if (type == "speaker_control") {
+                String action = data["action"] | "";
+                int volume = data["volume"] | 50;
+                
+                if (action == "beep") {
+                  playSpeakerBeep(volume);
+                  webSocket->sendOk(clientId, "Speaker beep played");
+                } else if (action == "confirm") {
+                  playSpeakerConfirmation(volume);
+                  webSocket->sendOk(clientId, "Confirmation sound played");
+                } else if (action == "error") {
+                  playSpeakerError(volume);
+                  webSocket->sendOk(clientId, "Error sound played");
+                } else if (action == "notify") {
+                  playSpeakerNotification(volume);
+                  webSocket->sendOk(clientId, "Notification sound played");
+                } else if (action == "tone") {
+                  int frequency = data["frequency"] | 1000;
+                  int duration = data["duration"] | 500;
+                  playSpeakerTone(frequency, duration, volume);
+                  webSocket->sendOk(clientId, "Tone played");
+                } else if (action == "stop") {
+                  stopSpeaker();
+                  webSocket->sendOk(clientId, "Speaker stopped");
+                } else if (action == "volume") {
+                  setSpeakerVolume(volume);
+                  webSocket->sendOk(clientId, "Volume set to " + String(volume));
+                } else {
+                  webSocket->sendError(clientId, 400, "Unknown speaker action: " + action);
+                }
+              }
+              else if (type == "servo_update" && servos) {
                 String servoType = data["type"] | "";
                 int position = data["position"] | 0;
 
@@ -445,7 +519,7 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               }
               // Set automation state
               else if (type == "automation_control") {
-                bool enabled = data["enabled"] | g_automationEnabled;  // Default to current state if not specified
+                bool enabled = data["enabled"] | _enableAutomation;  // Default to current state if not specified
                 
                 // Update automation state
                 setAutomationEnabled(enabled);
@@ -588,33 +662,50 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               // File operations
               else if (type == "list_files") {
                 String path = data["path"] | "/";
-
-                // Use FileManager to list files
-                static Utils::FileManager fileManager;
-                if (!fileManager.init()) {
-                  logger->error("Failed to initialize FileManager");
-                  webSocket->sendError(clientId, 500, "Failed to initialize file system");
-                  break;
-                }
+                String storageType = data["storage_type"] | "STORAGE_SPIFFS";
 
                 Utils::SpiJsonDocument filesData;
                 JsonArray files = filesData.to<JsonArray>();
 
-                // Get files using the FileManager
-                std::vector<Utils::FileManager::FileInfo> fileList = fileManager.listFiles(path);
-                for (const auto& file : fileList) {
-                  JsonObject fileObj = files.add<JsonObject>();
-                  fileObj["name"] = file.name;
-                  fileObj["path"] = file.dir;
-                  fileObj["size"] = file.size;
-                  fileObj["type"] = file.isDirectory ? "directory" : "file";
+                // Convert string storage type to enum
+                Utils::FileManager::StorageType storage = Utils::FileManager::STORAGE_SPIFFS;
+                if (storageType.equals("STORAGE_SD_MMC")) {
+                  storage = Utils::FileManager::STORAGE_SD_MMC;
                 }
+
+                if (fileManager) {
+                  // Get files using the FileManager with specified storage
+                  std::vector<Utils::FileManager::FileInfo> fileList = fileManager->listFiles(path, storage);
+                  Serial.println("Files in SPIFFS root directory:");
+                  for (const auto& file : fileList) {
+                      Serial.print("  ");
+                      Serial.print(file.name);
+                      if (file.isDirectory) {
+                          Serial.println("/");
+                      } else {
+                          Serial.print(" (");
+                          Serial.print(file.size);
+                          Serial.println(" bytes)");
+                      }
+                    JsonObject fileObj = files.add<JsonObject>();
+                    fileObj["name"] = file.name;
+                    fileObj["path"] = file.dir;
+                    fileObj["size"] = file.size;
+                    fileObj["type"] = file.isDirectory ? "directory" : "file";
+                  }
+                }
+
+                // Add storage info to response
+                filesData["files"] = files;
+                filesData["storage_type"] = storageType;
+                filesData["path"] = path;
 
                 webSocket->sendJsonMessage(clientId, "list_files", filesData);
               }
               // Delete file
               else if (type == "delete_file") {
                 String path = data["path"] | "";
+                String storageType = data["storage_type"] | "STORAGE_SPIFFS";
 
                 // Use FileManager for file operations
                 static Utils::FileManager fileManager;
@@ -626,13 +717,22 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
 
                 bool success = false;
                 if (path.length() > 0) {
-                  success = fileManager.deleteFile(path);
-                  logger->info("File delete " + String(success ? "successful" : "failed") + ": " + path);
+                  // Convert string storage type to enum
+                  Utils::FileManager::StorageType storage = Utils::FileManager::STORAGE_SPIFFS;
+                  if (storageType == "STORAGE_SD_MMC") {
+                    storage = Utils::FileManager::STORAGE_SD_MMC;
+                  }
+                  
+                  success = fileManager.deleteFile(path, storage);
+                  logger->info("File delete " + String(success ? "successful" : "failed") + 
+                               ": " + path + " from " + storageType);
                 }
 
                 Utils::SpiJsonDocument response;
                 response["success"] = success;
                 response["message"] = success ? "File deleted" : "Failed to delete file";
+                response["path"] = path;
+                response["storage_type"] = storageType;
 
                 webSocket->sendJsonMessage(clientId, "file_operation", response);
               }

@@ -1,18 +1,25 @@
 #include "WiFiManager.h"
 #include "Config.h"
 
-#include "lib/Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocator.h"
 #include "lib/Utils/FileManager.h"
 
 namespace Communication {
 
-WiFiManager::WiFiManager() : _initialized(false), _isAP(false) {
+WiFiManager::WiFiManager(Utils::FileManager *fileManager) : _initialized(false), _isAP(false) {
     // Initialize with default config from Config.h
     _config.ssid = WIFI_SSID;
     _config.password = WIFI_PASSWORD;
     _config.apSsid = WIFI_AP_SSID;
     _config.apPassword = WIFI_AP_PASSWORD;
     
+    if (!fileManager) {
+        fileManager = new Utils::FileManager();
+        fileManager->init();
+    }
+
+    _fileManager = fileManager;
+
     // Try to load config from file
     loadConfig();
 }
@@ -25,28 +32,6 @@ bool WiFiManager::init() {
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
     _initialized = true;
-    
-    // Debug: List all files in SPIFFS to help diagnose issues
-    if (_fileManager.init()) {
-        Serial.println("FileManager init successful in init()");
-        Serial.println("Files in root directory:");
-        
-        std::vector<Utils::FileManager::FileInfo> files = _fileManager.listFiles("/");
-        for (const auto& fileInfo : files) {
-            Serial.print("  ");
-            Serial.print(fileInfo.name);
-            if (fileInfo.isDirectory) {
-                Serial.println("/");
-            } else {
-                Serial.print(" (");
-                Serial.print(fileInfo.size);
-                Serial.println(" bytes)");
-            }
-        }
-        Serial.println("End of file list");
-    } else {
-        Serial.println("FileManager init failed in init()");
-    }
     
     return true;
 }
@@ -163,22 +148,17 @@ int32_t WiFiManager::getRSSI() const {
 }
 
 bool WiFiManager::loadConfig() {
-    if (!_fileManager.init()) {
-        Serial.println("Failed to initialize FileManager");
-        return false;
-    }
-    
     // Debug output to help diagnose the issue
     Serial.println("FileManager initialized successfully");
     Serial.println("Checking for wifi.json...");
     
-    if (!_fileManager.exists("/config/wifi.json")) {
+    if (!_fileManager->exists("/config/wifi.json")) {
         Serial.println("No wifi.json found at /config/wifi.json, using default config");
         return false;
     }
     
     Serial.println("Found wifi.json, reading file");
-    String jsonContent = _fileManager.readFile("/config/wifi.json");
+    String jsonContent = _fileManager->readFile("/config/wifi.json");
     if (jsonContent.isEmpty()) {
         Serial.println("Failed to read wifi.json or file is empty");
         return false;
@@ -191,10 +171,10 @@ bool WiFiManager::loadConfig() {
         Serial.println("Failed to parse wifi.json: " + String(error.c_str()));
         
         // If we had a parsing error, rename the broken config file for debugging
-        if (_fileManager.exists("/config/wifi.json")) {
+        if (_fileManager->exists("/config/wifi.json")) {
             // Create backup of broken file
-            _fileManager.writeFile("/config/wifi.json.broken", jsonContent);
-            _fileManager.deleteFile("/config/wifi.json");
+            _fileManager->writeFile("/config/wifi.json.broken", jsonContent);
+            _fileManager->deleteFile("/config/wifi.json");
             Serial.println("Renamed broken config to wifi.json.broken");
         }
         
@@ -227,28 +207,28 @@ bool WiFiManager::loadConfig() {
 }
 
 bool WiFiManager::saveConfig(const WiFiConfig& config) {
-    if (!_fileManager.init()) {
+    if (!_fileManager->init()) {
         Serial.println("Failed to initialize FileManager");
         return false;
     }
     
     // Create /config directory if it doesn't exist
-    if (!_fileManager.exists("/config")) {
-        if (!_fileManager.createDir("/config")) {
+    if (!_fileManager->exists("/config")) {
+        if (!_fileManager->createDir("/config")) {
             Serial.println("Failed to create /config directory");
         }
     }
     
     // Create a backup of the existing file if it exists
-    if (_fileManager.exists("/config/wifi.json")) {
-        if (_fileManager.exists("/config/wifi.json.bak")) {
-            _fileManager.deleteFile("/config/wifi.json.bak");
+    if (_fileManager->exists("/config/wifi.json")) {
+        if (_fileManager->exists("/config/wifi.json.bak")) {
+            _fileManager->deleteFile("/config/wifi.json.bak");
         }
         
         // Create backup by reading and writing to new file
-        String backupContent = _fileManager.readFile("/config/wifi.json");
+        String backupContent = _fileManager->readFile("/config/wifi.json");
         if (!backupContent.isEmpty()) {
-            if (!_fileManager.writeFile("/config/wifi.json.bak", backupContent)) {
+            if (!_fileManager->writeFile("/config/wifi.json.bak", backupContent)) {
                 Serial.println("Warning: Failed to create backup of wifi.json");
             } else {
                 Serial.println("Created backup of previous wifi.json");
@@ -279,14 +259,14 @@ bool WiFiManager::saveConfig(const WiFiConfig& config) {
     serializeJson(doc, jsonString);
     
     // Write to file
-    if (!_fileManager.writeFile("/config/wifi.json", jsonString)) {
+    if (!_fileManager->writeFile("/config/wifi.json", jsonString)) {
         Serial.println("Failed to write wifi.json");
         return false;
     }
     
     // Verify that the file was written correctly
-    if (_fileManager.exists("/config/wifi.json")) {
-        int fileSize = _fileManager.getSize("/config/wifi.json");
+    if (_fileManager->exists("/config/wifi.json")) {
+        int fileSize = _fileManager->getSize("/config/wifi.json");
         if (fileSize > 10) {
             Serial.println("WiFi config saved to file");
             return true;
@@ -295,10 +275,10 @@ bool WiFiManager::saveConfig(const WiFiConfig& config) {
     
     // If verification failed, restore backup if available
     Serial.println("WiFi config verification failed, attempting to restore backup");
-    if (_fileManager.exists("/config/wifi.json.bak")) {
-        String backupContent = _fileManager.readFile("/config/wifi.json.bak");
+    if (_fileManager->exists("/config/wifi.json.bak")) {
+        String backupContent = _fileManager->readFile("/config/wifi.json.bak");
         if (!backupContent.isEmpty()) {
-            if (_fileManager.writeFile("/config/wifi.json", backupContent)) {
+            if (_fileManager->writeFile("/config/wifi.json", backupContent)) {
                 Serial.println("Restored backup wifi.json");
             }
         }

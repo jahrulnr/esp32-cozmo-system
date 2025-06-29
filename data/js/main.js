@@ -3,6 +3,8 @@
 // DOM Elements
 const loginPage = document.getElementById('login-page');
 const mainApp = document.getElementById('main-app');
+const cameraFeed = document.getElementById('camera-feed');
+const cameraFeedMain = document.getElementById('camera-feed-main');
 const consoleOutput = document.getElementById('console-output');
 const recentLogs = document.getElementById('recent-logs');
 const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -18,12 +20,6 @@ const breadcrumb = document.getElementById('breadcrumb');
 const printTime = document.querySelectorAll('.print-time');
 const servoHeadSlider = document.getElementById('servo-head-slider');
 const servoHandSlider = document.getElementById('servo-hand-slider');
-    
-// Variables for frame processing
-let frameHeader = null;
-let frameQueue = [];
-const MAX_FRAME_QUEUE = 2; // Limit queued frames to avoid memory issues
-let processingFrame = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Configuration
@@ -194,6 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateMotorStatus(msg.data);
             } else if (msg.type === 'storage_info') {
                 updateStorageInfo(msg.data);
+            } else if (msg.type === 'storage_status') {
+                updateStorageStatus(msg.data);
             } else if (msg.type === 'file_content') {
                 displayFileContent(msg.data);
             } else if (msg.type === 'task_list') {
@@ -206,8 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleWifiConfig(msg.data);
             } else if (msg.type === 'wifi_config_update') {
                 handleWifiConfigUpdate(msg.data);
-            } else if (msg.type === 'camera_frame_header') {
-                handleCameraFrameHeader(msg.data);
             } else if (msg.type === 'logout_response') {
                 handleLogoutResponse(msg.data);
             } else if (msg.type === 'automation_status') {
@@ -222,79 +218,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle binary messages (camera frames)
-    function handleBinaryMessage(data) {
-        // If we don't have frame header metadata, ignore this binary frame or assume it's a file upload response
-        if (!frameHeader) {
-            
-            return;
-        }
-        
-        // Add frame to queue
-        frameQueue.push({
-            data: data,
-            header: frameHeader
-        });
-        
-        // Limit queue size
-        while (frameQueue.length > MAX_FRAME_QUEUE) {
-            const oldFrame = frameQueue.shift();
-            if (oldFrame.url) {
-                URL.revokeObjectURL(oldFrame.url);
-            }
-        }
-        
-        // Clear the frame header to avoid reusing it for a wrong frame
-        frameHeader = null;
-        
-        // Process frame if not already processing
-        if (!processingFrame) {
-            processNextFrame();
-        }
+    function handleBinaryMessage(data) { 
+        updateImageSources(URL.createObjectURL(data));
     }
     
-    // Process next frame in queue
-    function processNextFrame() {
-        if (frameQueue.length === 0) {
-            processingFrame = false;
-            return;
-        }
-        
-        processingFrame = true;
-        const frame = frameQueue.shift();
-        
-        // Create a blob from the binary data
-        const blob = frame.data instanceof Blob ? frame.data : new Blob([frame.data]);
-        frame.url = URL.createObjectURL(blob);
-        
-        // Update the camera feed with the new image
-        const cameraFeed = document.getElementById('camera-feed');
-        const cameraFeedMain = document.getElementById('camera-feed-main');
-        
-        // Function to handle image load completion
-        const onImageLoad = function() {
-            URL.revokeObjectURL(this.src);
-            
-            // Process next frame with a small delay
-            setTimeout(() => {
-                processNextFrame();
-            }, 10);
-        };
-        
+    function updateImageSources(url) {
         if (cameraFeed) {
-            cameraFeed.onload = onImageLoad;
-            cameraFeed.src = frame.url;
+            cameraFeed.src = url;
         }
         
         if (cameraFeedMain) {
-            cameraFeedMain.onload = onImageLoad;
-            cameraFeedMain.src = frame.url;
+            cameraFeedMain.src = url;
         }
-        
-        // If neither element exists, move on to next frame
-        if (!cameraFeed && !cameraFeedMain) {
-            URL.revokeObjectURL(frame.url);
-            processNextFrame();
-        }
+
+        setTimeout(()=>{
+            URL.revokeObjectURL(url);
+        }, 100)
     }
 
     // Login functions
@@ -361,8 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Load specific data based on the section
         if (id === 'files-section') {
-            fetchFiles(currentPath || '/');
+            fetchFiles(currentPath || '/', currentStorageMode);
             fetchStorageInfo();
+            updateStorageStatus();
         }
     }
 
@@ -517,11 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function updateCameraFrame(data) {
-        // Store frame metadata for the next binary message (used for camera_frame messages)
-        frameHeader = data;
-    }
-    
     function toggleCamera() {
         const cameraBtn = document.getElementById('camera-toggle');
         const isActive = cameraBtn.getAttribute('data-active') === 'true';
@@ -645,6 +580,101 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.servo.hand) {
                 document.getElementById('servo-y').textContent = data.servo.hand;
                 servoHandSlider.value = data.servo.hand;
+            }
+        }
+
+        // Update microphone data if available
+        if (data.microphone) {
+            const micLevel = document.getElementById('microphone-level');
+            const micPeak = document.getElementById('microphone-peak');
+            const micDetected = document.getElementById('microphone-detected');
+            const micStatus = document.getElementById('microphone-status');
+            const micRecording = document.getElementById('microphone-recording');
+            const micVoice = document.getElementById('microphone-voice');
+            const micLevelBar = document.getElementById('microphone-level-bar');
+            
+            if (micLevel) micLevel.textContent = data.microphone.level || 0;
+            if (micPeak) micPeak.textContent = data.microphone.peak || 0;
+            if (micDetected) {
+                const detected = data.microphone.detected;
+                micDetected.textContent = detected ? "Yes" : "No";
+                micDetected.style.color = detected ? "var(--color-warning)" : "var(--color-success)";
+            }
+            if (micStatus) {
+                const initialized = data.microphone.initialized;
+                micStatus.textContent = initialized ? "Active" : "Disabled";
+                micStatus.style.color = initialized ? "var(--color-success)" : "var(--color-muted)";
+            }
+            if (micRecording) {
+                const recording = data.microphone.recording;
+                micRecording.textContent = recording ? "Yes" : "No";
+                micRecording.style.color = recording ? "var(--color-danger)" : "var(--color-muted)";
+                micRecording.style.fontWeight = recording ? "bold" : "normal";
+            }
+            if (micVoice) {
+                const voiceDetected = data.microphone.voice_detected;
+                micVoice.textContent = voiceDetected ? "Yes" : "No";
+                micVoice.style.color = voiceDetected ? "var(--color-info)" : "var(--color-muted)";
+            }
+            if (micLevelBar) {
+                // Scale the sound level to percentage (assuming max level around 4095 for 12-bit ADC)
+                const levelPercent = Math.min((data.microphone.level || 0) / 4095 * 100, 100);
+                micLevelBar.style.width = levelPercent + '%';
+                
+                // Change color based on sound level and recording status
+                if (data.microphone.recording) {
+                    micLevelBar.style.backgroundColor = '#f44336'; // Red when recording
+                } else if (levelPercent > 70) {
+                    micLevelBar.style.backgroundColor = '#ff9800'; // Orange for loud
+                } else if (levelPercent > 40) {
+                    micLevelBar.style.backgroundColor = '#2196f3'; // Blue for medium
+                } else {
+                    micLevelBar.style.backgroundColor = '#4caf50'; // Green for quiet
+                }
+            }
+        }
+
+        // Update speaker data if available
+        if (data.speaker) {
+            const speakerEnabled = document.getElementById('speaker-enabled');
+            const speakerPlaying = document.getElementById('speaker-playing');
+            const speakerVolume = document.getElementById('speaker-volume');
+            const speakerType = document.getElementById('speaker-type');
+            const speakerVolumeBar = document.getElementById('speaker-volume-bar');
+            
+            if (speakerEnabled) {
+                const enabled = data.speaker.enabled;
+                speakerEnabled.textContent = enabled ? "Enabled" : "Disabled";
+                speakerEnabled.style.color = enabled ? "var(--color-success)" : "var(--color-muted)";
+            }
+            if (speakerPlaying) {
+                const playing = data.speaker.playing;
+                speakerPlaying.textContent = playing ? "Yes" : "No";
+                speakerPlaying.style.color = playing ? "var(--color-info)" : "var(--color-muted)";
+            }
+            if (speakerVolume) {
+                const volume = data.speaker.volume || 0;
+                speakerVolume.textContent = volume + '%';
+            }
+            if (speakerType) {
+                // Get speaker type from the type field, defaulting to "None"
+                const type = data.speaker.type || "None";
+                speakerType.textContent = type;
+            }
+            if (speakerVolumeBar) {
+                const volume = data.speaker.volume || 0;
+                speakerVolumeBar.style.width = volume + '%';
+                
+                // Change color based on volume level
+                if (volume > 80) {
+                    speakerVolumeBar.style.backgroundColor = '#f44336'; // Red for very loud
+                } else if (volume > 50) {
+                    speakerVolumeBar.style.backgroundColor = '#ff9800'; // Orange for loud
+                } else if (volume > 20) {
+                    speakerVolumeBar.style.backgroundColor = '#2196f3'; // Blue for medium
+                } else {
+                    speakerVolumeBar.style.backgroundColor = '#4caf50'; // Green for quiet
+                }
             }
         }
     }
@@ -1255,6 +1285,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Storage status display for different storage types
+    function updateStorageStatus(data) {
+        const storageStatus = document.getElementById('storage-status');
+        if (storageStatus) {
+            const isAvailable = data.available;
+            const status = data.status;
+            
+            storageStatus.textContent = status;
+            
+            // Update badge color based on availability
+            storageStatus.className = 'badge ' + (isAvailable ? 'badge-success' : 'badge-danger');
+        }
+        
+        // Log storage status change
+        const storageTypeName = data.storage_type === 'STORAGE_SPIFFS' ? 'SPIFFS' : 'SD/MMC';
+        logToConsole(`${storageTypeName} storage status: ${data.status}`, isAvailable ? 'info' : 'warning');
+    }
+    
     function fetchStorageInfo() {
         sendJsonMessage('storage_info', {});
     }
@@ -1353,16 +1401,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Missing function implementations
     let currentPath = '/';
+    let currentStorageMode = 'STORAGE_SPIFFS'; 
 
     function fetchWifiNetworks() {
         sendJsonMessage('get_wifi_networks', {});
         logToConsole('Scanning for WiFi networks...', 'info');
     }
 
-    function fetchFiles(path) {
+    function fetchFiles(path, storageMode) {
         currentPath = path || '/';
-        sendJsonMessage('list_files', { path: currentPath });
-        logToConsole(`Loading files from ${currentPath}...`, 'info');
+        currentStorageMode = storageMode || currentStorageMode;
+        
+        sendJsonMessage('list_files', { 
+            path: currentPath,
+            storage_type: currentStorageMode 
+        });
+
+        logToConsole(`Loading files from ${currentPath} (${currentStorageMode})...`, 'info');
+
+         // Update storage status
+        // updateStorageStatus();
+    }
+
+    function updateStorageStatus() {
+        const storageStatus = document.getElementById('storage-status');
+        if (storageStatus) {
+            // Request storage status from server
+            sendJsonMessage('get_storage_status', { 
+                storage_type: currentStorageMode 
+            });
+        }
+    }
+
+    function switchStorageMode(newMode) {
+        if (newMode !== currentStorageMode) {
+            currentStorageMode = newMode;
+            logToConsole(`Switching to storage mode: ${newMode}`, 'info');
+            
+            // Reset path to root when switching storage
+            currentPath = '/';
+            fetchFiles(currentPath, currentStorageMode);
+            
+            // Update breadcrumb
+            updateBreadcrumb('/');
+        }
+    }
+
+    function updateBreadcrumb(path) {
+        const breadcrumb = document.getElementById('breadcrumb');
+        if (!breadcrumb) return;
+        
+        breadcrumb.innerHTML = '';
+        
+        // Add storage type indicator
+        const storageIndicator = document.createElement('span');
+        storageIndicator.className = 'breadcrumb-item storage-indicator';
+        storageIndicator.textContent = currentStorageMode === 'STORAGE_SPIFFS' ? 'SPIFFS' : 'SD/MMC';
+        storageIndicator.style.fontWeight = 'bold';
+        storageIndicator.style.color = 'var(--color-accent)';
+        breadcrumb.appendChild(storageIndicator);
+        
+        // Add separator
+        const separator = document.createElement('span');
+        separator.className = 'breadcrumb-separator';
+        separator.textContent = ' > ';
+        breadcrumb.appendChild(separator);
+        
+        // Build path segments
+        const segments = path.split('/').filter(segment => segment);
+        
+        // Root segment
+        const rootItem = document.createElement('span');
+        rootItem.className = 'breadcrumb-item';
+        rootItem.textContent = 'Root';
+        rootItem.style.cursor = 'pointer';
+        rootItem.onclick = () => fetchFiles('/', currentStorageMode);
+        breadcrumb.appendChild(rootItem);
+        
+        // Path segments
+        let currentSegmentPath = '';
+        segments.forEach((segment, index) => {
+            currentSegmentPath += '/' + segment;
+            
+            const separator = document.createElement('span');
+            separator.className = 'breadcrumb-separator';
+            separator.textContent = ' / ';
+            breadcrumb.appendChild(separator);
+            
+            const segmentItem = document.createElement('span');
+            segmentItem.className = 'breadcrumb-item';
+            segmentItem.textContent = segment;
+            segmentItem.style.cursor = 'pointer';
+            
+            const segmentPath = currentSegmentPath;
+            segmentItem.onclick = () => fetchFiles(segmentPath, currentStorageMode);
+            
+            breadcrumb.appendChild(segmentItem);
+        });
     }
 
     function populateWifiList(networks) {
@@ -1409,29 +1544,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function populateFileList(files) {
+    function populateFileList(data) {
         if (!fileList) return;
         
         fileList.innerHTML = '';
         
-        // Add breadcrumb
-        if (breadcrumb) {
-            const pathParts = currentPath.split('/').filter(part => part);
-            breadcrumb.innerHTML = '<span class="breadcrumb-item" data-path="/">Root</span>';
-            
-            let currentBreadcrumbPath = '';
-            pathParts.forEach(part => {
-                currentBreadcrumbPath += '/' + part;
-                breadcrumb.innerHTML += ` / <span class="breadcrumb-item" data-path="${currentBreadcrumbPath}">${part}</span>`;
-            });
-            
-            // Add click handlers to breadcrumb items
-            breadcrumb.querySelectorAll('.breadcrumb-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const path = item.getAttribute('data-path');
-                    fetchFiles(path);
-                });
-            });
+        // Handle both old format (array) and new format (object with files array)
+        let files = Array.isArray(data) ? data : (data.files || []);
+        let path = data.path || currentPath;
+        let storageType = data.storage_type || currentStorageMode;
+        
+        // Update current path and storage mode if provided
+        if (data.path) currentPath = data.path;
+        if (data.storage_type) currentStorageMode = data.storage_type;
+        
+        // Update breadcrumb with new path
+        updateBreadcrumb(path);
+        
+        // Update storage mode selector if it exists
+        const storageModeSelect = document.getElementById('storage-mode');
+        if (storageModeSelect && storageModeSelect.value !== storageType) {
+            storageModeSelect.value = storageType;
         }
         
         if (!files || files.length === 0) {
@@ -1447,13 +1580,13 @@ document.addEventListener('DOMContentLoaded', () => {
             fileItem.className = 'file-item';
             
             const isDirectory = file.type === 'directory' || file.name.endsWith('/');
-            const icon = isDirectory ? 'fas fa-folder' : 'fas fa-file';
+            const iconClass = isDirectory ? 'fas fa-folder' : getFileIcon(file.name);
             const fileName = file.name;
             const filePath = file.path;
             const fullname = filePath + fileName;
             
             // Get file extension for icon
-            let fileIcon = icon;
+            let fileIcon = iconClass;
             if (!isDirectory) {
                 const extension = fileName.split('.').pop().toLowerCase();
                 if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension)) {
@@ -1468,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             fileItem.innerHTML = `
-                <i class="file-icon ${fileIcon}"></i>
+                <i class="file-icon ${iconClass}"></i>
                 <div class="file-name">${fileName}</div>
                 <div class="file-size pe-2">${file.size ? formatFileSize(file.size) : ''}</div>
                 <div class="file-actions">
@@ -1535,6 +1668,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        
+        const iconMap = {
+            'jpg': 'fas fa-image',
+            'jpeg': 'fas fa-image',
+            'png': 'fas fa-image',
+            'gif': 'fas fa-image',
+            'bmp': 'fas fa-image',
+            'svg': 'fas fa-image',
+            'mp3': 'fas fa-music',
+            'wav': 'fas fa-music',
+            'mp4': 'fas fa-video',
+            'avi': 'fas fa-video',
+            'txt': 'fas fa-file-text',
+            'md': 'fas fa-file-text',
+            'json': 'fas fa-file-code',
+            'js': 'fas fa-file-code',
+            'html': 'fas fa-file-code',
+            'css': 'fas fa-file-code',
+            'cpp': 'fas fa-file-code',
+            'h': 'fas fa-file-code',
+            'py': 'fas fa-file-code',
+            'zip': 'fas fa-file-archive',
+            'rar': 'fas fa-file-archive',
+            'pdf': 'fas fa-file-pdf'
+        };
+        
+        return iconMap[ext] || 'fas fa-file';
     }
     
     // Read file content
@@ -1664,6 +1828,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const file = fileInput.files[0];
         const formData = new FormData();
+        formData.append('storage_type', currentStorageMode)
         formData.append('file', file);
         
         fetch('/upload?path='+currentPath, {
@@ -1780,6 +1945,18 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchFiles(currentPath);
             fetchStorageInfo();
         });
+    }
+    
+    // Storage mode selector
+    const storageModeSelect = document.getElementById('storage-mode');
+    if (storageModeSelect) {
+        storageModeSelect.addEventListener('change', (e) => {
+            const newMode = e.target.value;
+            switchStorageMode(newMode);
+        });
+        
+        // Initialize with current value
+        storageModeSelect.value = currentStorageMode;
     }
     
     // File viewer controls
@@ -2126,13 +2303,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Function to handle camera frame header data
-    function handleCameraFrameHeader(data) {
-        // Store frame header information for the next binary message (used for camera_frame_header messages)
-        // This serves the same purpose as updateCameraFrame but for a different message type
-        frameHeader = data;
-    }
-    
     // Function to check for saved authentication token
     function checkSavedAuth() {
         try {
@@ -2247,25 +2417,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initAccelCanvas();
     
     // Request initial distance data after a delay to ensure WebSocket is connected
-    setTimeout(() => {
-        if (document.getElementById('distance-value') && checkWebSocketConnection()) {
-            sendJsonMessage('distance_request', {});
+    // setTimeout(() => {
+    //     if (document.getElementById('distance-value') && checkWebSocketConnection()) {
+    //         sendJsonMessage('distance_request', {});
             
-        }
-    }, 2000);
+    //     }
+    // }, 2000);
     
     // Set up automatic regular distance updates
-    setInterval(() => {
-        // Only request distance updates if the sensor section is visible and WebSocket is connected
-        if (document.getElementById('distance-value') && 
-            document.getElementById('sensors-section').style.display !== 'none' &&
-            checkWebSocketConnection()) {
-            sendJsonMessage('distance_request', {});
-        }
+    // setInterval(() => {
+    //     // Only request distance updates if the sensor section is visible and WebSocket is connected
+    //     if (document.getElementById('distance-value') && 
+    //         document.getElementById('sensors-section').style.display !== 'none' &&
+    //         checkWebSocketConnection()) {
+    //         sendJsonMessage('distance_request', {});
+    //     }
 
-        // Periodically check system status
-        if (connected) {
-            sendJsonMessage('get_status', {});
-        }
-    }, 1000);
+    //     // Periodically check system status
+    //     if (connected) {
+    //         sendJsonMessage('get_status', {});
+    //     }
+    // }, 1000);
 });

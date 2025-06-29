@@ -35,24 +35,31 @@ bool Screen::init(int sda, int scl) {
     _face->Expression.GoTo_Normal();
 
     // Assign a weight to each emotion
+    // Normal emotions
     _face->Behavior.SetEmotion(eEmotions::Normal, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Angry, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Sad, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Glee, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Happy, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Worried, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Focused, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Annoyed, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Surprised, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Skeptic, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Frustrated, 1.0);
     _face->Behavior.SetEmotion(eEmotions::Unimpressed, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Sleepy, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Suspicious, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Squint, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Furious, 1.0);
-    _face->Behavior.SetEmotion(eEmotions::Scared, 1.0);
+    _face->Behavior.SetEmotion(eEmotions::Focused, 1.0);
+    _face->Behavior.SetEmotion(eEmotions::Skeptic, 1.0);
+
+    // Happy emotions
+    _face->Behavior.SetEmotion(eEmotions::Happy, 1.0);
+    _face->Behavior.SetEmotion(eEmotions::Glee, 1.0);
     _face->Behavior.SetEmotion(eEmotions::Awe, 1.0);
+
+    // Sad emotions
+    _face->Behavior.SetEmotion(eEmotions::Sad, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Worried, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Sleepy, 0.2);
+
+    // Other emotions
+    _face->Behavior.SetEmotion(eEmotions::Angry, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Annoyed, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Surprised, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Frustrated, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Suspicious, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Squint, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Furious, 0.2);
+    _face->Behavior.SetEmotion(eEmotions::Scared, 0.2);
     _face->Behavior.Timer.SetIntervalMillis(10000);
 
     _face->Blink.Timer.SetIntervalMillis(3000);
@@ -232,9 +239,7 @@ void Screen::update() {
 
     if (_holdFace) {
         if (_holdTimer == 0) {
-            _holdTimer = millis() + 3000; // Set timer to 3 seconds from now
-            // Log when text display starts
-            _logger->debug("Text display started, will hold for 3s until " + String(_holdTimer));
+            _holdTimer = millis() + 3000;
         }
         _u8g2->sendBuffer();
     } else {
@@ -242,8 +247,6 @@ void Screen::update() {
     }
 
     if (_holdFace && millis() > _holdTimer){
-        // Log when text display ends
-        _logger->debug("Text display ended after 3s");
         _holdFace = false;
         _holdTimer = 0;
     }

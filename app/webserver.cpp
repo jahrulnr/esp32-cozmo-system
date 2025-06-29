@@ -5,13 +5,6 @@ void setupWebServer() {
   if (WEBSERVER_ENABLED) {
     logger->info("Setting up web server...");
     
-    // Initialize SPIFFS for file operations
-    fileManager = new Utils::FileManager();
-    if (!fileManager->init()) {
-      logger->error("SPIFFS initialization failed");
-      return;
-    }
-    
     webServer = new Communication::WebServer();
     if (webServer->init(WEBSERVER_PORT)) {
       // Setup routes
@@ -22,6 +15,37 @@ void setupWebServer() {
       // Serve static files from SPIFFS
       webServer->getServer()->serveStatic("/css/", SPIFFS, "/css/");
       webServer->getServer()->serveStatic("/js/", SPIFFS, "/js/");
+      
+      // Config API endpoints
+      webServer->on("/api/config", HTTP_GET, [](AsyncWebServerRequest *request) {
+        String config = Utils::ConfigManager::getConfigAsJson();
+        request->send(200, "application/json", config);
+      });
+      
+      webServer->getServer()->on("/api/config", HTTP_POST, 
+        [](AsyncWebServerRequest *request) {},
+        NULL,
+        [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+          String configJson = String((char*)data, len);
+          bool success = Utils::ConfigManager::saveConfig(configJson);
+          
+          if (success) {
+            // Apply the updated configuration
+            Utils::ConfigManager::applyConfigToSystem();
+            
+            Utils::SpiJsonDocument responseDoc;
+            responseDoc["version"] = "1.0";
+            responseDoc["type"] = "ok";
+            responseDoc["data"]["message"] = "Configuration updated successfully";
+            
+            String response;
+            serializeJson(responseDoc, response);
+            request->send(200, "application/json", response);
+          } else {
+            request->send(400, "application/json", "{\"version\":\"1.0\",\"type\":\"error\",\"data\":{\"code\":400,\"message\":\"Invalid configuration data\"}}");
+          }
+        }
+      );
       
       webServer->on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
         if (request->hasParam("path")) {

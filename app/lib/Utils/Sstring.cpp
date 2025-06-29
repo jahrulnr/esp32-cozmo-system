@@ -13,6 +13,10 @@ Sstring::~Sstring() {
     }
 }
 
+uint32_t Sstring::getMemoryType() const {
+    return ESP.getFreePsram() > 0 ? MALLOC_CAP_SPIRAM : MALLOC_CAP_DEFAULT;
+}
+
 void Sstring::setBuffer(char* buf, size_t cap) {
     if (buffer) {
         heap_caps_free(buffer);
@@ -34,13 +38,7 @@ bool Sstring::ensureCapacity(size_t minCap) {
     }
     
     // Allocate new buffer
-    char* newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, MALLOC_CAP_SPIRAM));
-    if (!newBuf) {
-        newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, MALLOC_CAP_INTERNAL));
-    }
-    if (!newBuf) {
-        newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, MALLOC_CAP_DEFAULT));
-    }
+    char* newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, getMemoryType()));
     
     // Copy existing content if any
     if (buffer && len > 0) {
@@ -362,7 +360,7 @@ void Sstring::replace(Sstring src, Sstring dest) {
 
     // Create a new buffer for the result
     size_t resultLen = len + 100; // Start with some extra space
-    char* result = static_cast<char*>(heap_caps_malloc(resultLen + 1, MALLOC_CAP_SPIRAM));
+    char* result = static_cast<char*>(heap_caps_malloc(resultLen + 1, getMemoryType()));
     if (!result) return;
 
     size_t pos = 0;
@@ -375,7 +373,7 @@ void Sstring::replace(Sstring src, Sstring dest) {
         // Ensure we have enough space
         if (needLen > resultLen) {
             resultLen = needLen + 100; // Add some extra space
-            char* newResult = static_cast<char*>(heap_caps_realloc(result, resultLen + 1, MALLOC_CAP_SPIRAM));
+            char* newResult = static_cast<char*>(heap_caps_realloc(result, resultLen + 1, getMemoryType()));
             if (!newResult) {
                 heap_caps_free(result);
                 return;
@@ -408,7 +406,7 @@ void Sstring::replace(Sstring src, Sstring dest) {
         // Ensure we have enough space for the rest
         if (needLen > resultLen) {
             resultLen = needLen;
-            char* newResult = static_cast<char*>(heap_caps_realloc(result, resultLen + 1, MALLOC_CAP_SPIRAM));
+            char* newResult = static_cast<char*>(heap_caps_realloc(result, resultLen + 1, getMemoryType()));
             if (!newResult) {
                 heap_caps_free(result);
                 return;
@@ -439,7 +437,7 @@ Sstring Sstring::substring(size_t start, size_t count) const {
     }
 
     // Create a new buffer for the substring
-    char* newBuf = static_cast<char*>(heap_caps_malloc(count + 1, MALLOC_CAP_SPIRAM));
+    char* newBuf = static_cast<char*>(heap_caps_malloc(count + 1, getMemoryType()));
     if (!newBuf) {
         return Sstring();
     }

@@ -1,10 +1,12 @@
 #include "MotorControl.h"
+#include "lib/Utils/Logger.h"
 
 namespace Motors {
 
 MotorControl::MotorControl() : _leftMotorPin1(-1), _leftMotorPin2(-1),
                                _rightMotorPin1(-1), _rightMotorPin2(-1),
                                _currentDirection(STOP), _initialized(false),
+                               _useIoExtender(false), _ioExtender(nullptr),
                                _screen(nullptr), _interrupt(false) {
 }
 
@@ -17,6 +19,10 @@ bool MotorControl::init(int leftMotorPin1, int leftMotorPin2, int rightMotorPin1
     _leftMotorPin2 = leftMotorPin2;
     _rightMotorPin1 = rightMotorPin1;
     _rightMotorPin2 = rightMotorPin2;
+    
+    // Use direct GPIO pins
+    _useIoExtender = false;
+    _ioExtender = nullptr;
 
     pinMode(_leftMotorPin1, OUTPUT);
     pinMode(_leftMotorPin2, OUTPUT);
@@ -27,6 +33,31 @@ bool MotorControl::init(int leftMotorPin1, int leftMotorPin2, int rightMotorPin1
     stop();
 
     _initialized = true;
+    Utils::Logger::getInstance().info("MotorControl: Initialized with direct GPIO pins");
+    return true;
+}
+
+bool MotorControl::initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPin1, int leftMotorPin2,
+                                int rightMotorPin1, int rightMotorPin2) {
+    if (!ioExtender) {
+        Utils::Logger::getInstance().error("MotorControl: Invalid I/O extender provided");
+        return false;
+    }
+    
+    _ioExtender = ioExtender;
+    _useIoExtender = true;
+    _leftMotorPin1 = leftMotorPin1;
+    _leftMotorPin2 = leftMotorPin2;
+    _rightMotorPin1 = rightMotorPin1;
+    _rightMotorPin2 = rightMotorPin2;
+
+    // No need to call pinMode for I/O extender pins
+    
+    // Start with motors stopped
+    stop();
+
+    _initialized = true;
+    Utils::Logger::getInstance().info("MotorControl: Initialized with I/O extender");
     return true;
 }
 
@@ -66,31 +97,31 @@ void MotorControl::move(Direction direction, unsigned long duration) {
     moveLook(direction);
     switch (direction) {
         case FORWARD:
-            digitalWrite(_leftMotorPin1, HIGH);
-            digitalWrite(_leftMotorPin2, LOW);
-            digitalWrite(_rightMotorPin1, HIGH);
-            digitalWrite(_rightMotorPin2, LOW);
+            setMotorPin(_leftMotorPin1, HIGH);
+            setMotorPin(_leftMotorPin2, LOW);
+            setMotorPin(_rightMotorPin1, HIGH);
+            setMotorPin(_rightMotorPin2, LOW);
             break;
             
         case BACKWARD:
-            digitalWrite(_leftMotorPin1, LOW);
-            digitalWrite(_leftMotorPin2, HIGH);
-            digitalWrite(_rightMotorPin1, LOW);
-            digitalWrite(_rightMotorPin2, HIGH);
+            setMotorPin(_leftMotorPin1, LOW);
+            setMotorPin(_leftMotorPin2, HIGH);
+            setMotorPin(_rightMotorPin1, LOW);
+            setMotorPin(_rightMotorPin2, HIGH);
             break;
             
         case LEFT:
-            digitalWrite(_leftMotorPin1, LOW);
-            digitalWrite(_leftMotorPin2, HIGH);
-            digitalWrite(_rightMotorPin1, HIGH);
-            digitalWrite(_rightMotorPin2, LOW);
+            setMotorPin(_leftMotorPin1, LOW);
+            setMotorPin(_leftMotorPin2, HIGH);
+            setMotorPin(_rightMotorPin1, HIGH);
+            setMotorPin(_rightMotorPin2, LOW);
             break;
             
         case RIGHT:
-            digitalWrite(_leftMotorPin1, HIGH);
-            digitalWrite(_leftMotorPin2, LOW);
-            digitalWrite(_rightMotorPin1, LOW);
-            digitalWrite(_rightMotorPin2, HIGH);
+            setMotorPin(_leftMotorPin1, HIGH);
+            setMotorPin(_leftMotorPin2, LOW);
+            setMotorPin(_rightMotorPin1, LOW);
+            setMotorPin(_rightMotorPin2, HIGH);
             break;
             
         case STOP:
@@ -118,10 +149,10 @@ void MotorControl::stop() {
     }
     
     moveLook(STOP);
-    digitalWrite(_leftMotorPin1, LOW);
-    digitalWrite(_leftMotorPin2, LOW);
-    digitalWrite(_rightMotorPin1, LOW);
-    digitalWrite(_rightMotorPin2, LOW);
+    setMotorPin(_leftMotorPin1, LOW);
+    setMotorPin(_leftMotorPin2, LOW);
+    setMotorPin(_rightMotorPin1, LOW);
+    setMotorPin(_rightMotorPin2, LOW);
     
     _currentDirection = STOP;
 }
@@ -137,6 +168,18 @@ void MotorControl::interuptMotor() {
 
 bool MotorControl::isInterrupt() {
     return _interrupt;
+}
+
+void MotorControl::setMotorPin(int pin, int value) {
+    if (!_initialized) {
+        return;
+    }
+    
+    if (_useIoExtender && _ioExtender) {
+        _ioExtender->digitalWrite(pin, value);
+    } else {
+        digitalWrite(pin, value);
+    }
 }
 
 } // namespace Motors

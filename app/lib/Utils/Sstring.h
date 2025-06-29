@@ -17,6 +17,8 @@ private:
     size_t capacity;
     size_t len;
 
+    uint32_t getMemoryType() const;
+
     /**
      * @brief Set buffer pointer and capacity
      * @param buf Buffer pointer

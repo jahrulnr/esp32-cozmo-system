@@ -6,7 +6,7 @@
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-#include "lib/Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocator.h"
 
 namespace Communication {
 
@@ -134,6 +134,8 @@ public:
      * @return true if there are any clients that want camera frames, false otherwise
      */
     bool hasClientsForCameraFrames();
+
+    size_t count() const;
 
 private:
     AsyncWebServer* _server;

@@ -1,12 +1,12 @@
 #include "Logger.h"
 #include <SPIFFS.h>
-#include "../Utils/SpiAllocatorUtils.h"
+#include "lib/Utils/SpiAllocator.h"
 
 namespace Utils {
 
 Logger::Logger() : _serialEnabled(true), _fileEnabled(false), _fileName("/logs.txt"), 
                  _logLevel(LogLevel::INFO), _webSocket(nullptr), _logTaskRunning(false),
-                 _batchSize(5), _flushIntervalMs(500), _lastFlushTime(0) {
+                 _batchSize(50), _flushIntervalMs(500), _lastFlushTime(0) {
     // Create queue for log messages (larger size to handle high log volumes)
     _logQueue = xQueueCreate(50, sizeof(LogMessage*));
     
@@ -14,7 +14,7 @@ Logger::Logger() : _serialEnabled(true), _fileEnabled(false), _fileName("/logs.t
     xTaskCreate(
         logTask,
         "LoggerTask",
-        4096,  // Stack size
+        4 * 1024,  // Stack size
         this,  // Pass this instance as parameter
         1,     // Priority
         &_logTaskHandle
@@ -25,7 +25,7 @@ Logger::~Logger() {
     // Clean up resources
     if (_logTaskRunning) {
         _logTaskRunning = false;
-        vTaskDelay(pdMS_TO_TICKS(100));  // Give time for task to exit
+        vTaskDelay(pdMS_TO_TICKS(100));
         vTaskDelete(_logTaskHandle);
     }
     
@@ -66,24 +66,87 @@ void Logger::setLogLevel(LogLevel level) {
     _logLevel = level;
 }
 
-void Logger::debug(const String& message) {
-    log(LogLevel::DEBUG, message);
+LogLevel Logger::getLogLevel() const {
+    return _logLevel;
 }
 
-void Logger::info(const String& message) {
-    log(LogLevel::INFO, message);
+bool Logger::isLogLevelEnabled(LogLevel level) const {
+    return level >= _logLevel;
 }
 
-void Logger::warning(const String& message) {
-    log(LogLevel::WARNING, message);
+String Logger::formatString(const char* format, va_list args) {
+    char buffer[256]; // Buffer to hold formatted string
+    
+    // Format the string
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    
+    // Return as a String object
+    return String(buffer);
 }
 
-void Logger::error(const String& message) {
-    log(LogLevel::ERROR, message);
+void Logger::debug(const String& format, ...) {
+    debug(format.c_str());
 }
 
-void Logger::critical(const String& message) {
-    log(LogLevel::CRITICAL, message);
+void Logger::debug(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    String formattedMessage = formatString(format, args);
+    va_end(args);
+    
+    log(LogLevel::DEBUG, formattedMessage);
+}
+
+void Logger::info(const String& format, ...) {
+    info(format.c_str());
+}
+
+void Logger::info(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    String formattedMessage = formatString(format, args);
+    va_end(args);
+    
+    log(LogLevel::INFO, formattedMessage);
+}
+
+void Logger::warning(const String& format, ...) {
+    warning(format.c_str());
+}
+
+void Logger::warning(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    String formattedMessage = formatString(format, args);
+    va_end(args);
+    
+    log(LogLevel::WARNING, formattedMessage);
+}
+
+void Logger::error(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    String formattedMessage = formatString(format, args);
+    va_end(args);
+    
+    log(LogLevel::ERROR, formattedMessage);
+}
+
+void Logger::error(const String& format, ...) {
+    error(format.c_str());
+}
+
+void Logger::critical(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    String formattedMessage = formatString(format, args);
+    va_end(args);
+    
+    log(LogLevel::CRITICAL, formattedMessage);
+}
+
+void Logger::critical(const String& format, ...) {
+    critical(format.c_str());
 }
 
 void Logger::log(LogLevel level, const String& message) {
@@ -99,13 +162,13 @@ void Logger::log(LogLevel level, const String& message) {
         Serial.println(logMessage);
     }
     
-    if (_fileEnabled) {
-        File file = SPIFFS.open(_fileName, "a");
-        if (file) {
-            file.println(logMessage);
-            file.close();
-        }
-    }
+    // if (_fileEnabled) {
+    //     File file = SPIFFS.open(_fileName, "a");
+    //     if (file) {
+    //         file.println(logMessage);
+    //         file.close();
+    //     }
+    // }
     
     // Queue the message for async WebSocket sending
     if (_webSocket && _webSocket->hasClients()) {
@@ -124,6 +187,15 @@ void Logger::log(LogLevel level, const String& message) {
             }
         }
     }
+}
+
+void Logger::log(LogLevel level, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    String formattedMessage = formatString(format, args);
+    va_end(args);
+    
+    log(level, formattedMessage);
 }
 
 String Logger::logLevelToString(LogLevel level) {
@@ -205,7 +277,7 @@ void Logger::logTask(void* parameter) {
         bool timeToFlush = (currentTime - logger->_lastFlushTime) >= logger->_flushIntervalMs;
         
         // Try to get a message with very short timeout to avoid blocking
-        if (xQueueReceive(logger->_logQueue, &msg, timeToFlush ? 0 : pdMS_TO_TICKS(10)) == pdTRUE) {
+        if (xQueueReceive(logger->_logQueue, &msg, timeToFlush ? pdMS_TO_TICKS(100) : pdMS_TO_TICKS(1000)) == pdTRUE) {
             if (msg != nullptr) {
                 // Add to batch
                 logBatch.push_back(msg);
@@ -228,7 +300,7 @@ void Logger::logTask(void* parameter) {
                 batchData.shrinkToFit();
                 
                 // Send as a batch_log_message type for better frontend handling
-                logger->_webSocket->sendJsonMessage(-1, "batch_log_messages", batchData);
+                // logger->_webSocket->sendJsonMessage(-1, "batch_log_messages", batchData);
             }
             
             // Cleanup all messages

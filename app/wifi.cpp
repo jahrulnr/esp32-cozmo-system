@@ -7,14 +7,14 @@ bool g_isApOnlyMode = false;
 void setupWiFi() {
   if (WIFI_ENABLED) {
     logger->info("Setting up WiFi...");
-    wifiManager = new Communication::WiFiManager();
+    wifiManager = new Communication::WiFiManager(fileManager);
     wifiManager->init();
     
     // Get config (already loaded from file or defaults in constructor)
     Communication::WiFiManager::WiFiConfig config = wifiManager->getConfig();
     
     // Log the current config source - note: config was already loaded in constructor
-    if (SPIFFS.exists("/config/wifi.json")) {
+    if (fileManager->exists("/config/wifi.json")) {
       logger->info("Using Wi-Fi configuration from wifi.json file");
     } else {
       logger->info("Using default Wi-Fi configuration from Config.h");

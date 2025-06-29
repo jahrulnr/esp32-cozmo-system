@@ -3,7 +3,7 @@
 
 namespace Sensors {
 
-Camera::Camera() : _resolution(CAMERA_FRAME_SIZE), _initialized(false), _streamingInterval(200) {
+Camera::Camera() : _resolution(CAMERA_FRAME_SIZE), _initialized(false), _streamingInterval(30) {
 }
 
 Camera::~Camera() {
@@ -57,6 +57,11 @@ bool Camera::init() {
         Serial.printf("Camera init failed with error 0x%x\n", err);
         return false;
     }
+
+    sensor_t *s = esp_camera_sensor_get();
+    s->set_gain_ctrl(s, 1);                       // auto gain on
+    s->set_exposure_ctrl(s, 1);                   // auto exposure on
+    s->set_awb_gain(s, 1);                        // Auto White Balance enable (0 or 1)
     
     _initialized = true;
     return true;

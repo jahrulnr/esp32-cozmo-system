@@ -218,4 +218,8 @@ bool WebSocketHandler::hasClientsForCameraFrames() {
     return false;
 }
 
+size_t WebSocketHandler::count() const {
+    return _webSocket->count();
+}
+
 } // namespace Communication

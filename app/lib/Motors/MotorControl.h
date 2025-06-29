@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include "lib/Screen/Screen.h"
+#include "lib/Utils/IOExtern.h"
 
 namespace Motors {
 
@@ -22,7 +23,7 @@ public:
     ~MotorControl();
 
     /**
-     * Initialize motor control
+     * Initialize motor control with direct GPIO pins
      * @param leftMotorPin1 First pin for the left motor
      * @param leftMotorPin2 Second pin for the left motor
      * @param rightMotorPin1 First pin for the right motor
@@ -31,6 +32,18 @@ public:
      */
     bool init(int leftMotorPin1 = 2, int leftMotorPin2 = 4, 
               int rightMotorPin1 = 13, int rightMotorPin2 = 12);
+              
+    /**
+     * Initialize motor control with I/O extender
+     * @param ioExtender Pointer to PCF8575 I/O extender
+     * @param leftMotorPin1 First pin for the left motor on I/O extender
+     * @param leftMotorPin2 Second pin for the left motor on I/O extender
+     * @param rightMotorPin1 First pin for the right motor on I/O extender
+     * @param rightMotorPin2 Second pin for the right motor on I/O extender
+     * @return true if initialization was successful, false otherwise
+     */
+    bool initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPin1 = 0, int leftMotorPin2 = 1, 
+                         int rightMotorPin1 = 2, int rightMotorPin2 = 3);
 
     /**
      * Move in a specified direction
@@ -59,9 +72,13 @@ private:
     Direction _currentDirection;
     bool _interrupt;
     bool _initialized;
+    bool _useIoExtender;
+    Utils::IOExtern* _ioExtender;
     Screen::Screen *_screen;
+    
     void moveLook(Direction direction);
     bool isInterrupt();
+    void setMotorPin(int pin, int value);  // Helper for unified pin control
 };
 
 } // namespace Motors

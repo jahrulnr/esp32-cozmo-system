@@ -38,21 +38,20 @@ void Automation::start() {
     loadTemplateBehaviors();
     
     // Create the task
-    xTaskCreatePinnedToCore(
+    xTaskCreate(
         taskFunction,    // Function that implements the task
         "automation",    // Task name
         8192,           // Stack size in words
         this,           // Parameter passed to the task
         1,              // Priority
-        &_taskHandle,   // Task handle
-        0
+        &_taskHandle   // Task handle
     );
 
     if (_fileManager && !_fileManager->exists("/config/templates_update.txt")) {
-        xTaskCreate(
+        xTaskCreatePinnedToCore(
             [](void * param){
+                vTaskDelay(pdMS_TO_TICKS(20099));
                 if (WiFi.isConnected()) {
-                    vTaskDelay(pdMS_TO_TICKS(11000));
                     Automation* automation = static_cast<Automation*>(param);
                     automation->fetchAndAddNewBehaviors();                
                 }
@@ -61,8 +60,9 @@ void Automation::start() {
             "automationUpdate",    // Task name
             8192,           // Stack size in words
             this,           // Parameter passed to the task
-            1,              // Priority
-            NULL
+            0,              // Priority
+            NULL,
+            0
         );
     }
     
@@ -223,7 +223,8 @@ void Automation::loadTemplateBehaviors() {
         int startPos = 0;
         int nextPos = 0;
         while ((nextPos = templateDefault.indexOf('\n', startPos)) != -1) {
-            Utils::Sstring behavior = templateDefault.substring(startPos, nextPos).trim();
+            String behavior = templateDefault.toString().substring(startPos, nextPos);
+            behavior.trim();
             if (behavior.length() > 0) {
                 _templateBehaviors.push_back(behavior);
             }
@@ -231,7 +232,7 @@ void Automation::loadTemplateBehaviors() {
         }
         
         // Add the remaining text as the last behavior if it exists
-        Utils::Sstring lastBehavior = templateDefault.substring(startPos).trim();
+        Utils::Sstring lastBehavior = templateDefault.substring(startPos);
         if (lastBehavior.length() > 0) {
             _templateBehaviors.push_back(lastBehavior);
         }
@@ -264,22 +265,12 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
         // Display the message on the screen if available
         // The screen class already handles internal mutex locking in its mutexX methods
         if (::screen && !voiceMessage.isEmpty()) {
-            // Save the current face to restore after showing the message
-            Face* face = ::screen->getFace();
-            
-            // Display the vocalization message
-            ::screen->mutexClear();
-            ::screen->drawCenteredText(30, voiceMessage);
-            ::screen->mutexUpdate();
-            
-            // Extract and execute commands
-            int commandCount = _commandMapper->executeCommandString(behavior.toString());
-            
-            // Give the message some time to be visible, if it's not a long running action
+            playBehaviorSound(behavior.toString());
+            _commandMapper->executeCommandString(behavior.toString());
             vTaskDelay(pdMS_TO_TICKS(1000));
         } else {
             // Just execute the commands without showing the message
-            int commandCount = _commandMapper->executeCommandString(behavior.toString());
+            _commandMapper->executeCommandString(behavior.toString());
         }
         
         if (_logger) {
@@ -480,14 +471,16 @@ bool Automation::saveBehaviorsToFile() {
     int startPos = 0;
     int nextPos = 0;
     while ((nextPos = defaultTemplates.indexOf('\n', startPos)) != -1) {
-        Utils::Sstring behavior = defaultTemplates.substring(startPos, nextPos).trim();
+        String behavior = defaultTemplates.toString().substring(startPos, nextPos);
+        behavior.trim();
         if (behavior.length() > 0) {
             defaultTemplatesList.push_back(behavior);
         }
         startPos = nextPos + 1;
     }
     
-    Utils::Sstring lastDefault = defaultTemplates.substring(startPos).trim();
+    String lastDefault = defaultTemplates.toString().substring(startPos);
+    lastDefault.trim();
     if (lastDefault.length() > 0) {
         defaultTemplatesList.push_back(lastDefault);
     }
@@ -497,7 +490,7 @@ bool Automation::saveBehaviorsToFile() {
         // Check if this behavior is in the default list
         bool isDefault = false;
         for (const auto& defaultBehavior : defaultTemplatesList) {
-            if (behavior.toString() == defaultBehavior.toString()) {
+            if (behavior.equals(defaultBehavior)) {
                 isDefault = true;
                 break;
             }
@@ -506,7 +499,7 @@ bool Automation::saveBehaviorsToFile() {
         if (isDefault) {
             defaultBehaviors.push_back(behavior);
         } else {
-            userBehaviors.push_back(behavior);
+            userBehaviors.push_back(behavior.toString());
         }
     }
     

@@ -10,22 +10,25 @@ Sensors::DistanceSensor* distanceSensor = nullptr;
 Sensors::CliffDetector* cliffLeftDetector = nullptr;
 Sensors::CliffDetector* cliffRightDetector = nullptr;
 Sensors::TemperatureSensor* temperatureSensor = nullptr;
+Sensors::MicrophoneSensor* microphoneSensor = nullptr;
 Motors::MotorControl* motors = nullptr;
 Motors::ServoControl* servos = nullptr;
+Audio::PWMSpeaker* pwmSpeaker = nullptr;
+Audio::I2SSpeaker* i2sSpeaker = nullptr;
 Communication::WiFiManager* wifiManager = nullptr;
 Communication::WebServer* webServer = nullptr;
 Communication::WebSocketHandler* webSocket = nullptr;
 Communication::GPTAdapter* gptAdapter = nullptr;
+// Communication::SPIHandler* spiHandler = nullptr;
 Screen::Screen* screen = nullptr;
 Utils::FileManager* fileManager = nullptr;
-Utils::HealthCheck* healthCheck = nullptr;
 Utils::Logger* logger = nullptr;
 Utils::CommandMapper* commandMapper = nullptr;
+Utils::ConfigManager* configManager = nullptr;
 
 void setup() {
-  heap_caps_malloc_extmem_enable(0);  
-  disableLoopWDT();
-  setCpuFrequencyMhz(240);
+  // gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
+  heap_caps_malloc_extmem_enable(4096);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
@@ -34,25 +37,37 @@ void setup() {
   // Initialize Logger
   logger = &Utils::Logger::getInstance();
   logger->init(true, true, "/logs.txt");
+  logger->setLogLevel(Utils::LogLevel::INFO);
   logger->info("Logger initialized");
+
+  fileManager = new Utils::FileManager();
+  if (!fileManager->init()) {
+    logger->error("SPIFFS initialization failed");
+  }
+
+  disableLoopWDT();
+  setCpuFrequencyMhz(240);
   
   // Initialize components
-  setupPins();
+  // setupConfigManager();
+  // setupSPI(); // Initialize SPI buses and devices
   setupScreen();
+  setupExtender();
   setupWiFi();
-  setupCamera();
   setupMotors();
   setupServos();
   setupOrientation();
   setupDistanceSensor();
   setupCliffDetector();
   setupTemperatureSensor();
+  setupMicrophone();
+  setupSpeakers();
   setupWebServer();
   setupWebSocket();
   setupGPT();
   setupCommandMapper();
   setupAutomation();
-  setupHealthCheck();
+  setupCamera();
 
   if (motors && screen)
     motors->setScreen(screen);
@@ -67,16 +82,13 @@ void setup() {
     screen->drawCenteredText(40, "Ready!");
     screen->update();
   }
+  
+  playSpeakerMP3File("/audio/boot.mp3");
 
   setupTasks();
 }
 
 void loop() {
-  if (healthCheck)
-    healthCheck->update();
-
-  if (screen)
-      screen->mutexUpdate();
-
-  vTaskDelay(pdMS_TO_TICKS(33));
+  vTaskDelay(pdMS_TO_TICKS(2000)); 
+  vTaskDelete(NULL);
 }

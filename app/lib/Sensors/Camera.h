@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <esp_camera.h>
+#include "Config.h"
 #include "CameraConfig.h"
 
 namespace Sensors {
