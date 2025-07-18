@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "lib/Utils/Logger.h"
 #include "lib/Utils/I2CManager.h"
+#include "Bar/Bar.h"
 
 namespace Screen {
 
@@ -109,6 +110,7 @@ private:
     bool _initialized;
     SemaphoreHandle_t _mux;
     Face *_face;
+    MicBar *_micBar;
     bool _holdFace;
     long _holdTimer;
     Utils::Logger *_logger;

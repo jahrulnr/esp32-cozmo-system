@@ -5,6 +5,7 @@ namespace Sensors {
 MicrophoneSensor::MicrophoneSensor(int analogPin, int gainPin, int attackReleasePin) 
     : _analogPin(analogPin), _gainPin(gainPin), _attackReleasePin(attackReleasePin), 
       _initialized(false), _baselineLevel(0) {
+    _mutex = xSemaphoreCreateMutex();
 }
 
 MicrophoneSensor::~MicrophoneSensor() {
@@ -50,8 +51,11 @@ int MicrophoneSensor::readLevel() {
     if (!_initialized) {
         return -1;
     }
-
-    return analogRead(_analogPin);
+    
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    int value = analogRead(_analogPin);
+    xSemaphoreGive(_mutex);
+    return value;
 }
 
 int MicrophoneSensor::readPeakLevel(int durationMs) {
@@ -63,7 +67,7 @@ int MicrophoneSensor::readPeakLevel(int durationMs) {
     unsigned long startTime = millis();
     
     while (millis() - startTime < durationMs) {
-        int currentLevel = analogRead(_analogPin);
+        int currentLevel = readLevel();
         if (currentLevel > peakLevel) {
             peakLevel = currentLevel;
         }
@@ -83,7 +87,7 @@ int MicrophoneSensor::readAverageLevel(int durationMs) {
     unsigned long startTime = millis();
     
     while (millis() - startTime < durationMs) {
-        totalLevel += analogRead(_analogPin);
+        totalLevel += readLevel();
         sampleCount++;
         delayMicroseconds(100); // Small delay to prevent overwhelming the ADC
     }
@@ -156,7 +160,7 @@ int* MicrophoneSensor::readSamples(int samples, int delayMs) {
     int* sampleArray = new int[samples];
     
     for (int i = 0; i < samples; i++) {
-        sampleArray[i] = analogRead(_analogPin);
+        sampleArray[i] = readLevel();
         if (delayMs > 0) {
             delay(delayMs);
         }

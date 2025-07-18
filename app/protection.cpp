@@ -150,6 +150,8 @@ void protectCozmoTask(void * param) {
 	{
 		protectCozmo();
 		vTaskDelay(pdMS_TO_TICKS(5));
+
+		taskYIELD();
 	}
 
 }

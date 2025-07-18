@@ -15,10 +15,6 @@ namespace Communication {
 enum class SPICommand : uint8_t {
   PING = 0x01,
   PONG = 0x02,
-  CAMERA_DATA_REQUEST = 0x20,        // New command for requesting camera data
-  CAMERA_DATA_RESPONSE = 0x21,       // Response with camera data
-  CAMERA_DATA_BLOCK_REQUEST = 0x22,  // Request for a specific block of camera data
-  CAMERA_DATA_BLOCK_RESPONSE = 0x23, // Response with a specific block of camera data
   ACK = 0xAA,
   NACK = 0xFF
 };

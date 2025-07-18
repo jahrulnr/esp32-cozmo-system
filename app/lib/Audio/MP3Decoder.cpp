@@ -5,10 +5,16 @@
 namespace Audio {
 
 MP3Decoder::MP3Decoder() 
-    : _decoder(nullptr), _initialized(false), _inputBuffer(nullptr), _outputBuffer(nullptr) {
+    : _decoder(nullptr), _initialized(false), _streaming(false),
+      _inputBuffer(nullptr), _outputBuffer(nullptr), _streamBuffer(nullptr),
+      _bytesLeft(0), _readPtr(nullptr), _firstFrame(true) {
 }
 
 MP3Decoder::~MP3Decoder() {
+    if (_streaming) {
+        stopStreaming();
+    }
+    
     if (_decoder) {
         MP3FreeDecoder(_decoder);
     }
@@ -276,6 +282,182 @@ void MP3Decoder::freePCMBuffer(int16_t* pcmBuffer) {
     if (pcmBuffer) {
         heap_caps_free(pcmBuffer);
     }
+}
+
+bool MP3Decoder::startStreaming(const String& filePath, StreamCallback callback) {
+    if (!_initialized || _streaming) {
+        return false;
+    }
+    
+    // Open the file
+    _streamFile = SPIFFS.open(filePath, "r");
+    if (!_streamFile) {
+        return false;
+    }
+    
+    // Allocate streaming buffer
+    _streamBuffer = (uint8_t*)heap_caps_malloc(STREAM_BUFFER_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_DEFAULT);
+    if (!_streamBuffer) {
+        _streamFile.close();
+        return false;
+    }
+    
+    // Get file information
+    if (!getFileInfo(filePath, &_streamInfo)) {
+        heap_caps_free(_streamBuffer);
+        _streamFile.close();
+        return false;
+    }
+    
+    // Initialize streaming state
+    _callback = callback;
+    _bytesLeft = 0;
+    _readPtr = _streamBuffer;
+    _firstFrame = true;
+    _streaming = true;
+    
+    // Fill the buffer with initial data
+    if (!fillStreamBuffer()) {
+        stopStreaming();
+        return false;
+    }
+    
+    return true;
+}
+
+bool MP3Decoder::processStreamFrame() {
+    if (!_streaming || !_initialized) {
+        return false;
+    }
+    
+    // Find the next MP3 frame sync word
+    int offset = MP3FindSyncWord((unsigned char*)_readPtr, _bytesLeft);
+    if (offset < 0) {
+        // No sync word found in current buffer, try to fill more data
+        if (!fillStreamBuffer()) {
+            return false; // End of file or error
+        }
+        return processStreamFrame(); // Try again with new data
+    }
+    
+    // Move to the sync word position
+    _readPtr += offset;
+    _bytesLeft -= offset;
+    
+    // Get frame info
+    MP3FrameInfo frameInfo;
+    int result = MP3GetNextFrameInfo(_decoder, &frameInfo, (unsigned char*)_readPtr);
+    if (result != 0) {
+        // Invalid frame, skip one byte and try again
+        _readPtr++;
+        _bytesLeft--;
+        if (_bytesLeft == 0) {
+            if (!fillStreamBuffer()) {
+                return false;
+            }
+        }
+        return processStreamFrame();
+    }
+    
+    // Update stream info from first valid frame
+    if (_firstFrame) {
+        _streamInfo.sampleRate = frameInfo.samprate;
+        _streamInfo.channels = frameInfo.nChans;
+        _streamInfo.bitRate = frameInfo.bitrate;
+        _streamInfo.valid = true;
+        _firstFrame = false;
+    }
+    
+    // Decode the frame
+    int result2 = 0;
+    try {
+        result2 = MP3Decode(_decoder, (unsigned char**)&_readPtr, (int*)&_bytesLeft, _outputBuffer, 0);
+    } catch(...) {
+        result2 = -1;
+    }
+    
+    if (result2 != 0) {
+        if (result2 == ERR_MP3_INDATA_UNDERFLOW) {
+            // Need more data
+            if (!fillStreamBuffer()) {
+                return false;
+            }
+            return processStreamFrame();
+        } else {
+            // Other error, skip this frame
+            _readPtr++;
+            _bytesLeft--;
+            if (_bytesLeft == 0) {
+                if (!fillStreamBuffer()) {
+                    return false;
+                }
+            }
+            return processStreamFrame();
+        }
+    }
+    
+    // Successfully decoded a frame
+    if (_callback) {
+        // Call the callback with the decoded data
+        if (!_callback(_outputBuffer, frameInfo.outputSamps, _streamInfo)) {
+            // Callback returned false, stop streaming
+            stopStreaming();
+            return false;
+        }
+    }
+    
+    // If we're running low on data, fill the buffer
+    if (_bytesLeft < INPUT_BUFFER_SIZE && _streamFile.available()) {
+        fillStreamBuffer();
+    }
+    
+    return true;
+}
+
+void MP3Decoder::stopStreaming() {
+    if (!_streaming) {
+        return;
+    }
+    
+    _streaming = false;
+    
+    if (_streamFile) {
+        _streamFile.close();
+    }
+    
+    if (_streamBuffer) {
+        heap_caps_free(_streamBuffer);
+        _streamBuffer = nullptr;
+    }
+    
+    _bytesLeft = 0;
+    _readPtr = nullptr;
+    _callback = nullptr;
+}
+
+bool MP3Decoder::fillStreamBuffer() {
+    // If no file or end of file, return false
+    if (!_streamFile || !_streamFile.available()) {
+        return false;
+    }
+    
+    // If we have bytes left, move them to the beginning of the buffer
+    if (_bytesLeft > 0 && _readPtr != _streamBuffer) {
+        memmove(_streamBuffer, _readPtr, _bytesLeft);
+    }
+    
+    _readPtr = _streamBuffer;
+    
+    // Fill the rest of the buffer
+    size_t spaceLeft = STREAM_BUFFER_SIZE - _bytesLeft;
+    size_t bytesRead = _streamFile.read(_streamBuffer + _bytesLeft, spaceLeft);
+    
+    if (bytesRead == 0) {
+        return false; // No more data
+    }
+    
+    _bytesLeft += bytesRead;
+    return true;
 }
 
 } // namespace Audio

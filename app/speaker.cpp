@@ -434,7 +434,8 @@ bool playSpeakerMP3File(const String& filePath, int volume) {
   
   #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    return i2sSpeaker->playMP3File(filePath, volume);
+    // return i2sSpeaker->playMP3File(filePath, volume);
+    return i2sSpeaker->playMP3FileStreamingOptimized(filePath, volume);
   }
   #endif
   
@@ -570,7 +571,8 @@ bool playSpeakerRandomMP3(int volume, Utils::FileManager::StorageType storageTyp
   // Play the selected MP3 file
   #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    return i2sSpeaker->playMP3File(selectedFile, volume);
+    // return i2sSpeaker->playMP3File(selectedFile, volume);
+    return i2sSpeaker->playMP3FileStreamingOptimized(selectedFile, volume);
   }
   #endif
   

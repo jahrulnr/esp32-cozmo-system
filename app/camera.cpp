@@ -87,5 +87,7 @@ void cameraStreamTask(void* parameter) {
       logger->info("capture image failed");
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
+
+		taskYIELD();
   }
 }

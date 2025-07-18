@@ -29,6 +29,9 @@
 		"tuple": "cpp",
 		"type_traits": "cpp",
 		"utility": "cpp",
-		"cstdint": "cpp"
+		"cstdint": "cpp",
+		"algorithm": "cpp",
+		"mutex": "cpp",
+		"stop_token": "cpp"
 	}
 }

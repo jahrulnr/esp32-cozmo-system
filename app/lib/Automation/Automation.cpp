@@ -198,8 +198,10 @@ void Automation::taskFunction(void* parameter) {
         }
         
         inprogress = false;
+        
         // Check at regular intervals
         vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
+		taskYIELD();
     }
 }
 

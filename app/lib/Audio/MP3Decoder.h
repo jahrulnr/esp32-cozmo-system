@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <SPIFFS.h>
+#include <functional>
 
 // Include the ESP32 Helix MP3 decoder library
 extern "C" {
@@ -15,6 +16,8 @@ namespace Audio {
  * 
  * Uses the ESP32 Helix MP3 decoder library to decode MP3 files
  * and convert them to PCM data for playback through speakers.
+ * 
+ * Supports both full decoding and streaming decoding modes.
  */
 class MP3Decoder {
 public:
@@ -25,6 +28,9 @@ public:
         int duration;      // in seconds
         bool valid;
     };
+
+    // Callback for streaming data
+    using StreamCallback = std::function<bool(const int16_t* data, size_t len, MP3Info& info)>;
 
     MP3Decoder();
     ~MP3Decoder();
@@ -57,6 +63,31 @@ public:
     bool decodeData(const uint8_t* mp3Data, size_t mp3Size, int16_t** pcmBuffer, size_t* pcmSize, MP3Info* info = nullptr);
 
     /**
+     * Start streaming decoding of a file
+     * @param filePath Path to MP3 file
+     * @param callback Callback function to receive PCM data
+     * @return true if successfully started streaming
+     */
+    bool startStreaming(const String& filePath, StreamCallback callback);
+
+    /**
+     * Process next frame in streaming mode
+     * @return true if a frame was processed, false if end of stream or error
+     */
+    bool processStreamFrame();
+    
+    /**
+     * Stop streaming and clean up resources
+     */
+    void stopStreaming();
+    
+    /**
+     * Check if streaming is active
+     * @return true if streaming is in progress
+     */
+    bool isStreaming() const { return _streaming; }
+    
+    /**
      * Get MP3 file information without full decoding
      * @param filePath Path to MP3 file
      * @param info Output MP3 information
@@ -79,14 +110,24 @@ public:
 private:
     HMP3Decoder _decoder;
     bool _initialized;
+    bool _streaming;
     
     static const size_t INPUT_BUFFER_SIZE = 2048;
     static const size_t OUTPUT_BUFFER_SIZE = 4608; // Max PCM samples per frame
+    static const size_t STREAM_BUFFER_SIZE = 8192; // Size of streaming buffer
     
     uint8_t* _inputBuffer;
     int16_t* _outputBuffer;
+    uint8_t* _streamBuffer;     // Buffer for streaming data
+    File _streamFile;           // File handle for streaming
+    size_t _bytesLeft;          // Bytes left in the streaming buffer
+    uint8_t* _readPtr;          // Current read position in streaming buffer
+    bool _firstFrame;           // Flag for first frame processing
+    MP3Info _streamInfo;        // MP3 info for streaming
+    StreamCallback _callback;   // Callback for streaming data
     
     bool decodeInternal(const uint8_t* mp3Data, size_t mp3Size, int16_t** pcmBuffer, size_t* pcmSize, MP3Info* info);
+    bool fillStreamBuffer();    // Fill the streaming buffer with more data
 };
 
 } // namespace Audio
