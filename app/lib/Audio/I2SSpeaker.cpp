@@ -436,6 +436,109 @@ bool I2SSpeaker::playMP3FileStreaming(const String& filePath, int volume, Utils:
     return true;
 }
 
+/**
+ * Play MP3 file using the new optimized streaming decoder
+ * This method uses the frame-by-frame decoding approach for more efficient memory usage
+ */
+bool I2SSpeaker::playMP3FileStreamingOptimized(const String& filePath, int volume) {
+    if (!_initialized) {
+        Serial.println("I2S not initialized");
+        return false;
+    }
+    
+    // Create MP3 decoder
+    MP3Decoder decoder;
+    if (!decoder.init()) {
+        Serial.println("Failed to initialize MP3 decoder");
+        return false;
+    }
+    
+    // Allocate buffer for PCM data
+    const size_t PCM_BUFFER_SIZE = 4096;
+    int16_t* pcmBuffer = (int16_t*)heap_caps_malloc(PCM_BUFFER_SIZE * sizeof(int16_t), MALLOC_CAP_DEFAULT);
+    if (!pcmBuffer) {
+        Serial.println("Failed to allocate PCM buffer");
+        return false;
+    }
+    
+    _playing = true;
+    size_t totalFrames = 0;
+    
+    Serial.printf("Starting optimized streaming playback: %s\n", filePath.c_str());
+    
+    // Start streaming with callback
+    bool success = decoder.startStreaming(filePath, 
+        [this, pcmBuffer, volume, &totalFrames](const int16_t* data, size_t len, MP3Decoder::MP3Info& info) {
+            // First frame with info
+            if (totalFrames == 0) {
+                Serial.printf("MP3 Stream Info: %dHz, %d channels, %dkbps\n", 
+                              info.sampleRate, info.channels, info.bitRate);
+            }
+            
+            totalFrames++;
+            
+            // Process data in smaller chunks to avoid blocking
+            const size_t PLAY_CHUNK_SIZE = 1024;
+            size_t samplesPlayed = 0;
+            
+            while (samplesPlayed < len && _playing) {
+                size_t samplesToPlay = _min(PLAY_CHUNK_SIZE, len - samplesPlayed);
+                
+                // Copy to play buffer and apply volume
+                memcpy(pcmBuffer, data + samplesPlayed, samplesToPlay * sizeof(int16_t));
+                applyVolume(pcmBuffer, samplesToPlay, volume);
+                
+                // Write to I2S
+                size_t bytesWritten;
+                esp_err_t result = i2s_write(_i2sPort, pcmBuffer, samplesToPlay * sizeof(int16_t), 
+                                           &bytesWritten, pdMS_TO_TICKS(100));
+                
+                if (result != ESP_OK) {
+                    Serial.printf("I2S write error: %d\n", result);
+                    return false;
+                }
+                
+                samplesPlayed += samplesToPlay;
+                
+                // Small delay to prevent watchdog timeout
+                vTaskDelay(pdMS_TO_TICKS(1));
+            }
+            
+            // Progress indication every 100 frames
+            if (totalFrames % 100 == 0) {
+                Serial.printf("Streaming progress: %d frames processed\n", totalFrames);
+            }
+            
+            return _playing; // Continue streaming if still playing
+        });
+    
+    if (!success) {
+        Serial.println("Failed to start streaming");
+        heap_caps_free(pcmBuffer);
+        return false;
+    }
+    
+    // Process frames until streaming is complete
+    while (decoder.isStreaming() && _playing) {
+        if (!decoder.processStreamFrame()) {
+            break;
+        }
+        
+        // Yield to other tasks
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
+    
+    _playing = false;
+    
+    // Stop streaming and cleanup
+    decoder.stopStreaming();
+    heap_caps_free(pcmBuffer);
+    
+    Serial.printf("Optimized streaming playback completed: %d frames processed\n", totalFrames);
+    
+    return true;
+}
+
 // WAV file header structure
 struct WAVHeader {
     char riff[4];           // "RIFF"

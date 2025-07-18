@@ -91,6 +91,15 @@ public:
      * @return true if successful, false otherwise
      */
     bool playMP3FileStreaming(const String& filePath, int volume, Utils::FileManager& fileManager);
+    
+    /**
+     * Play MP3 file using frame-by-frame streaming (optimized for memory usage)
+     * 
+     * @param filePath Path to the MP3 file in SPIFFS
+     * @param volume Volume level (0-100)
+     * @return true if successful, false otherwise
+     */
+    bool playMP3FileStreamingOptimized(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 
     /**
      * Play WAV file (supports PCM 16-bit)

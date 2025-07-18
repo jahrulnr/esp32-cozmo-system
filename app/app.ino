@@ -45,7 +45,6 @@ void setup() {
     logger->error("SPIFFS initialization failed");
   }
 
-  disableLoopWDT();
   setCpuFrequencyMhz(240);
   
   // Initialize components
@@ -90,5 +89,8 @@ void setup() {
 
 void loop() {
   vTaskDelay(pdMS_TO_TICKS(2000)); 
+  // disableCore0WDT();
+  // disableCore1WDT();
+  disableLoopWDT();
   vTaskDelete(NULL);
 }

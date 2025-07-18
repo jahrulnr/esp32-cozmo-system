@@ -99,6 +99,7 @@ private:
     int _attackReleasePin;
     bool _initialized;
     int _baselineLevel;
+    xSemaphoreHandle _mutex;
     
     /**
      * Internal function to read multiple samples

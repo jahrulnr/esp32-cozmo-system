@@ -100,8 +100,6 @@ void ServoControl::moveLook(ServoType type, int angle) {
 
     if (angle > lastPosition) 
         _screen->getFace()->LookTop();
-    else if(angle < lastPosition)
-        _screen->getFace()->LookBottom();
     else _screen->getFace()->LookFront();
 }
 

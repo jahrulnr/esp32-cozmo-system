@@ -88,7 +88,9 @@ void setupTasks() {
                 if (playSpeakerRandomMP3()){
                     logger->info("success play a random mp3");
                 }
+                
                 vTaskDelay(pdMS_TO_TICKS(10000)); 
+		        taskYIELD();
             }
         }, "autoSound", 4 * 1024, NULL, 5, NULL, 0);
     }
@@ -225,5 +227,6 @@ void sensorMonitorTask(void* parameter) {
         }
 
         vTaskDelay(pdMS_TO_TICKS(updateInterval));
+		taskYIELD();
     }
 }

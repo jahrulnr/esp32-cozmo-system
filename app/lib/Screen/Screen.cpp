@@ -69,6 +69,8 @@ bool Screen::init(int sda, int scl) {
     autoFace(false);
     _face->RandomBlink = true;
     update();
+
+    _micBar = new MicBar(_u8g2);
     
     _initialized = true;
     return true;
@@ -241,6 +243,8 @@ void Screen::update() {
         if (_holdTimer == 0) {
             _holdTimer = millis() + 3000;
         }
+
+        _micBar->drawBar();
         _u8g2->sendBuffer();
     } else {
         updateFace();
@@ -265,6 +269,9 @@ void Screen::updateFace() {
     }
 
     if (!_holdFace) {
+        _u8g2->clearBuffer();
+
+        _micBar->drawBar();
         _face->Update();
     }
 }
