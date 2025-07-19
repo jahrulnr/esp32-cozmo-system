@@ -69,50 +69,6 @@ This document provides examples of the binary data transfer protocol used for ca
 }
 ```
 
-#### Binary Data Message
-
-```json
-{
-  "version": "1.0",
-  "type": "binary_data",
-  "transferId": "cam_frame_1234567890",
-  "contentType": "image/jpeg",
-  "totalSize": 24580,
-  "chunkIndex": 0,
-  "offset": 0,
-  "chunkSize": 8192,
-  "data": "/9j/4AAQSkZJRgABAQEASABIAAD/4QCMRXhpZgAATU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUA..."
-}
-```
-
-```json
-{
-  "version": "1.0",
-  "type": "binary_data",
-  "transferId": "cam_frame_1234567890",
-  "contentType": "image/jpeg",
-  "totalSize": 24580,
-  "chunkIndex": 1,
-  "offset": 8192,
-  "chunkSize": 8192,
-  "data": "AAAGGoAAEzAABMigACU1AABKdQAATKUABQzlAAZNJQAHTUUAB05lAAlOhQAKTqUADE7FEAxO5..."
-}
-```
-
-#### Binary End Message
-
-```json
-{
-  "version": "1.0",
-  "type": "binary_end",
-  "transferId": "cam_frame_1234567890",
-  "contentType": "image/jpeg",
-  "totalSize": 24580,
-  "checksum": "a7c3e8bf3acc1a114c3769c7845889db",
-  "chunks": 3
-}
-```
-
 ## File Transfers
 
 ### File Transfer Request
