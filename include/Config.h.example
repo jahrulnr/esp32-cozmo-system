@@ -69,7 +69,6 @@
 #define GPT_MODEL "gpt-4.1-nano-2025-04-14"
 #define GPT_MAX_TOKENS 1024
 #define GPT_TEMPERATURE 0.7
-#define GPT_DATA_LOG_PATH "/data/gpt_interactions.txt"
 #define GPT_LEARNING_ENABLED true
 
 // Health check configuration

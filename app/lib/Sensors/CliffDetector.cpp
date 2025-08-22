@@ -1,5 +1,5 @@
 #include "CliffDetector.h"
-#include "lib/Utils/Logger.h"
+#include "Logger.h"
 
 namespace Sensors {
 

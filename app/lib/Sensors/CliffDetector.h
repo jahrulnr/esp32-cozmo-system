@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "lib/Utils/IOExtern.h"
+#include "IOExtern.h"
 
 namespace Sensors {
 

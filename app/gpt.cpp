@@ -227,7 +227,6 @@ void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback c
 	gptRequest *data = new gptRequest{
 		prompt: prompt,
 		callback: callback,
-		saveToLog: GPT_LEARNING_ENABLED
 	};
 
 	xTaskCreate(gptChatTask, "gptChatTask", 20 * 1024, data, 10, &gptTaskHandle);

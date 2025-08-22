@@ -4,10 +4,10 @@
 #include <Arduino.h>
 #include <vector>
 #include "Config.h"
-#include "lib/Utils/Sstring.h"
-#include "lib/Utils/FileManager.h"
+#include "Sstring.h"
+#include "FileManager.h"
 #include "lib/Utils/CommandMapper.h"
-#include "lib/Utils/Logger.h"
+#include "Logger.h"
 #include "lib/Communication/WebSocketHandler.h"
 #include "lib/Communication/GPTAdapter.h"
 

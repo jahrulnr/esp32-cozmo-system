@@ -1,5 +1,5 @@
 #include "ServoControl.h"
-#include "lib/Utils/Logger.h"
+#include "Logger.h"
 
 namespace Motors {
 

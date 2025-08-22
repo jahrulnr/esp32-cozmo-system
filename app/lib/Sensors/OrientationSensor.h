@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-#include "lib/Utils/I2CManager.h"
+#include "I2CManager.h"
 
 namespace Sensors {
 

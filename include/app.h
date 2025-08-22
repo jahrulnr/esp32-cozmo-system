@@ -8,6 +8,7 @@
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include "lib/Utils/SpiAllocator.h"
 #include "lib/Automation/Automation.h"
 #include "lib/Sensors/Camera.h"
 #include "lib/Sensors/OrientationSensor.h"
@@ -21,25 +22,21 @@
 #include "lib/Communication/WebServer.h"
 #include "lib/Communication/WebSocketHandler.h"
 #include "lib/Communication/GPTAdapter.h"
-// #include "lib/Communication/SPIHandler.h"
-#include "lib/Screen/Screen.h"
-#include "lib/Utils/FileManager.h"
-#include "lib/Utils/Logger.h"
-#include "lib/Utils/SpiAllocator.h"
-#include "lib/Utils/I2CScanner.h"
-#include "lib/Utils/I2CManager.h"
-#include "lib/Utils/IOExtern.h"
-#include "lib/Utils/Sstring.h"
 #include "lib/Utils/CommandMapper.h"
-#include "lib/Utils/ConfigManager.h"
-#include "lib/Audio/PWMSpeaker.h"
-#include "lib/Audio/I2SSpeaker.h"
+#include "lib/Screen/Screen.h"
+#include "FileManager.h"
+#include "Logger.h"
+#include "I2CScanner.h"
+#include "I2CManager.h"
+#include "IOExtern.h"
+#include "Sstring.h"
+#include "PWMSpeaker.h"
+#include "I2SSpeaker.h"
 
 struct gptRequest
 {
 	String prompt;
 	Communication::GPTAdapter::ResponseCallback callback;
-	bool saveToLog;  // Flag to indicate if this interaction should be logged
 };
 
 // Component instances
@@ -64,7 +61,6 @@ extern Screen::Screen* screen;
 extern Utils::FileManager* fileManager;
 extern Utils::Logger* logger;
 extern Utils::CommandMapper* commandMapper;
-extern Utils::ConfigManager* configManager;
 extern Utils::IOExtern ioExpander;
 extern bool g_isApOnlyMode;
 extern bool _cameraStreaming;
@@ -89,7 +85,6 @@ void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback callback);
-void setupSPI();
 void setupExtender();
 
 // Forward declarations
@@ -158,7 +153,6 @@ void setupWebSocket();
 void setupGPT();
 void setupTasks();
 void setupCommandMapper();
-void setupConfigManager();
 void setupAutomation();
 void updateManualControlTime();
 bool isAutomationEnabled();

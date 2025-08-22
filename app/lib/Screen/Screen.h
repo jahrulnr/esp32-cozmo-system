@@ -6,8 +6,8 @@
 #include <U8g2lib.h>
 #include "Face/Face.h"
 #include "Config.h"
-#include "lib/Utils/Logger.h"
-#include "lib/Utils/I2CManager.h"
+#include "Logger.h"
+#include "I2CManager.h"
 #include "Bar/Bar.h"
 
 namespace Screen {

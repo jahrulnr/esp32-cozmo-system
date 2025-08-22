@@ -29,14 +29,8 @@ void setupWebSocket() {
         handleWebSocketEvent(server, client, type, arg, data, len);
       });
 
-      // Set the WebSocket in the Logger for sending logs to frontend
-      logger->setWebSocket(webSocket);
-
       webSocket->begin();
       logger->info("WebSocket server started on path /ws");
-
-      // Test WebSocket logging
-      logger->info("WebSocket logger test - this message should appear in frontend");
     } else {
       logger->error("WebSocket server initialization failed");
     }

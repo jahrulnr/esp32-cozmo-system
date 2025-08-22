@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <functional>
-#include "lib/Utils/Sstring.h"
+#include "Sstring.h"
 
 namespace Communication {
 

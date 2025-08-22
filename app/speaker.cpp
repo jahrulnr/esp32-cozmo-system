@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <vector>
 #include "app.h"
-#include "lib/Audio/MP3Decoder.h"
+#include "MP3Decoder.h"
 
 void setupSpeakers() {
   logger->info("Setting up speakers...");

@@ -24,10 +24,8 @@ Screen::Screen* screen = nullptr;
 Utils::FileManager* fileManager = nullptr;
 Utils::Logger* logger = nullptr;
 Utils::CommandMapper* commandMapper = nullptr;
-Utils::ConfigManager* configManager = nullptr;
 
 void setup() {
-  // gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
   heap_caps_malloc_extmem_enable(4096);
 
   // Initialize Serial
@@ -36,7 +34,7 @@ void setup() {
   
   // Initialize Logger
   logger = &Utils::Logger::getInstance();
-  logger->init(true, true, "/logs.txt");
+  logger->init(true, true);
   logger->setLogLevel(Utils::LogLevel::INFO);
   logger->info("Logger initialized");
 
@@ -48,8 +46,6 @@ void setup() {
   setCpuFrequencyMhz(240);
   
   // Initialize components
-  // setupConfigManager();
-  // setupSPI(); // Initialize SPI buses and devices
   setupScreen();
   setupExtender();
   setupWiFi();
