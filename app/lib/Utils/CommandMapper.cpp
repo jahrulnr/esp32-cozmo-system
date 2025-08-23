@@ -398,25 +398,25 @@ void CommandMapper::initCommandHandlers() {
 
     // Microphone commands
     _commandHandlers["MIC_CALIBRATE"] = [this](const String& param) -> bool {
-        calibrateMicrophone();
+        amicrophone->calibrateBaseline();
         _logger->debug("Microphone calibration initiated");
         return true;
     };
 
     _commandHandlers["MIC_GAIN_LOW"] = [this](const String& param) -> bool {
-        setMicrophoneGain(LOW);
+        amicrophone->setGain(LOW);
         _logger->debug("Microphone gain set to LOW (40dB)");
         return true;
     };
 
     _commandHandlers["MIC_GAIN_MID"] = [this](const String& param) -> bool {
-        setMicrophoneGain(HIGH);
+        amicrophone->setGain(HIGH);
         _logger->debug("Microphone gain set to MID (50dB)");
         return true;
     };
 
     _commandHandlers["MIC_GAIN_HIGH"] = [this](const String& param) -> bool {
-        setMicrophoneGain(2); // Floating pin for 60dB
+        amicrophone->setGain(INPUT); // Floating pin for 60dB
         _logger->debug("Microphone gain set to HIGH (60dB)");
         return true;
     };

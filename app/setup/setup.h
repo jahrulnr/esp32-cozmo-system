@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Config.h"
+#include "Constants.h"
+#include <Notification.h>
 #include <vector>
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
@@ -12,7 +14,6 @@
 #include "lib/Sensors/DistanceSensor.h"
 #include "lib/Sensors/CliffDetector.h"
 #include "lib/Sensors/TemperatureSensor.h"
-#include "lib/Sensors/MicrophoneSensor.h"
 #include "lib/Motors/MotorControl.h"
 #include "lib/Motors/ServoControl.h"
 #include "lib/Communication/WiFiManager.h"
@@ -27,11 +28,14 @@
 #include "I2CManager.h"
 #include "IOExtern.h"
 #include "Sstring.h"
+#include <AnalogMicrophone.h>
 #include "I2SSpeaker.h"
 #include <AudioSamples.h>
 #include <MP3Player.h>
 #include "tasks/register.h"
+#include "callback/register.h"
 
+extern Notification* notification;
 extern Automation::Automation* automation;
 extern Sensors::Camera* camera;
 extern Sensors::OrientationSensor* orientation;
@@ -39,7 +43,6 @@ extern Sensors::DistanceSensor* distanceSensor;
 extern Sensors::CliffDetector* cliffLeftDetector;
 extern Sensors::CliffDetector* cliffRightDetector;
 extern Sensors::TemperatureSensor* temperatureSensor;
-extern Sensors::MicrophoneSensor* microphoneSensor;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
 extern Communication::WiFiManager* wifiManager;
@@ -51,10 +54,12 @@ extern Utils::FileManager* fileManager;
 extern Utils::Logger* logger;
 extern Utils::CommandMapper* commandMapper;
 extern Utils::IOExtern ioExpander;
+extern AnalogMicrophone* amicrophone;
 extern I2SSpeaker* i2sSpeaker;
 extern AudioSamples* audioSamples;
 
 void setupLogger();
+void setupNotification();
 void setupFilemanager();
 void setupCamera();
 void setupMotors();

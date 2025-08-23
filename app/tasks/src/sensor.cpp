@@ -37,11 +37,6 @@ void sensorMonitorTask(void* parameter) {
             cliffRightDetector->update();
         }
 
-        // Microphone sensor
-        if (microphoneSensor) {
-            checkMicrophone();
-        }
-
         // Send the data to all connected clients using the DTO v1.0 format
         if (millis() - currentUpdate >= sendInterval) {
             Utils::SpiJsonDocument jsonData;
@@ -86,20 +81,16 @@ void sensorMonitorTask(void* parameter) {
             }
 
             // Microphone sensor
-            if (microphoneSensor && microphoneSensor->isInitialized()) {
-                jsonData["microphone"]["level"] = getCurrentSoundLevel();
-                jsonData["microphone"]["peak"] = getPeakSoundLevel();
-                jsonData["microphone"]["detected"] = isSoundDetected();
+            if (amicrophone && amicrophone->isInitialized()) {
+                jsonData["microphone"]["level"] = amicrophone->readPeakLevel();
+                jsonData["microphone"]["peak"] = amicrophone->readLevel();
                 jsonData["microphone"]["initialized"] = true;
                 jsonData["microphone"]["recording"] = false;
-                jsonData["microphone"]["voice_detected"] = microphoneSensor->isSoundDetected();
             } else {
                 jsonData["microphone"]["level"] = 0;
                 jsonData["microphone"]["peak"] = 0;
-                jsonData["microphone"]["detected"] = false;
                 jsonData["microphone"]["initialized"] = false;
                 jsonData["microphone"]["recording"] = false;
-                jsonData["microphone"]["voice_detected"] = false;
             }
 
             // Speaker status

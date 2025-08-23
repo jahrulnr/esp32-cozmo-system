@@ -3,6 +3,7 @@
 void setupApp() {
 	setupLogger();
 	setupFilemanager();
+  setupNotification();
 
   // Initialize components
   setupScreen();

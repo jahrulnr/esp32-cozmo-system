@@ -34,12 +34,6 @@ void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback c
 
 // Forward declarations
 bool cliffDetected();
-void checkMicrophone();
-int getCurrentSoundLevel();
-int getPeakSoundLevel();
-bool isSoundDetected();
-void calibrateMicrophone();
-void setMicrophoneGain(int gainLevel);
 void playSpeakerTone(int frequency, int duration, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 void playSpeakerBeep(int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 void playSpeakerConfirmation(int volume = I2S_SPEAKER_DEFAULT_VOLUME);

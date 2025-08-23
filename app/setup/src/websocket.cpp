@@ -184,10 +184,9 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 statusData["spiffs_total"] = String(SPIFFS.totalBytes() / 1024) + " KB"; // KB
                 statusData["spiffs_used"] = String((SPIFFS.totalBytes() - SPIFFS.usedBytes()) / 1024) + " KB"; // KB
                 statusData["temperature"] = temperatureSensor->readTemperature();
-                statusData["microphone"]["enabled"] = microphoneSensor != nullptr;
-                if (microphoneSensor && microphoneSensor->isInitialized()) {
-                  statusData["microphone"]["level"] = getCurrentSoundLevel();
-                  statusData["microphone"]["detected"] = isSoundDetected();
+                statusData["microphone"]["enabled"] = amicrophone != nullptr;
+                if (amicrophone && amicrophone->isInitialized()) {
+                  statusData["microphone"]["level"] = amicrophone->readLevel();
                 }
                 statusData["speaker"]["enabled"] = getSpeakerStatus();
                 statusData["speaker"]["type"] = getSpeakerType();
@@ -393,11 +392,10 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 }
               }
               else if (type == "microphone_request") {
-                if (microphoneSensor && microphoneSensor->isInitialized()) {
+                if (amicrophone && amicrophone->isInitialized()) {
                   Utils::SpiJsonDocument sensorData;
-                  sensorData["microphone"]["level"] = getCurrentSoundLevel();
-                  sensorData["microphone"]["peak"] = getPeakSoundLevel();
-                  sensorData["microphone"]["detected"] = isSoundDetected();
+                  sensorData["microphone"]["level"] = amicrophone->readLevel();
+                  sensorData["microphone"]["peak"] = amicrophone->readPeakLevel();
 
                   webSocket->sendJsonMessage(clientId, "sensor_data", sensorData);
                 } else {
