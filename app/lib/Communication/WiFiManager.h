@@ -40,7 +40,7 @@ public:
      * @param timeout Connection timeout in milliseconds
      * @return true if connection was successful, false otherwise
      */
-    bool connect(const String& ssid, const String& password, uint32_t timeout = 30000);
+    bool connect(const String& ssid, const String& password, uint32_t timeout = 3000);
 
     /**
      * Start access point mode

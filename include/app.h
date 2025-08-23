@@ -30,8 +30,9 @@
 #include "I2CManager.h"
 #include "IOExtern.h"
 #include "Sstring.h"
-#include "PWMSpeaker.h"
 #include "I2SSpeaker.h"
+#include <AudioSamples.h>
+#include <MP3Player.h>
 
 struct gptRequest
 {
@@ -50,8 +51,8 @@ extern Sensors::TemperatureSensor* temperatureSensor;
 extern Sensors::MicrophoneSensor* microphoneSensor;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
-extern Audio::PWMSpeaker* pwmSpeaker;
-extern Audio::I2SSpeaker* i2sSpeaker;
+extern I2SSpeaker* i2sSpeaker;
+extern AudioSamples* audioSamples;
 extern Communication::WiFiManager* wifiManager;
 extern Communication::WebServer* webServer;
 extern Communication::WebSocketHandler* webSocket;
@@ -75,9 +76,6 @@ extern TaskHandle_t automationTaskHandle;
 extern bool _enableAutomation;
 extern unsigned long _lastManualControlTime;
 
-// SPI control
-// bool sendPingToSlave();
-
 // Function prototypes
 void protectCozmo();
 void protectCozmoTask(void * param);
@@ -88,7 +86,6 @@ void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback c
 void setupExtender();
 
 // Forward declarations
-// void setupSPI();
 void setupCamera();
 void startCameraStreaming();
 void stopCameraStreaming();

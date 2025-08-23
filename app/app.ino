@@ -13,17 +13,17 @@ Sensors::TemperatureSensor* temperatureSensor = nullptr;
 Sensors::MicrophoneSensor* microphoneSensor = nullptr;
 Motors::MotorControl* motors = nullptr;
 Motors::ServoControl* servos = nullptr;
-Audio::PWMSpeaker* pwmSpeaker = nullptr;
-Audio::I2SSpeaker* i2sSpeaker = nullptr;
 Communication::WiFiManager* wifiManager = nullptr;
 Communication::WebServer* webServer = nullptr;
 Communication::WebSocketHandler* webSocket = nullptr;
 Communication::GPTAdapter* gptAdapter = nullptr;
-// Communication::SPIHandler* spiHandler = nullptr;
 Screen::Screen* screen = nullptr;
 Utils::FileManager* fileManager = nullptr;
 Utils::Logger* logger = nullptr;
 Utils::CommandMapper* commandMapper = nullptr;
+
+I2SSpeaker* i2sSpeaker = nullptr;
+AudioSamples* audioSamples = nullptr;
 
 void setup() {
   heap_caps_malloc_extmem_enable(4096);
@@ -78,15 +78,14 @@ void setup() {
     screen->update();
   }
   
-  playSpeakerMP3File("/audio/boot.mp3");
+  if (!playSpeakerMP3File("/audio/boot.mp3")) {
+    logger->error("Play boot mp3 failed");
+  };
 
   setupTasks();
 }
 
 void loop() {
-  vTaskDelay(pdMS_TO_TICKS(2000)); 
-  // disableCore0WDT();
-  // disableCore1WDT();
   disableLoopWDT();
   vTaskDelete(NULL);
 }

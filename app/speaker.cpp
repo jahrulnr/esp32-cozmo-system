@@ -1,215 +1,125 @@
 #include <Arduino.h>
 #include <vector>
 #include "app.h"
-#include "MP3Decoder.h"
 
 void setupSpeakers() {
   logger->info("Setting up speakers...");
   
   #if SPEAKER_ENABLED
-  
-  #if SPEAKER_TYPE_PWM
-  logger->info("Initializing PWM speaker...");
-  pwmSpeaker = new Audio::PWMSpeaker(PWM_SPEAKER_PIN, PWM_SPEAKER_CHANNEL);
-  if (pwmSpeaker->init()) {
-    pwmSpeaker->setVolume(PWM_SPEAKER_DEFAULT_VOLUME);
-    logger->info("PWM speaker initialized successfully");
-    
-    // Play startup sound to confirm speaker is working
-    pwmSpeaker->playStartup(PWM_SPEAKER_DEFAULT_VOLUME);
-  } else {
-    logger->error("PWM speaker initialization failed");
-    delete pwmSpeaker;
-    pwmSpeaker = nullptr;
-  }
-  #else
-  pwmSpeaker = nullptr;
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   logger->info("Initializing I2S speaker (MAX98357)...");
-  i2sSpeaker = new Audio::I2SSpeaker(
+  i2sSpeaker = new I2SSpeaker(
+    I2S_SPEAKER_DATA_PIN,
     I2S_SPEAKER_BCLK_PIN, 
-    I2S_SPEAKER_WCLK_PIN, 
-    I2S_SPEAKER_DATA_PIN
+    I2S_SPEAKER_WCLK_PIN
   );
   
-  if (i2sSpeaker->init(I2S_SPEAKER_SAMPLE_RATE, I2S_SPEAKER_BITS_PER_SAMPLE)) {
-    i2sSpeaker->setVolume(I2S_SPEAKER_DEFAULT_VOLUME);
+  if (i2sSpeaker->init(I2S_SPEAKER_SAMPLE_RATE, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO) == ESP_OK) {
     logger->info("I2S speaker (MAX98357) initialized successfully");
     
-    // Play startup sound to confirm speaker is working
-    // i2sSpeaker->playStartup(I2S_SPEAKER_DEFAULT_VOLUME);
+    // Now initialize dependent components AFTER i2sSpeaker is created
+    audioSamples = new AudioSamples(i2sSpeaker);
+    if (!MP3Player::init(i2sSpeaker)) {
+      logger->error("MP3Player initialization failed");
+    } else {
+      logger->info("MP3Player initialized successfully");
+    }
+    
+    // Test with a simple beep first
+    logger->info("Testing I2S speaker with beep...");
+    if (audioSamples) {
+      audioSamples->playSample(AudioSamples::BEEP_SHORT);
+    }
   } else {
     logger->error("I2S speaker (MAX98357) initialization failed");
     delete i2sSpeaker;
     i2sSpeaker = nullptr;
+    audioSamples = nullptr;
   }
-  #else
-  i2sSpeaker = nullptr;
-  #endif
   
   #else
   logger->info("Speakers disabled in configuration");
   pwmSpeaker = nullptr;
   i2sSpeaker = nullptr;
+  audioSamples = nullptr;
   #endif
 }
 
 void playSpeakerTone(int frequency, int duration, int volume) {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->playTone(frequency, duration, volume);
-    return;
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
     i2sSpeaker->playTone(frequency, duration, volume);
     return;
   }
   #endif
-  #endif
 }
 
 void playSpeakerBeep(int volume) {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->beep(volume);
-    return;
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->beep(volume);
+    audioSamples->playSample(AudioSamples::BEEP_SHORT);
     return;
   }
-  #endif
   #endif
 }
 
 void playSpeakerConfirmation(int volume) {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->playConfirmation(volume);
-    return;
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->playConfirmation(volume);
+    audioSamples->playSample(AudioSamples::CONFIRMATION);
     return;
   }
-  #endif
   #endif
 }
 
 void playSpeakerError(int volume) {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->playError(volume);
-    return;
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->playError(volume);
+    audioSamples->playSample(AudioSamples::ERROR);
     return;
   }
-  #endif
   #endif
 }
 
 void playSpeakerStartup(int volume) {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->playStartup(volume);
-    return;
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->playStartup(volume);
+    audioSamples->playSample(AudioSamples::POWER_ON);
     return;
   }
-  #endif
   #endif
 }
 
 void playSpeakerNotification(int volume) {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->playNotification(volume);
-    return;
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->playNotification(volume);
+    audioSamples->playSample(AudioSamples::NOTIFICATION);
     return;
   }
-  #endif
   #endif
 }
 
 void stopSpeaker() {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->stop();
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
     i2sSpeaker->stop();
   }
-  #endif
   #endif
 }
 
 void setSpeakerVolume(int volume) {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->setVolume(volume);
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->setVolume(volume);
+    MP3Player::setVolume(volume / 100.0f);
   }
-  #endif
   #endif
 }
 
 // Get current speaker volume
 int getSpeakerVolume() {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    return pwmSpeaker->getVolume();
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    return i2sSpeaker->getVolume();
+    return (int)(MP3Player::getVolume() * 100);
   }
-  #endif
   #endif
   
   return 0;
@@ -217,17 +127,9 @@ int getSpeakerVolume() {
 
 bool isSpeakerPlaying() {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    return pwmSpeaker->isPlaying();
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
     return i2sSpeaker->isPlaying();
   }
-  #endif
   #endif
   
   return false;
@@ -256,17 +158,9 @@ void playBehaviorSound(const String& behavior) {
 // Get speaker status for WebSocket
 bool getSpeakerStatus() {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    return true;
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
     return true;
   }
-  #endif
   #endif
   
   return false;
@@ -275,17 +169,9 @@ bool getSpeakerStatus() {
 // Get speaker type for WebSocket
 String getSpeakerType() {
   #if SPEAKER_ENABLED
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    return "PWM";
-  }
-  #endif
-  
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
     return "I2S_MAX98357";
   }
-  #endif
   #endif
   
   return "None";
@@ -317,26 +203,19 @@ bool playSpeakerAudioFile(const String& filePath, int volume) {
   
   logger->info("Playing audio file: " + filePath + " (" + String(dataSize) + " bytes)");
   
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    Audio::MP3Decoder decoder;
-    Audio::MP3Decoder::MP3Info *info;
+    MP3Decoder decoder;
+    MP3Decoder::MP3Info *info;
     decoder.getFileInfo(filePath, info);
 
     // For I2S speaker, play as raw audio data
-    if (info) i2sSpeaker->setSampleRate(info->sampleRate);
-    i2sSpeaker->playAudioData(audioData, dataSize, volume);
+    // if (info) 
+    i2sSpeaker->start();
+    size_t bytesWritten;
+    i2sSpeaker->writeAudioData(audioData, dataSize, &bytesWritten);
+    i2sSpeaker->stop();
     return true;
   }
-  #endif
-  
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    // For PWM speaker, play as frequency data with default sample rate
-    pwmSpeaker->playAudioData(audioData, dataSize, 8000, volume); // 8kHz sample rate
-    return true;
-  }
-  #endif
   
   logger->error("No speaker available for audio file playback");
   return false;
@@ -357,19 +236,12 @@ void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleR
   
   logger->info("Playing audio data (" + String(dataSize) + " bytes, " + String(sampleRate) + "Hz)");
   
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->playAudioData(data, dataSize, volume);
+    i2sSpeaker->start();
+    i2sSpeaker->writeSamples((int16_t*)data, dataSize);
+    i2sSpeaker->stop();
     return;
   }
-  #endif
-  
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    pwmSpeaker->playAudioData(data, dataSize, sampleRate, volume);
-    return;
-  }
-  #endif
   
   logger->error("No speaker available for audio data playback");
   #endif
@@ -432,18 +304,11 @@ bool playSpeakerMP3File(const String& filePath, int volume) {
     return false;
   }
   
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
     // return i2sSpeaker->playMP3File(filePath, volume);
-    return i2sSpeaker->playMP3FileStreamingOptimized(filePath, volume);
+    
+    return MP3Player::playFile(filePath, volume / 100.0f);
   }
-  #endif
-  
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    return pwmSpeaker->playMP3File(filePath, volume);
-  }
-  #endif
   
   logger->error("No speaker available for MP3 playback");
   return false;
@@ -457,13 +322,13 @@ bool playSpeakerMP3File(const String& filePath, int volume) {
 // Get MP3 file information
 bool getMP3FileInfo(const String& filePath, int* sampleRate, int* channels, int* bitRate, int* duration) {
   #if SPEAKER_ENABLED
-  Audio::MP3Decoder decoder;
+  MP3Decoder decoder;
   if (!decoder.init()) {
     logger->error("Failed to initialize MP3 decoder");
     return false;
   }
   
-  Audio::MP3Decoder::MP3Info info;
+  MP3Decoder::MP3Info info;
   if (!decoder.getFileInfo(filePath, &info)) {
     logger->error("Failed to get MP3 file info: " + filePath);
     return false;
@@ -489,7 +354,7 @@ bool getMP3FileInfo(const String& filePath, int* sampleRate, int* channels, int*
 // Convert MP3 to custom audio format
 bool convertMP3ToAudioFile(const String& mp3FilePath, const String& audioFilePath) {
   #if SPEAKER_ENABLED
-  Audio::MP3Decoder decoder;
+  MP3Decoder decoder;
   if (!decoder.init()) {
     logger->error("Failed to initialize MP3 decoder");
     return false;
@@ -498,7 +363,7 @@ bool convertMP3ToAudioFile(const String& mp3FilePath, const String& audioFilePat
   // Decode MP3 to PCM
   int16_t* pcmBuffer = nullptr;
   size_t pcmSize = 0;
-  Audio::MP3Decoder::MP3Info info;
+  MP3Decoder::MP3Info info;
   
   if (!decoder.decodeFile(mp3FilePath, &pcmBuffer, &pcmSize, &info)) {
     logger->error("Failed to decode MP3 file: " + mp3FilePath);
@@ -568,19 +433,10 @@ bool playSpeakerRandomMP3(int volume, Utils::FileManager::StorageType storageTyp
   
   logger->info("Selected random MP3: " + selectedFile + " (" + String(randomIndex + 1) + "/" + String(mp3Files.size()) + ")");
   
-  // Play the selected MP3 file
-  #if SPEAKER_TYPE_I2S
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
     // return i2sSpeaker->playMP3File(selectedFile, volume);
-    return i2sSpeaker->playMP3FileStreamingOptimized(selectedFile, volume);
+    return MP3Player::playFile(selectedFile, volume / 100.0f);
   }
-  #endif
-  
-  #if SPEAKER_TYPE_PWM
-  if (pwmSpeaker && pwmSpeaker->isInitialized()) {
-    return pwmSpeaker->playMP3File(selectedFile, volume);
-  }
-  #endif
   
   logger->error("No speaker available for random MP3 playback");
   return false;
