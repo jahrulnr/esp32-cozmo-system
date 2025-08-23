@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
+Communication::WebServer *webServer;
+
 void setupWebServer() {
   if (WEBSERVER_ENABLED) {
     logger->info("Setting up web server...");

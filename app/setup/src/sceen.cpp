@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
+Screen::Screen* screen = nullptr;
+
 void setupScreen() {
   screen = new Screen::Screen(logger);
   if (SCREEN_ENABLED) {

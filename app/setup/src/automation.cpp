@@ -7,6 +7,8 @@ bool _enableAutomation = AUTOMATION_ENABLED;
 unsigned long _lastManualControlTime = 0;
 int g_automationBehaviorIndex = 0;
 
+Automation::Automation *automation;
+
 // Initialize and start automation
 void setupAutomation() {
     if (automation == nullptr) {

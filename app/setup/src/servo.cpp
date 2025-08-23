@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
+Motors::ServoControl* servos = nullptr;
+
 void setupServos() {
   if (SERVO_ENABLED) {
     logger->info("Setting up servos...");

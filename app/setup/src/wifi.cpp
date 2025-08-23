@@ -4,6 +4,8 @@
 // Global flag to track if we're running in AP-only mode
 bool g_isApOnlyMode = false;
 
+Communication::WiFiManager *wifiManager;
+
 void setupWiFi() {
   if (WIFI_ENABLED) {
     logger->info("Setting up WiFi...");

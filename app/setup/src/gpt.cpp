@@ -2,6 +2,8 @@
 #include "setup/setup.h"
 #include "tasks/register.h"
 
+Communication::GPTAdapter *gptAdapter;
+
 void setupGPT(){
 	gptAdapter = new Communication::GPTAdapter();
 	#if GPT_ENABLED

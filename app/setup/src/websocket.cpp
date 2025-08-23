@@ -3,6 +3,8 @@
 #include "setup/setup.h"
 #include "tasks/register.h"
 
+Communication::WebSocketHandler *webSocket;
+
 // Current session data
 struct {
   bool authenticated = false;

@@ -13,6 +13,8 @@ const unsigned long TEMPERATURE_CHECK_INTERVAL = 30000; // 30 seconds
 unsigned long lastTemperatureBehavior = 0;
 const unsigned long TEMPERATURE_BEHAVIOR_COOLDOWN = 300000; // 5 minutes
 
+Sensors::TemperatureSensor *temperatureSensor;
+
 void setupTemperatureSensor() {
   logger->info("Setting up temperature sensor...");
   

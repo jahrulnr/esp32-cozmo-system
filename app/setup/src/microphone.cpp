@@ -28,6 +28,8 @@ bool loudSoundDetected = false;
 int soundLevel = 0;
 int peakSoundLevel = 0;
 
+Sensors::MicrophoneSensor *microphoneSensor;
+
 void setupMicrophone() {
   logger->info("Setting up MAX9814 microphone sensor...");
   

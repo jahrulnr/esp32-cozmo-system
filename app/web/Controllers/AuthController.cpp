@@ -14,12 +14,8 @@ Response AuthController::showLogin(Request& request) {
 		
 		// Serve login page from SPIFFS
 		if (SPIFFS.exists("/views/login.html")) {
-				File file = SPIFFS.open("/views/login.html", "r");
-				String html = file.readString();
-				file.close();
-				
 				return Response(request.getServerRequest())
-						.html(html);
+						.file("/views/login.html");
 		}
 		
 		// Fallback if file doesn't exist

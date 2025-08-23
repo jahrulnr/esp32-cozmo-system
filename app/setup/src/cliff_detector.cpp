@@ -1,5 +1,8 @@
 #include "setup/setup.h"
 
+Sensors::CliffDetector *cliffLeftDetector;
+Sensors::CliffDetector *cliffRightDetector;
+
 void setupCliffDetector(){
 	cliffLeftDetector = new Sensors::CliffDetector();
 	cliffRightDetector = new Sensors::CliffDetector();

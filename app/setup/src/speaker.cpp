@@ -3,6 +3,9 @@
 #include "setup/setup.h"
 #include "tasks/register.h"
 
+I2SSpeaker *i2sSpeaker;
+AudioSamples *audioSamples;
+
 void setupSpeakers() {
   logger->info("Setting up speakers...");
   

@@ -1,5 +1,7 @@
 #include "../setup.h"
 
+Sensors::Camera *camera;
+
 void setupCamera() {
   if (CAMERA_ENABLED) {
     camera = new Sensors::Camera();

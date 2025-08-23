@@ -30,6 +30,7 @@
 #include "I2SSpeaker.h"
 #include <AudioSamples.h>
 #include <MP3Player.h>
+#include "tasks/register.h"
 
 extern Automation::Automation* automation;
 extern Sensors::Camera* camera;
@@ -53,6 +54,8 @@ extern Utils::IOExtern ioExpander;
 extern I2SSpeaker* i2sSpeaker;
 extern AudioSamples* audioSamples;
 
+void setupLogger();
+void setupFilemanager();
 void setupCamera();
 void setupMotors();
 void setupServos();
@@ -71,3 +74,5 @@ void setupTasks();
 void setupCommandMapper();
 void setupAutomation();
 void setupExtender();
+
+void setupApp();

@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
+Motors::MotorControl *motors;
+
 void setupMotors() {
   motors = new Motors::MotorControl();
   if (MOTOR_ENABLED) {

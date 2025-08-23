@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
+Utils::CommandMapper *commandMapper;
+
 void setupCommandMapper() {
     if (screen && motors && servos) {
         logger->info("Setting up CommandMapper...");

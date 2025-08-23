@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
+Sensors::DistanceSensor *distanceSensor;
+
 void setupDistanceSensor() {
   if (ULTRASONIC_ENABLED) {
     logger->info("Setting up HC-SR04 ultrasonic distance sensor...");

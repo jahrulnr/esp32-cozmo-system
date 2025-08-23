@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
+Sensors::OrientationSensor *orientation;
+
 void setupOrientation() {
   if (ORIENTATION_ENABLED) {
     logger->info("Setting up gyroscope...");
