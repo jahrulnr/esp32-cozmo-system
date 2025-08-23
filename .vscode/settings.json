@@ -3,6 +3,7 @@
 		"*.twig": "twig",
 		"*.vcl": "bat",
 		"*.cf": "properties",
+		"*.sh": "shellscript",
 		"unordered_map": "cpp",
 		"istream": "cpp",
 		"numeric": "cpp",
@@ -32,6 +33,8 @@
 		"cstdint": "cpp",
 		"algorithm": "cpp",
 		"mutex": "cpp",
-		"stop_token": "cpp"
+		"stop_token": "cpp",
+		"bitset": "cpp",
+		"string_view": "cpp"
 	}
 }

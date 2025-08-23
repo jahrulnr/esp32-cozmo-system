@@ -1,5 +1,6 @@
 #include "CommandMapper.h"
-#include "app.h"  // For access to updateManualControlTime()
+#include "setup/setup.h"  // For access to updateManualControlTime()
+#include <tasks/register.h>
 
 namespace Utils {
 

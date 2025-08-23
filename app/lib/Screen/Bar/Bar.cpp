@@ -1,6 +1,6 @@
 // filepath: /apps/PlatformIO/cozmo-system/app/lib/Screen/Bar/Bar.cpp
 #include "Bar.h"
-#include "app.h"
+#include "setup/setup.h"
 
 MicBar::MicBar(U8G2_SSD1306_128X64_NONAME_F_HW_I2C *display): _display(display) {
 	// Constructor implementation

@@ -1,5 +1,6 @@
 #include "Automation.h"
-#include "app.h"
+#include "setup/setup.h"
+#include <tasks/register.h>
 
 namespace Automation {
 

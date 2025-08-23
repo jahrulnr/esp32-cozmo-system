@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <soc/soc.h>
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
-#include "app.h"
+#include "setup/setup.h"
+#include "tasks/register.h"
 
 Automation::Automation* automation = nullptr;
 Sensors::Camera* camera = nullptr;
