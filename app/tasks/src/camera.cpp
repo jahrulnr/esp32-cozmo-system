@@ -53,8 +53,11 @@ void cameraStreamTask(void* parameter) {
   uint32_t consecutiveLowMemory = 0;
   uint32_t adaptiveInterval = camera->getStreamingInterval();
   _cameraStreaming = false;
+  TickType_t lastWakeTime = xTaskGetTickCount();
   
   while (true) {
+    vTaskDelayUntil(&lastWakeTime, adaptiveInterval / portTICK_PERIOD_MS);
+
     // Only process frames when streaming is enabled and clients are connected
     if (!_cameraStreaming) {
       vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -67,13 +70,9 @@ void cameraStreamTask(void* parameter) {
       webSocket->sendBinary(-1, fb->buf, fb->len);
       esp_camera_fb_return(fb);
       logger->info("capturing image");
-      // Wait for the next frame using adaptive interval
-      vTaskDelay(adaptiveInterval / portTICK_PERIOD_MS);
     } else {
       logger->info("capture image failed");
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
-
-		taskYIELD();
   }
 }

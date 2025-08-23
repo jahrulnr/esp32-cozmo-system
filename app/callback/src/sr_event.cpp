@@ -1,5 +1,7 @@
 #include "../register.h"
 
+#if MICROPHONE_ENABLED
+
 // Event callback for SR system
 void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {
     switch (event) {
@@ -24,50 +26,51 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
         case SR_EVENT_COMMAND:
             Serial.printf("✅ Command detected! ID=%d, Phrase=%d\n", command_id, phrase_id);
             
-            // Map phrase_id to actual voice command (since phrase_id indexes the voice_commands array)
-            if (phrase_id >= 0 && phrase_id < (sizeof(voice_commands) / sizeof(sr_cmd_t))) {
-                const sr_cmd_t* cmd = &voice_commands[phrase_id];
-                Serial.printf("   📝 You said: '%s'\n", cmd->str);
-                Serial.printf("   � Phonetic: '%s'\n", cmd->phoneme);
-                Serial.printf("   🆔 Command Group: %d, Phrase Index: %d\n", command_id, phrase_id);
-            } else {
-                Serial.println("   ❓ Unknown command mapping");
-            }
-            
             // Handle specific command groups based on command_id (from voice_commands array)
             switch (command_id) {
-                case 0: 
-                    Serial.println("💡 Action: Turning ON the light");
-                    Serial.println("   🎯 Target: Light Control System (ON)");
-                    // Add your light ON control logic here
-                    if (notification) {
-                        notification->send(NOTIFICATION_DISPLAY, (void*)"LIGHTS_ON");
-                    }
+                case 0: // look to left
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_LOOK_LEFT);
                     break;
-                case 1: 
-                    Serial.println("💡 Action: Turning OFF the light");
-                    Serial.println("   🎯 Target: Light Control System (OFF/DARK)");
-                    // Add your light OFF control logic here
-                    if (notification) {
-                        notification->send(NOTIFICATION_DISPLAY, (void*)"LIGHTS_OFF");
-                    }
+                    
+                case 1: // look to right
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_LOOK_RIGHT);
                     break;
-                case 2: 
-                    Serial.println("🌀 Action: Starting fan");
-                    Serial.println("   🎯 Target: Fan Control System (START)");
-                    // Add your fan start control logic here
-                    if (notification) {
-                        notification->send(NOTIFICATION_DISPLAY, (void*)"FAN_START");
-                    }
+                    
+                case 2: // close your eyes
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_CLOSE_EYE);
                     break;
-                case 3: 
-                    Serial.println("� Action: Stopping fan");
-                    Serial.println("   🎯 Target: Fan Control System (STOP)");
-                    // Add your fan stop control logic here
-                    if (notification) {
-                        notification->send(NOTIFICATION_DISPLAY, (void*)"FAN_STOP");
-                    }
-                    break;
+                // case 0: 
+                //     Serial.println("💡 Action: Turning ON the light");
+                //     Serial.println("   🎯 Target: Light Control System (ON)");
+                //     // Add your light ON control logic here
+                //     if (notification) {
+                //         notification->send(NOTIFICATION_DISPLAY, (void*)"LIGHTS_ON");
+                //     }
+                //     break;
+                // case 1: 
+                //     Serial.println("💡 Action: Turning OFF the light");
+                //     Serial.println("   🎯 Target: Light Control System (OFF/DARK)");
+                //     // Add your light OFF control logic here
+                //     if (notification) {
+                //         notification->send(NOTIFICATION_DISPLAY, (void*)"LIGHTS_OFF");
+                //     }
+                //     break;
+                // case 2: 
+                //     Serial.println("🌀 Action: Starting fan");
+                //     Serial.println("   🎯 Target: Fan Control System (START)");
+                //     // Add your fan start control logic here
+                //     if (notification) {
+                //         notification->send(NOTIFICATION_DISPLAY, (void*)"FAN_START");
+                //     }
+                //     break;
+                // case 3: 
+                //     Serial.println("� Action: Stopping fan");
+                //     Serial.println("   🎯 Target: Fan Control System (STOP)");
+                //     // Add your fan stop control logic here
+                //     if (notification) {
+                //         notification->send(NOTIFICATION_DISPLAY, (void*)"FAN_STOP");
+                //     }
+                //     break;
                 default: 
                     Serial.printf("❓ Unknown command ID: %d\n", command_id);
                     Serial.println("   📋 Available commands:");
@@ -103,3 +106,5 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             break;
     }
 }
+
+#endif

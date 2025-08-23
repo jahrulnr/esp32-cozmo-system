@@ -5,7 +5,7 @@
 #include "tasks/register.h"
 
 void setup() {
-  heap_caps_malloc_extmem_enable(4096);
+  heap_caps_malloc_extmem_enable(1024 * 8);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
@@ -18,6 +18,5 @@ void setup() {
 }
 
 void loop() {
-  disableLoopWDT();
   vTaskDelete(NULL);
 }

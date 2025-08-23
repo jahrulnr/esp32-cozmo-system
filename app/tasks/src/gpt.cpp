@@ -203,8 +203,6 @@ void gptChatTask(void * param) {
 				screen->mutexUpdate();
 			}
 		});
-
-		taskYIELD();
 	}
 
 	gptTaskHandle = nullptr;

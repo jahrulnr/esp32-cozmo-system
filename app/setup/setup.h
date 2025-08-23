@@ -1,5 +1,6 @@
 #pragma once
 
+#include <esp_log.h>
 #include "Config.h"
 #include "Constants.h"
 #include <Notification.h>
@@ -29,6 +30,7 @@
 #include "IOExtern.h"
 #include "Sstring.h"
 #include <AnalogMicrophone.h>
+#include <I2SMicrophone.h>
 #include "I2SSpeaker.h"
 #include <AudioSamples.h>
 #include <MP3Player.h>
@@ -55,8 +57,11 @@ extern Utils::Logger* logger;
 extern Utils::CommandMapper* commandMapper;
 extern Utils::IOExtern ioExpander;
 extern AnalogMicrophone* amicrophone;
+extern I2SMicrophone* microphone;
 extern I2SSpeaker* i2sSpeaker;
 extern AudioSamples* audioSamples;
+
+extern bool sr_system_running;
 
 void setupLogger();
 void setupNotification();
@@ -79,5 +84,6 @@ void setupTasks();
 void setupCommandMapper();
 void setupAutomation();
 void setupExtender();
+void setupSpeechRecognition();
 
 void setupApp();

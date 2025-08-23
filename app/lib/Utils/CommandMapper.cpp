@@ -397,6 +397,7 @@ void CommandMapper::initCommandHandlers() {
     };
 
     // Microphone commands
+    #if MICROPHONE_ANALOG
     _commandHandlers["MIC_CALIBRATE"] = [this](const String& param) -> bool {
         amicrophone->calibrateBaseline();
         _logger->debug("Microphone calibration initiated");
@@ -420,6 +421,7 @@ void CommandMapper::initCommandHandlers() {
         _logger->debug("Microphone gain set to HIGH (60dB)");
         return true;
     };
+    #endif
 
     // Audio/Speaker commands
     _commandHandlers["PLAY_BEEP"] = [this](const String& param) -> bool {

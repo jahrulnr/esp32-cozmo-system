@@ -5,13 +5,16 @@
 
 // Define voice commands (phonetic representations)
 static const sr_cmd_t voice_commands[] = {
-	{0, "Turn on the light", "TkN nN jc LiT"},
-	{0, "Switch on the light", "SWgp nN jc LiT"},
-	{1, "Turn off the light", "TkN eF jc LiT"},
-	{1, "Switch off the light", "SWgp eF jc LiT"},
-	{1, "Go dark", "Gb DnRK"},
-	{2, "Start fan", "STnRT FaN"},
-	{3, "Stop fan", "STnP FaN"},
+	{0, "look to left", "LwK To LfFT"},
+	{1, "look to right", "LwK To RiT"},
+	{2, "close your eyes", "KLbS YeR iZ"},
+	// {0, "Turn on the light", "TkN nN jc LiT"},
+// 	{0, "Switch on the light", "SWgp nN jc LiT"},
+// 	{1, "Turn off the light", "TkN eF jc LiT"},
+// 	{1, "Switch off the light", "SWgp eF jc LiT"},
+// 	{1, "Go dark", "Gb DnRK"},
+// 	{2, "Start fan", "STnRT FaN"},
+// 	{3, "Stop fan", "STnP FaN"},
 };
 
 static const char* NOTIFICATION_WAKEWORD = "wakeword";
@@ -21,8 +24,9 @@ static const char* NOTIFICATION_COMMAND = "command";
 
 // Display Events
 static const char* EVENT_DISPLAY_WAKEWORD = "display_wakeword";
-static const char* EVENT_DISPLAY_COMMAND = "display_command";
-static const char* EVENT_DISPLAY_LISTENING = "display_listening";
+static const char* EVENT_DISPLAY_LOOK_LEFT = "look_left";
+static const char* EVENT_DISPLAY_LOOK_RIGHT = "look_right";
+static const char* EVENT_DISPLAY_CLOSE_EYE = "close_eye";
 
 // SR Events
 static const char* EVENT_SR_WAKEWORD = "sr_wakeword";

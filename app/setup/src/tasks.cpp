@@ -30,9 +30,9 @@ void setupTasks() {
             "CameraStream",          // Task name
             40 * 1024,               // Stack size
             NULL,                    // Parameters
-            8 ,                      // Priority
+            4,                      // Priority
             &cameraStreamTaskHandle,  // Task handle
-            0
+            1
         );
         
         logger->info("Camera streaming task initialized");
@@ -41,23 +41,24 @@ void setupTasks() {
     }
 
     if (screen) {
-        xTaskCreateUniversal([](void *param){
-            while(1) {
-                screen->mutexUpdate();
-                vTaskDelay(pdMS_TO_TICKS(33)); 
-            }
-        }, "screenUpdate", 4096, NULL, 5, NULL, 0);
+        xTaskCreate(
+            screenTask, 
+            "screenTaskHandler", 
+            4096, 
+            NULL, 
+            4, 
+            NULL
+        );
     }
     
     // Create sensor monitoring task
-    xTaskCreateUniversal(
+    xTaskCreate(
         sensorMonitorTask,         // Task function
         "SensorMonitor",           // Task name
         4096,                      // Stack size
         NULL,                      // Parameters
-        5,                         // Priority
-        &sensorMonitorTaskHandle,  // Task handle
-        0
+        0,                         // Priority
+        &sensorMonitorTaskHandle   // Task handle
     );
     
     // Initialize automation variables
@@ -70,31 +71,34 @@ void setupTasks() {
         automation->setRandomBehaviorOrder();
     }
 
-    // Task to ping the slave device periodically
-    // xTaskCreate([](void *param){
-    //     while(1) {
-    //         sendPingToSlave();
-    //         vTaskDelay(pdMS_TO_TICKS(3000)); // Ping every 5 seconds
-    //     }
-    // }, "pingDevices", 4096, NULL, 10, NULL);
+    // if (SPEAKER_ENABLED) {
+    //     xTaskCreate([](void *param){
+    //         while(1) {
+    //             if (isSpeakerPlaying()) {
+    //                 vTaskDelay(pdMS_TO_TICKS(5000));
+    //                 continue;
+    //             }
 
-    if (SPEAKER_ENABLED) {
-        xTaskCreateUniversal([](void *param){
-            while(1) {
-                if (isSpeakerPlaying()) {
-                    vTaskDelay(pdMS_TO_TICKS(5000));
-                    continue;
-                }
-
-                if (playSpeakerRandomMP3()){
-                    logger->info("success play a random mp3");
-                }
+    //             if (playSpeakerRandomMP3()){
+    //                 logger->info("success play a random mp3");
+    //             }
                 
-                vTaskDelay(pdMS_TO_TICKS(10000)); 
-		        taskYIELD();
-            }
-        }, "autoSound", 4 * 1024, NULL, 5, NULL, 0);
-    }
+    //             vTaskDelay(pdMS_TO_TICKS(10000)); 
+	// 	        taskYIELD();
+    //         }
+    //     }, "autoSound", 4 * 1024, NULL, 4, NULL);
+    // }
+
+    #if MICROPHONE_ENABLED
+        xTaskCreate(
+            speechRecognitionTask,
+            "speechRecognitionTask", 
+            4 * 1024, 
+            NULL, 
+            4, 
+            NULL
+        );
+    #endif
 
     delay(1000);
     logger->info("Tasks initialized");

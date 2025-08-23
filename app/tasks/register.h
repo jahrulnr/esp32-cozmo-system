@@ -3,14 +3,17 @@
 #include "setup/setup.h"
 
 // Task handles
+extern TaskHandle_t speechRecognitionTaskHandle;
 extern TaskHandle_t cameraStreamTaskHandle;
 extern TaskHandle_t sensorMonitorTaskHandle;
 extern TaskHandle_t gptTaskHandle;
 
 void protectCozmoTask(void * param);
+void screenTask(void* param);
 void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
+void speechRecognitionTask(void* param);
 
 extern bool g_isApOnlyMode;
 extern bool _cameraStreaming;

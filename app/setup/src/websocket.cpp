@@ -184,10 +184,17 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 statusData["spiffs_total"] = String(SPIFFS.totalBytes() / 1024) + " KB"; // KB
                 statusData["spiffs_used"] = String((SPIFFS.totalBytes() - SPIFFS.usedBytes()) / 1024) + " KB"; // KB
                 statusData["temperature"] = temperatureSensor->readTemperature();
+          #if MICROPHONE_I2S
                 statusData["microphone"]["enabled"] = amicrophone != nullptr;
                 if (amicrophone && amicrophone->isInitialized()) {
                   statusData["microphone"]["level"] = amicrophone->readLevel();
                 }
+          #elif MICROPHONE_ANALOG
+                statusData["microphone"]["enabled"] = amicrophone != nullptr;
+                if (amicrophone && amicrophone->isInitialized()) {
+                  statusData["microphone"]["level"] = amicrophone->readLevel();
+                }
+          #endif
                 statusData["speaker"]["enabled"] = getSpeakerStatus();
                 statusData["speaker"]["type"] = getSpeakerType();
                 statusData["speaker"]["playing"] = isSpeakerPlaying();
@@ -392,11 +399,17 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                 }
               }
               else if (type == "microphone_request") {
+          #if MICROPHONE_I2S
+                if (microphone && microphone->isInitialized()) {
+                  Utils::SpiJsonDocument sensorData;
+                  sensorData["microphone"]["level"] = microphone->readLevel();
+                  sensorData["microphone"]["peak"] = microphone->readLevel();
+          #elif MICROPHONE_ANALOG
                 if (amicrophone && amicrophone->isInitialized()) {
                   Utils::SpiJsonDocument sensorData;
                   sensorData["microphone"]["level"] = amicrophone->readLevel();
                   sensorData["microphone"]["peak"] = amicrophone->readPeakLevel();
-
+          #endif
                   webSocket->sendJsonMessage(clientId, "sensor_data", sensorData);
                 } else {
                   webSocket->sendError(clientId, 404, "Microphone sensor not available");

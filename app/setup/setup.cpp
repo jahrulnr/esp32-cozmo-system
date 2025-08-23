@@ -23,6 +23,7 @@ void setupApp() {
   setupCommandMapper();
   setupAutomation();
   setupCamera();
+  setupSpeechRecognition();
 
   if (motors && screen)
     motors->setScreen(screen);

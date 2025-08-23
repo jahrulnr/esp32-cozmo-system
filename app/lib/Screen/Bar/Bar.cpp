@@ -7,10 +7,15 @@ MicBar::MicBar(U8G2_SSD1306_128X64_NONAME_F_HW_I2C *display): _display(display) 
 }
 
 void MicBar::drawBar() {
+  #if MICROPHONE_I2S
+	if (_display == nullptr || microphone == nullptr) return;
+	int micLevel = microphone->readLevel();
+	#else
 	if (_display == nullptr || amicrophone == nullptr) return;
+	int micLevel = amicrophone->readLevel();
+	#endif
 
 	// Read current level from microphone sensor
-	int micLevel = amicrophone->readLevel();
 	int barWidth = map(micLevel, 0, 4095, 0, 97);
 	
 	// Calculate center position and draw box from center

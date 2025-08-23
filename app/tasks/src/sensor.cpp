@@ -13,14 +13,18 @@ void sensorMonitorTask(void* parameter) {
     }
     
     logger->info("Sensor monitoring task started");
-    const int updateInterval = 3;
     const int sendInterval = 500;
     long currentUpdate = millis();
     float distance;
     SemaphoreHandle_t sensor_handle = xSemaphoreCreateMutex();
+    
+    TickType_t lastWakeTime = xTaskGetTickCount();
+    TickType_t updateFrequency = pdMS_TO_TICKS(33);
 
     // Monitor sensors forever
     while (true) {
+        vTaskDelayUntil(&lastWakeTime, updateFrequency);
+
         // Gyroscope and accelerometer
         if (orientation) {
             orientation->update();
@@ -81,11 +85,19 @@ void sensorMonitorTask(void* parameter) {
             }
 
             // Microphone sensor
+          #if MICROPHONE_I2S
+            if (microphone && microphone->isInitialized()) {
+                jsonData["microphone"]["level"] = microphone->readLevel();
+                jsonData["microphone"]["peak"] = microphone->readLevel();
+                jsonData["microphone"]["initialized"] = true;
+                jsonData["microphone"]["recording"] = false;
+          #elif MICROPHONE_ANALOG
             if (amicrophone && amicrophone->isInitialized()) {
                 jsonData["microphone"]["level"] = amicrophone->readPeakLevel();
                 jsonData["microphone"]["peak"] = amicrophone->readLevel();
                 jsonData["microphone"]["initialized"] = true;
                 jsonData["microphone"]["recording"] = false;
+          #endif
             } else {
                 jsonData["microphone"]["level"] = 0;
                 jsonData["microphone"]["peak"] = 0;
@@ -117,8 +129,5 @@ void sensorMonitorTask(void* parameter) {
             webSocket->sendJsonMessage(-1, "sensor_data", jsonData);
             currentUpdate = millis();
         }
-
-        vTaskDelay(pdMS_TO_TICKS(updateInterval));
-		taskYIELD();
     }
 }
