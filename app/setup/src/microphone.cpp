@@ -65,7 +65,7 @@ void setupMicrophone() {
           logger->error("[setupAnalogMicrophone] ERROR: Failed to start analog microphone: %s\n", esp_err_to_name(ret));
           return;
       }
-      amicrophone->setGain(INPUT);
+      amicrophone->setGain(LOW);
       amicrophone->setAttackRelease(true);
   }
   #endif

@@ -7,6 +7,9 @@ extern TaskHandle_t speechRecognitionTaskHandle;
 extern TaskHandle_t cameraStreamTaskHandle;
 extern TaskHandle_t sensorMonitorTaskHandle;
 extern TaskHandle_t gptTaskHandle;
+#if PICOTTS_ENABLED
+extern TaskHandle_t picoTTSTaskHandle;
+#endif
 
 void protectCozmoTask(void * param);
 void screenTask(void* param);
@@ -14,6 +17,9 @@ void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void speechRecognitionTask(void* param);
+#if PICOTTS_ENABLED
+void picoTTSTask(void* param);
+#endif
 
 extern bool g_isApOnlyMode;
 extern bool _cameraStreaming;
@@ -72,3 +78,12 @@ void setAutomationEnabled(bool enabled);
 String processTextCommands(const String& text);
 void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 
                          AwsEventType type, void* arg, uint8_t* data, size_t len);
+
+#if PICOTTS_ENABLED
+// PicoTTS functions
+bool queueTTSRequest(const String& text, int priority = 5, bool urgent = false);
+bool sayText(const String& text);
+bool sayTextUrgent(const String& text);
+int getTTSQueueSize();
+bool isTTSQueueFull();
+#endif

@@ -212,12 +212,17 @@ bool playSpeakerAudioFile(const String& filePath, int volume) {
     MP3Decoder::MP3Info *info;
     decoder.getFileInfo(filePath, info);
 
+    // Ensure I2S is started
+    if (!i2sSpeaker->isActive()) {
+        esp_err_t err = i2sSpeaker->start();
+        if (err != ESP_OK) {
+            return false;
+        }
+    }
+
     // For I2S speaker, play as raw audio data
-    // if (info) 
-    i2sSpeaker->start();
     size_t bytesWritten;
     i2sSpeaker->writeAudioData(audioData, dataSize, &bytesWritten);
-    i2sSpeaker->stop();
     return true;
   }
   
@@ -241,9 +246,14 @@ void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleR
   logger->info("Playing audio data (" + String(dataSize) + " bytes, " + String(sampleRate) + "Hz)");
   
   if (i2sSpeaker && i2sSpeaker->isInitialized()) {
-    i2sSpeaker->start();
+    if (!i2sSpeaker->isActive()) {
+        esp_err_t err = i2sSpeaker->start();
+        if (err != ESP_OK) {
+            return;
+        }
+    }
+    
     i2sSpeaker->writeSamples((int16_t*)data, dataSize);
-    i2sSpeaker->stop();
     return;
   }
   

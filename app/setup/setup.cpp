@@ -17,6 +17,7 @@ void setupApp() {
   setupTemperatureSensor();
   setupMicrophone();
   setupSpeakers();
+  setupPicoTTS();
   setupWebServer();
   setupWebSocket();
   setupGPT();

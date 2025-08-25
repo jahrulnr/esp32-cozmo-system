@@ -34,6 +34,7 @@
 #include "I2SSpeaker.h"
 #include <AudioSamples.h>
 #include <MP3Player.h>
+#include "picotts.h"
 #include "tasks/register.h"
 #include "callback/register.h"
 
@@ -63,6 +64,13 @@ extern AudioSamples* audioSamples;
 
 extern bool sr_system_running;
 
+#if PICOTTS_ENABLED
+extern bool picotts_initialized;
+#endif
+
+// PicoTTS function declarations
+String getPicoTTSInfo();
+
 void setupLogger();
 void setupNotification();
 void setupFilemanager();
@@ -85,5 +93,6 @@ void setupCommandMapper();
 void setupAutomation();
 void setupExtender();
 void setupSpeechRecognition();
+void setupPicoTTS();
 
 void setupApp();

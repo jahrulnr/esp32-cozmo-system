@@ -31,6 +31,8 @@ void speechRecognitionTask(void* param) {
             // Check if SR system is still running
             if (sr_system_running) {
                 ESP_LOGI(TAG, "SR system running normally");
+
+            sayTextUrgent("ESP now online");
             } else {
                 ESP_LOGW(TAG, "SR system appears to be stopped");
             }
