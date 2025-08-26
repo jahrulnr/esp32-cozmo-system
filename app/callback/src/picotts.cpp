@@ -3,15 +3,46 @@
 
 #if PICOTTS_ENABLED
 
+// Speed control factor (1.0 = normal, >1.0 = faster, <1.0 = slower)
+static float playback_speed = 1.5f;
+// Volume amplification factor (adjust as needed)
+const float volume_multiplier = 1.5f;
+
+// Buffer to collect audio samples
+static std::vector<int16_t> collected_audio;
+
+// Function to set playback speed
+void picotts_set_speed(float speed) {
+    playback_speed = speed;
+}
+
+// Function to apply speed adjustment to audio samples
+std::vector<int16_t> apply_speed_adjustment(const std::vector<int16_t>& samples) {
+    if (playback_speed == 1.0f) {
+        return samples; // No speed change needed
+    }
+    
+    std::vector<int16_t> adjusted_samples;
+    size_t output_size = (size_t)(samples.size() / playback_speed);
+    adjusted_samples.reserve(output_size);
+    
+    for (size_t i = 0; i < output_size; i += 2) { // Process stereo pairs
+        float source_index = i * playback_speed;
+        size_t index = (size_t)source_index;
+        
+        if (index + 1 < samples.size()) {
+            adjusted_samples.push_back(samples[index]);     // Left channel
+            adjusted_samples.push_back(samples[index + 1]); // Right channel
+        }
+    }
+    
+    return adjusted_samples;
+}
+
 // PicoTTS output callback - called by the TTS engine with synthesized audio
 void picotts_output_callback(int16_t *samples, unsigned count) {
-    // Create stereo buffer (double the size for left/right channels)
-    int16_t* stereo = new int16_t[count * 2];
     
-    // Volume amplification factor (adjust as needed)
-    const float volume_multiplier = 2.0f;
-    
-    // Convert mono to stereo by duplicating each sample with volume boost
+    // Convert mono to stereo and collect samples
     for (unsigned i = 0; i < count; i++) {
         // Amplify sample with clipping protection
         int32_t amplified = (int32_t)(samples[i] * volume_multiplier);
@@ -22,12 +53,10 @@ void picotts_output_callback(int16_t *samples, unsigned count) {
         
         int16_t boosted_sample = (int16_t)amplified;
         
-        stereo[i * 2] = boosted_sample;     // Left channel
-        stereo[i * 2 + 1] = boosted_sample; // Right channel
+        // Add stereo samples to collection buffer
+        collected_audio.push_back(boosted_sample);     // Left channel
+        collected_audio.push_back(boosted_sample);     // Right channel
     }
-    
-    i2sSpeaker->writeSamples(stereo, count * 2);
-    delete[] stereo;
 }
 
 // PicoTTS error callback - called when TTS encounters an error
@@ -39,6 +68,16 @@ void picotts_error_callback(void) {
 // PicoTTS idle callback - called when TTS engine becomes idle
 void picotts_idle_callback(void) {
     logger->debug("PicoTTS engine is now idle");
+    
+    // Play collected audio samples to speaker with speed adjustment
+    if (!collected_audio.empty() && i2sSpeaker) {
+        std::vector<int16_t> speed_adjusted_audio = apply_speed_adjustment(collected_audio);
+        i2sSpeaker->writeSamples(speed_adjusted_audio.data(), speed_adjusted_audio.size());
+        logger->debug("Played speed-adjusted audio samples to speaker (speed: %.2f)", playback_speed);
+        
+        // Clear the buffer for next use
+        collected_audio.clear();
+    }
     
     // Notify the management task that TTS is idle
     if (notification) {

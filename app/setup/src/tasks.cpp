@@ -41,13 +41,14 @@ void setupTasks() {
     }
 
     if (screen) {
-        xTaskCreate(
+        xTaskCreateUniversal(
             screenTask, 
             "screenTaskHandler", 
             4096, 
             NULL, 
             4, 
-            NULL
+            NULL,
+            1
         );
     }
     
