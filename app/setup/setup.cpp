@@ -17,7 +17,6 @@ void setupApp() {
   setupTemperatureSensor();
   setupMicrophone();
   setupSpeakers();
-  setupPicoTTS();
   setupWebServer();
   setupWebSocket();
   setupGPT();
@@ -25,6 +24,7 @@ void setupApp() {
   setupAutomation();
   setupCamera();
   setupSpeechRecognition();
+  setupPicoTTS();
 
   if (motors && screen)
     motors->setScreen(screen);

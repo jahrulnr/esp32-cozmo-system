@@ -436,9 +436,6 @@ void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
                   int duration = data["duration"] | 500;
                   playSpeakerTone(frequency, duration, volume);
                   webSocket->sendOk(clientId, "Tone played");
-                } else if (action == "stop") {
-                  stopSpeaker();
-                  webSocket->sendOk(clientId, "Speaker stopped");
                 } else if (action == "volume") {
                   setSpeakerVolume(volume);
                   webSocket->sendOk(clientId, "Volume set to " + String(volume));

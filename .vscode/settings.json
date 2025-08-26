@@ -40,6 +40,13 @@
 		"esp_picorsrc.h": "c",
 		"picoapi.h": "c",
 		"picorsrc.h": "c",
-		"*.example": "cpp"
+		"*.example": "cpp",
+		"deque": "cpp",
+		"list": "cpp",
+		"string": "cpp",
+		"unordered_set": "cpp",
+		"initializer_list": "cpp",
+		"span": "cpp",
+		"text_encoding": "cpp"
 	}
 }

@@ -29,7 +29,6 @@ void setupSpeakers() {
     }
     
     // Test with a simple beep first
-    logger->info("Testing I2S speaker with beep...");
     if (audioSamples) {
       audioSamples->playSample(AudioSamples::BEEP_SHORT);
     }
@@ -236,7 +235,7 @@ bool playSpeakerAudioFile(const String& filePath, int volume) {
 }
 
 // Play audio data from memory
-void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleRate, int volume) {
+void playSpeakerAudioData(const int16_t* data, size_t dataSize, uint32_t sampleRate, int volume) {
   #if SPEAKER_ENABLED
   if (!data || dataSize == 0) {
     logger->error("Invalid audio data");
@@ -253,7 +252,7 @@ void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleR
         }
     }
     
-    i2sSpeaker->writeSamples((int16_t*)data, dataSize);
+    i2sSpeaker->writeSamples(data, dataSize);
     return;
   }
   

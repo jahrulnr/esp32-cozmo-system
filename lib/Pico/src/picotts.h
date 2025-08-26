@@ -10,7 +10,7 @@ extern "C" {
 
 #define CONFIG_PICOTTS_TA_PARTITION "picotts_ta"
 #define CONFIG_PICOTTS_SG_PARTITION "picotts_sg"
-#define CONFIG_PICOTTS_INPUT_QUEUE_SIZE (1024 * 4)
+#define CONFIG_PICOTTS_INPUT_QUEUE_SIZE 512
 
 typedef void (*picotts_output_fn)(int16_t *samples, unsigned count);
 

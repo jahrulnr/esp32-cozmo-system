@@ -60,8 +60,8 @@ void setupMicrophone() {
   if (!amicrophone) {
       amicrophone = new AnalogMicrophone(MICROPHONE_ANALOG_PIN, MICROPHONE_GAIN_PIN, MICROPHONE_AR_PIN);
       
-      esp_err_t ret = amicrophone->init();
-      if (ret != ESP_OK) {
+      bool ret = amicrophone->init();
+      if (!ret) {
           logger->error("[setupAnalogMicrophone] ERROR: Failed to start analog microphone: %s\n", esp_err_to_name(ret));
           return;
       }

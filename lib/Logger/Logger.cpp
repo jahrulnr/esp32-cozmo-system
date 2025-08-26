@@ -23,7 +23,7 @@ bool Logger::init(bool serialEnabled, bool fileEnabled) {
         Serial.begin(115200);
     }
     
-    if (_fileEnabled && !SPIFFS.begin(false)) {
+    if (_fileEnabled && !SPIFFS.begin(false, "/spiffs", 10U, "spiffs")) {
         if (_serialEnabled) {
             Serial.println("Failed to mount SPIFFS");
         }

@@ -11,7 +11,7 @@ FileManager::~FileManager() {
 
 bool FileManager::init(bool enableSDMMC, bool use1bitMode, bool formatIfMountFailed, uint32_t sdmmcFreq) {
     // Initialize SPIFFS
-    if (!_initialized && !SPIFFS.begin(false)) {
+    if (!_initialized && !SPIFFS.begin(false, "/spiffs", 10U, "spiffs")) {
         Serial.println("SPIFFS mount failed");
         return false;
     }

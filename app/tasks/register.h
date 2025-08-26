@@ -7,9 +7,6 @@ extern TaskHandle_t speechRecognitionTaskHandle;
 extern TaskHandle_t cameraStreamTaskHandle;
 extern TaskHandle_t sensorMonitorTaskHandle;
 extern TaskHandle_t gptTaskHandle;
-#if PICOTTS_ENABLED
-extern TaskHandle_t picoTTSTaskHandle;
-#endif
 
 void protectCozmoTask(void * param);
 void screenTask(void* param);
@@ -17,9 +14,6 @@ void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void speechRecognitionTask(void* param);
-#if PICOTTS_ENABLED
-void picoTTSTask(void* param);
-#endif
 
 extern bool g_isApOnlyMode;
 extern bool _cameraStreaming;
@@ -57,7 +51,7 @@ void playBehaviorSound(const String& behavior);
 bool getSpeakerStatus();
 String getSpeakerType();
 bool playSpeakerAudioFile(const String& filePath, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
-void playSpeakerAudioData(const uint8_t* data, size_t dataSize, uint32_t sampleRate = I2S_SPEAKER_SAMPLE_RATE, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
+void playSpeakerAudioData(const int16_t* data, size_t dataSize, uint32_t sampleRate = I2S_SPEAKER_SAMPLE_RATE, int volume = I2S_SPEAKER_DEFAULT_VOLUME);
 bool createAudioFile(const String& filePath, const int16_t* samples, size_t sampleCount, uint32_t sampleRate = I2S_SPEAKER_SAMPLE_RATE);
 
 // MP3 audio functions
@@ -78,12 +72,3 @@ void setAutomationEnabled(bool enabled);
 String processTextCommands(const String& text);
 void handleWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 
                          AwsEventType type, void* arg, uint8_t* data, size_t len);
-
-#if PICOTTS_ENABLED
-// PicoTTS functions
-bool queueTTSRequest(const String& text, int priority = 5, bool urgent = false);
-bool sayText(const String& text);
-bool sayTextUrgent(const String& text);
-int getTTSQueueSize();
-bool isTTSQueueFull();
-#endif

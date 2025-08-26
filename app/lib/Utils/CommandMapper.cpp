@@ -519,12 +519,6 @@ void CommandMapper::initCommandHandlers() {
         return success;
     };
 
-    _commandHandlers["STOP_AUDIO"] = [this](const String& param) -> bool {
-        stopSpeaker();
-        _logger->debug("Stopped audio playback");
-        return true;
-    };
-
     _commandHandlers["SET_VOLUME"] = [this](const String& param) -> bool {
         int volume = param.isEmpty() ? 50 : param.toInt();
         volume = constrain(volume, 0, 100);

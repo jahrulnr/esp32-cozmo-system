@@ -59,7 +59,7 @@ static const void *find_and_map_partition(
 {
   const esp_partition_t *part =
     esp_partition_find_first(
-        ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, name);
+        ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, name);
   if (!part)
   {
     ESP_LOGE(tag, "Partition '%s' not found", name);
@@ -189,6 +189,8 @@ static void esp_pico_run(void *)
             pico_getData(picoEngine, outbuf, sizeof(outbuf), &bytes, &type);
           if (bytes > 0)
             outputCb(outbuf, bytes/2);
+            // small delay to feed wdt
+            taskYIELD();
         } while (status == PICO_STEP_BUSY);
         if (status != PICO_STEP_IDLE)
         {
@@ -342,9 +344,16 @@ bool picotts_init(unsigned prio, picotts_output_fn cb, int core)
     return false;
   }
 
-  if (xTaskCreatePinnedToCore(esp_pico_run, "picotts", 8192, NULL,
-        prio, &picoTask, core == -1 ? tskNO_AFFINITY : core)
-      != pdPASS)
+  BaseType_t task;
+  if (core == -1) {
+      task = xTaskCreate(esp_pico_run, "picotts", 8192, NULL,
+          prio, &picoTask);
+  } else {
+      task = xTaskCreatePinnedToCore(esp_pico_run, "picotts", 8192, NULL,
+          prio, &picoTask, core);
+  }
+
+  if (task != pdPASS)
   {
     ESP_LOGE(tag, "Failed to create task");
     esp_pico_cleanup();
