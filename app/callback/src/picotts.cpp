@@ -57,6 +57,7 @@ void picotts_output_callback(int16_t *samples, unsigned count) {
         collected_audio.push_back(boosted_sample);     // Left channel
         collected_audio.push_back(boosted_sample);     // Right channel
     }
+    vTaskDelay(pdMS_TO_TICKS(1));
 }
 
 // PicoTTS error callback - called when TTS encounters an error
