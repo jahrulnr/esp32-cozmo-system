@@ -2,6 +2,7 @@
 #define ROUTES_H
 
 #include <MVCFramework.h>
+#include <setup/setup.h>
 #include <SPIFFS.h>
 #include "Routing/Router.h"
 #include "../Controllers/AuthController.h"

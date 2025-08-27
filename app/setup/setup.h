@@ -38,6 +38,21 @@
 #include "tasks/register.h"
 #include "callback/register.h"
 
+#ifndef WEB_VAR_H
+#define WEB_VAR_H
+struct {
+  bool authenticated = false;
+} sessions[5];
+
+struct FileUploadState {
+  String path;
+  String name;
+  size_t size;
+  bool inProgress;
+};
+extern std::map<uint32_t, FileUploadState> fileUploads;
+#endif
+
 extern Notification* notification;
 extern Automation::Automation* automation;
 extern Sensors::Camera* camera;

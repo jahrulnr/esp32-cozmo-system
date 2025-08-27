@@ -140,6 +140,7 @@ void Automation::taskFunction(void* parameter) {
         }
 
         inprogress = true;
+        notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_PAUSE);
         // get servo position
         if (servos) {
             long lastServoUpdate = servoTimer;
@@ -199,6 +200,7 @@ void Automation::taskFunction(void* parameter) {
         }
         
         inprogress = false;
+        notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_RESUME);
         
         // Check at regular intervals
         vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
@@ -263,6 +265,8 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
         
         if (startVoice >= 0 && endVoice > startVoice) {
             voiceMessage = behavior.toString().substring(startVoice + 1, endVoice);
+            sayText(voiceMessage.c_str());
+            delay(2000);
         }
         
         // Display the message on the screen if available

@@ -1,5 +1,7 @@
 #include "setup.h"
 
+std::map<uint32_t, FileUploadState> fileUploads;
+
 void setupApp() {
 	setupLogger();
 	setupFilemanager();
@@ -40,6 +42,7 @@ void setupApp() {
     screen->update();
   }
   
+  delay(5000);
   if (!playSpeakerMP3File("/audio/boot.mp3")) {
     logger->error("Play boot mp3 failed");
   };

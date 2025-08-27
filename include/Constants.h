@@ -20,6 +20,7 @@ static const sr_cmd_t voice_commands[] = {
 static const char* NOTIFICATION_WAKEWORD = "wakeword";
 static const char* NOTIFICATION_DISPLAY = "display";
 static const char* NOTIFICATION_SPEAKER = "speaker";
+static const char* NOTIFICATION_SPEECH_RECOGNITION = "speech_recognition";
 static const char* NOTIFICATION_COMMAND = "command";
 
 // Display Events
@@ -34,5 +35,7 @@ static const char* EVENT_DISPLAY_TTS_COMPLETE = "tts_complete";
 static const char* EVENT_SR_WAKEWORD = "sr_wakeword";
 static const char* EVENT_SR_COMMAND = "sr_command";
 static const char* EVENT_SR_TIMEOUT = "sr_timeout";
+static const char* EVENT_SR_PAUSE = "pause_sr";
+static const char* EVENT_SR_RESUME = "resume_sr";
 
 #endif

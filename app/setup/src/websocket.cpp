@@ -5,20 +5,6 @@
 
 Communication::WebSocketHandler *webSocket;
 
-// Current session data
-struct {
-  bool authenticated = false;
-} sessions[5]; // Support up to 5 concurrent sessions
-
-// File upload state tracking
-struct FileUploadState {
-  String path;
-  String name;
-  size_t size;
-  bool inProgress;
-};
-std::map<uint32_t, FileUploadState> fileUploads;
-
 void setupWebSocket() {
   if (WEBSOCKET_ENABLED) {
     logger->info("Setting up WebSocket server...");

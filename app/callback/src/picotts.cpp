@@ -4,7 +4,7 @@
 #if PICOTTS_ENABLED
 
 // Speed control factor (1.0 = normal, >1.0 = faster, <1.0 = slower)
-static float playback_speed = 1.5f;
+static float playback_speed = 1.0f;
 // Volume amplification factor (adjust as needed)
 const float volume_multiplier = 1.5f;
 
