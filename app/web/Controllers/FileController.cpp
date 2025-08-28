@@ -13,23 +13,23 @@ Response FileController::download(Request& request) {
     
     String path = request.input("path");
     if (path.isEmpty()) {
-        JsonDocument error = createErrorResponse("Missing path parameter", "MISSING_PATH");
+        Utils::SpiJsonDocument error = createErrorResponse("Missing path parameter", "MISSING_PATH");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
-    path = sanitizePath(path);
+    path = sanitizePath(path).c_str();
     
     if (!isValidPath(path)) {
-        JsonDocument error = createErrorResponse("Invalid file path", "INVALID_PATH");
+        Utils::SpiJsonDocument error = createErrorResponse("Invalid file path", "INVALID_PATH");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
     if (!SPIFFS.exists(path)) {
-        JsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
+        Utils::SpiJsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
         return Response(request.getServerRequest())
             .status(404)
             .json(error);
@@ -54,20 +54,20 @@ Response FileController::upload(Request& request) {
     String targetPath = request.input("path", "/");
     
     if (filename.isEmpty()) {
-        JsonDocument error = createErrorResponse("Filename is required", "MISSING_FILENAME");
+        Utils::SpiJsonDocument error = createErrorResponse("Filename is required", "MISSING_FILENAME");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
     if (!isAllowedFileType(filename)) {
-        JsonDocument error = createErrorResponse("File type not allowed", "INVALID_FILE_TYPE");
+        Utils::SpiJsonDocument error = createErrorResponse("File type not allowed", "INVALID_FILE_TYPE");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
-    targetPath = sanitizePath(targetPath);
+    targetPath = sanitizePath(targetPath).c_str();
     if (!targetPath.endsWith("/")) {
         targetPath += "/";
     }
@@ -79,30 +79,30 @@ Response FileController::upload(Request& request) {
         }
     }
     
-    String fullPath = targetPath + filename;
-    fullPath = sanitizePath(fullPath);
+    String fullPath = (targetPath + filename).c_str();
+    fullPath = sanitizePath(fullPath).c_str();
     
     // Open file for writing
     File file = SPIFFS.open(fullPath, "w");
     if (!file) {
-        JsonDocument error = createErrorResponse("Failed to create file", "FILE_CREATION_ERROR");
+        Utils::SpiJsonDocument error = createErrorResponse("Failed to create file", "FILE_CREATION_ERROR");
         return Response(request.getServerRequest())
             .status(500)
             .json(error);
     }
     
-    size_t bytesWritten = file.print(content);
+    size_t bytesWritten = file.print(content.c_str());
     file.close();
     
-    logger->info("File uploaded: " + fullPath + " (" + String(bytesWritten) + " bytes)");
+    logger->info("File uploaded: %s (%d bytes)", fullPath, bytesWritten);
     
-    JsonDocument responseData;
+    Utils::SpiJsonDocument responseData;
     responseData["filename"] = filename;
     responseData["path"] = fullPath;
     responseData["size"] = bytesWritten;
     responseData["message"] = "File uploaded successfully";
     
-    JsonDocument response = createSuccessResponse(responseData);
+    Utils::SpiJsonDocument response = createSuccessResponse(responseData);
     
     return Response(request.getServerRequest())
         .status(201)
@@ -119,23 +119,23 @@ Response FileController::listFiles(Request& request) {
         delete user;
     }
     
-    String directory = request.input("directory", "/");
-    directory = sanitizePath(directory);
+    Utils::Sstring directory = request.input("directory", "/");
+    directory = sanitizePath(directory).c_str();
     
     if (!isValidPath(directory)) {
-        JsonDocument error = createErrorResponse("Invalid directory path", "INVALID_PATH");
+        Utils::SpiJsonDocument error = createErrorResponse("Invalid directory path", "INVALID_PATH");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
-    JsonDocument responseData;
+    Utils::SpiJsonDocument responseData;
     JsonArray files = responseData["files"].to<JsonArray>();
     
     // List all files in SPIFFS (SPIFFS doesn't have true directories)
     File root = SPIFFS.open("/");
     if (!root) {
-        JsonDocument error = createErrorResponse("Failed to open root directory", "DIRECTORY_ACCESS_ERROR");
+        Utils::SpiJsonDocument error = createErrorResponse("Failed to open root directory", "DIRECTORY_ACCESS_ERROR");
         return Response(request.getServerRequest())
             .status(500)
             .json(error);
@@ -145,7 +145,7 @@ Response FileController::listFiles(Request& request) {
     int fileCount = 0;
     
     while (file) {
-        String fileName = String(file.name());
+        Utils::Sstring fileName = Utils::Sstring(file.name());
         
         // Filter files by directory if not root
         if (directory.equals("/") || fileName.startsWith(directory)) {
@@ -156,7 +156,7 @@ Response FileController::listFiles(Request& request) {
             
             // Add relative path (remove directory prefix if listing subdirectory)
             if (!directory.equals("/")) {
-                String relativeName = fileName.substring(directory.length());
+                Utils::Sstring relativeName = fileName.substring(directory.length());
                 if (relativeName.startsWith("/")) {
                     relativeName = relativeName.substring(1);
                 }
@@ -177,7 +177,7 @@ Response FileController::listFiles(Request& request) {
     responseData["used_size"] = SPIFFS.usedBytes();
     responseData["free_size"] = SPIFFS.totalBytes() - SPIFFS.usedBytes();
     
-    JsonDocument response = createSuccessResponse(responseData);
+    Utils::SpiJsonDocument response = createSuccessResponse(responseData);
     
     return Response(request.getServerRequest())
         .status(200)
@@ -194,23 +194,23 @@ Response FileController::deleteFile(Request& request) {
     
     String path = request.input("path");
     if (path.isEmpty()) {
-        JsonDocument error = createErrorResponse("Missing path parameter", "MISSING_PATH");
+        Utils::SpiJsonDocument error = createErrorResponse("Missing path parameter", "MISSING_PATH");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
-    path = sanitizePath(path);
+    path = sanitizePath(path).c_str();
     
     if (!isValidPath(path)) {
-        JsonDocument error = createErrorResponse("Invalid file path", "INVALID_PATH");
+        Utils::SpiJsonDocument error = createErrorResponse("Invalid file path", "INVALID_PATH");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
     if (!SPIFFS.exists(path)) {
-        JsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
+        Utils::SpiJsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
         return Response(request.getServerRequest())
             .status(404)
             .json(error);
@@ -218,26 +218,26 @@ Response FileController::deleteFile(Request& request) {
     
     // Prevent deletion of critical system files
     if (path.startsWith("/css/") || path.startsWith("/js/") || path.equals("/index.html")) {
-        JsonDocument error = createErrorResponse("Cannot delete system files", "PROTECTED_FILE");
+        Utils::SpiJsonDocument error = createErrorResponse("Cannot delete system files", "PROTECTED_FILE");
         return Response(request.getServerRequest())
             .status(403)
             .json(error);
     }
     
-    if (SPIFFS.remove(path)) {
-        logger->info("File deleted: " + path);
+    if (SPIFFS.remove(path.c_str())) {
+        logger->info("File deleted: %s" + path);
         
-        JsonDocument responseData;
+        Utils::SpiJsonDocument responseData;
         responseData["path"] = path;
         responseData["message"] = "File deleted successfully";
         
-        JsonDocument response = createSuccessResponse(responseData);
+        Utils::SpiJsonDocument response = createSuccessResponse(responseData);
         
         return Response(request.getServerRequest())
             .status(200)
             .json(response);
     } else {
-        JsonDocument error = createErrorResponse("Failed to delete file", "DELETE_ERROR");
+        Utils::SpiJsonDocument error = createErrorResponse("Failed to delete file", "DELETE_ERROR");
         return Response(request.getServerRequest())
             .status(500)
             .json(error);
@@ -245,33 +245,33 @@ Response FileController::deleteFile(Request& request) {
 }
 
 Response FileController::getFileInfo(Request& request) {
-    String path = request.input("path");
+    Utils::Sstring path = request.input("path");
     if (path.isEmpty()) {
-        JsonDocument error = createErrorResponse("Missing path parameter", "MISSING_PATH");
+        Utils::SpiJsonDocument error = createErrorResponse("Missing path parameter", "MISSING_PATH");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
-    path = sanitizePath(path);
+    path = sanitizePath(path).c_str();
     
     if (!isValidPath(path)) {
-        JsonDocument error = createErrorResponse("Invalid file path", "INVALID_PATH");
+        Utils::SpiJsonDocument error = createErrorResponse("Invalid file path", "INVALID_PATH");
         return Response(request.getServerRequest())
             .status(400)
             .json(error);
     }
     
-    JsonDocument fileInfo = formatFileInfo(path);
+    Utils::SpiJsonDocument fileInfo = formatFileInfo(path);
     
     if (!fileInfo["exists"]) {
-        JsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
+        Utils::SpiJsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
         return Response(request.getServerRequest())
             .status(404)
             .json(error);
     }
     
-    JsonDocument response = createSuccessResponse(fileInfo);
+    Utils::SpiJsonDocument response = createSuccessResponse(fileInfo);
     
     return Response(request.getServerRequest())
         .status(200)
@@ -279,7 +279,7 @@ Response FileController::getFileInfo(Request& request) {
 }
 
 Response FileController::getStorageInfo(Request& request) {
-    JsonDocument responseData;
+    Utils::SpiJsonDocument responseData;
     responseData["total_bytes"] = SPIFFS.totalBytes();
     responseData["used_bytes"] = SPIFFS.usedBytes();
     responseData["free_bytes"] = SPIFFS.totalBytes() - SPIFFS.usedBytes();
@@ -290,7 +290,7 @@ Response FileController::getStorageInfo(Request& request) {
     responseData["used_formatted"] = formatBytes(SPIFFS.usedBytes());
     responseData["free_formatted"] = formatBytes(SPIFFS.totalBytes() - SPIFFS.usedBytes());
     
-    JsonDocument response = createSuccessResponse(responseData);
+    Utils::SpiJsonDocument response = createSuccessResponse(responseData);
     
     return Response(request.getServerRequest())
         .status(200)
@@ -298,28 +298,19 @@ Response FileController::getStorageInfo(Request& request) {
 }
 
 // Helper methods
-bool FileController::isValidPath(const String& path) {
+bool FileController::isValidPath(const Utils::Sstring& path) {
     return path.startsWith("/") && 
            path.indexOf("..") == -1 && 
            path.length() > 0 && 
            path.length() < 256;
 }
 
-bool FileController::isAllowedFileType(const String& filename) {
-    // Allow common text and web file types
-    // return filename.endsWith(".txt") || 
-    //        filename.endsWith(".json") || 
-    //        filename.endsWith(".html") || 
-    //        filename.endsWith(".css") || 
-    //        filename.endsWith(".js") ||
-    //        filename.endsWith(".md") ||
-    //        filename.endsWith(".xml") ||
-    //        filename.endsWith(".log");
+bool FileController::isAllowedFileType(const Utils::Sstring& filename) {
 		return true;
 }
 
-String FileController::sanitizePath(const String& path) {
-    String cleaned = path;
+Utils::Sstring FileController::sanitizePath(const Utils::Sstring& path) {
+    Utils::Sstring cleaned = path;
     
     // Remove dangerous path traversal attempts
     cleaned.replace("../", "");
@@ -328,40 +319,41 @@ String FileController::sanitizePath(const String& path) {
     
     // Ensure path starts with /
     if (!cleaned.startsWith("/")) {
-        cleaned = "/" + cleaned;
+        cleaned = "/"; 
+        cleaned += cleaned.c_str();
     }
     
     // Remove trailing slash unless it's root
-    if (cleaned.length() > 1 && cleaned.endsWith("/")) {
+    if (cleaned.length() > 1 && cleaned.toString().endsWith("/")) {
         cleaned = cleaned.substring(0, cleaned.length() - 1);
     }
     
     return cleaned;
 }
 
-JsonDocument FileController::formatFileInfo(const String& path) {
-    JsonDocument info;
+Utils::SpiJsonDocument FileController::formatFileInfo(const Utils::Sstring& path) {
+    Utils::SpiJsonDocument info;
     
-    if (SPIFFS.exists(path)) {
-        File file = SPIFFS.open(path, "r");
+    if (SPIFFS.exists(path.c_str())) {
+        File file = SPIFFS.open(path.c_str(), "r");
         if (file) {
             info["exists"] = true;
             info["path"] = path;
-            info["name"] = path.substring(path.lastIndexOf('/') + 1);
+            info["name"] = path.substring(path.toString().lastIndexOf('/') + 1);
             info["size"] = file.size();
             info["size_formatted"] = formatBytes(file.size());
             info["is_directory"] = file.isDirectory();
             
             // Determine file type
-            String extension = "";
-            int lastDot = path.lastIndexOf('.');
+            Utils::Sstring extension = "";
+            int lastDot = path.toString().lastIndexOf('.');
             if (lastDot > 0) {
                 extension = path.substring(lastDot + 1);
             }
             info["extension"] = extension;
             
             // Determine MIME type
-            String mimeType = "application/octet-stream";
+            Utils::Sstring mimeType = "application/octet-stream";
             if (extension == "txt") mimeType = "text/plain";
             else if (extension == "html") mimeType = "text/html";
             else if (extension == "css") mimeType = "text/css";
@@ -382,8 +374,8 @@ JsonDocument FileController::formatFileInfo(const String& path) {
     return info;
 }
 
-JsonDocument FileController::createErrorResponse(const String& message, const String& code) {
-    JsonDocument error;
+Utils::SpiJsonDocument FileController::createErrorResponse(const Utils::Sstring& message, const Utils::Sstring& code) {
+    Utils::SpiJsonDocument error;
     error["success"] = false;
     error["message"] = message;
     error["timestamp"] = millis();
@@ -395,8 +387,8 @@ JsonDocument FileController::createErrorResponse(const String& message, const St
     return error;
 }
 
-JsonDocument FileController::createSuccessResponse(const JsonDocument& data) {
-    JsonDocument response;
+Utils::SpiJsonDocument FileController::createSuccessResponse(const Utils::SpiJsonDocument& data) {
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["timestamp"] = millis();
     
@@ -407,27 +399,27 @@ JsonDocument FileController::createSuccessResponse(const JsonDocument& data) {
     return response;
 }
 
-bool FileController::requiresAuthentication(const String& operation) {
+bool FileController::requiresAuthentication(const Utils::Sstring& operation) {
     // List operations can be public for basic file access
     // Upload, delete, and downloads of sensitive files require auth
     return operation != "list" && operation != "info";
 }
 
 Response FileController::unauthorizedResponse(Request& request) {
-    JsonDocument error = createErrorResponse("Authentication required", "UNAUTHORIZED");
+    Utils::SpiJsonDocument error = createErrorResponse("Authentication required", "UNAUTHORIZED");
     return Response(request.getServerRequest())
         .status(401)
         .json(error);
 }
 
-String FileController::formatBytes(size_t bytes) {
+Utils::Sstring FileController::formatBytes(size_t bytes) {
     if (bytes < 1024) {
-        return String(bytes) + " B";
+        return Utils::Sstring(bytes) + " B";
     } else if (bytes < 1024 * 1024) {
-        return String(bytes / 1024.0, 1) + " KB";
+        return Utils::Sstring(bytes / 1024.0, 1) + " KB";
     } else if (bytes < 1024 * 1024 * 1024) {
-        return String(bytes / (1024.0 * 1024.0), 1) + " MB";
+        return Utils::Sstring(bytes / (1024.0 * 1024.0), 1) + " MB";
     } else {
-        return String(bytes / (1024.0 * 1024.0 * 1024.0), 1) + " GB";
+        return Utils::Sstring(bytes / (1024.0 * 1024.0 * 1024.0), 1) + " GB";
     }
 }

@@ -3,7 +3,7 @@
 #include <esp_heap_caps.h>
 
 Response SystemController::getStats(Request& request) {
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["data"] = getSystemInfo();
     
@@ -13,7 +13,7 @@ Response SystemController::getStats(Request& request) {
 }
 
 Response SystemController::restart(Request& request) {
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["message"] = "System restart initiated";
     
@@ -30,8 +30,8 @@ Response SystemController::restart(Request& request) {
 }
 
 Response SystemController::getNetworkInfo(Request& request) {
-    JsonDocument response;
-    JsonDocument networkInfo;
+    Utils::SpiJsonDocument response;
+    Utils::SpiJsonDocument networkInfo;
     
     if (WiFi.status() == WL_CONNECTED) {
         networkInfo["connected"] = true;
@@ -56,8 +56,8 @@ Response SystemController::getNetworkInfo(Request& request) {
 }
 
 Response SystemController::getMemoryInfo(Request& request) {
-    JsonDocument response;
-    JsonDocument memoryInfo;
+    Utils::SpiJsonDocument response;
+    Utils::SpiJsonDocument memoryInfo;
     
     // Heap memory information
     memoryInfo["free_heap"] = ESP.getFreeHeap();
@@ -88,15 +88,15 @@ Response SystemController::getMemoryInfo(Request& request) {
         .json(response);
 }
 
-JsonDocument SystemController::getSystemInfo() {
-    JsonDocument systemInfo;
+Utils::SpiJsonDocument SystemController::getSystemInfo() {
+    Utils::SpiJsonDocument systemInfo;
     
     // Basic system information
     systemInfo["uptime"] = millis();
     systemInfo["uptime_formatted"] = formatUptime(millis());
     
     // Memory information
-    JsonDocument memory;
+    Utils::SpiJsonDocument memory;
     memory["free_heap"] = ESP.getFreeHeap();
     memory["free_heap_formatted"] = formatBytes(ESP.getFreeHeap());
     memory["total_heap"] = ESP.getHeapSize();
@@ -114,7 +114,7 @@ JsonDocument SystemController::getSystemInfo() {
     systemInfo["memory"] = memory;
     
     // Network information
-    JsonDocument network;
+    Utils::SpiJsonDocument network;
     if (WiFi.status() == WL_CONNECTED) {
         network["connected"] = true;
         network["ip"] = WiFi.localIP().toString();
@@ -127,7 +127,7 @@ JsonDocument SystemController::getSystemInfo() {
     systemInfo["network"] = network;
     
     // Hardware information
-    JsonDocument hardware;
+    Utils::SpiJsonDocument hardware;
     hardware["chip_model"] = ESP.getChipModel();
     hardware["chip_revision"] = ESP.getChipRevision();
     hardware["chip_cores"] = ESP.getChipCores();
@@ -138,7 +138,7 @@ JsonDocument SystemController::getSystemInfo() {
     systemInfo["hardware"] = hardware;
     
     // Software information
-    JsonDocument software;
+    Utils::SpiJsonDocument software;
     software["sdk_version"] = ESP.getSdkVersion();
     software["arduino_version"] = ARDUINO;
     software["compile_date"] = __DATE__;
@@ -149,7 +149,7 @@ JsonDocument SystemController::getSystemInfo() {
     return systemInfo;
 }
 
-String SystemController::formatUptime(unsigned long milliseconds) {
+Utils::Sstring SystemController::formatUptime(unsigned long milliseconds) {
     unsigned long seconds = milliseconds / 1000;
     unsigned long minutes = seconds / 60;
     unsigned long hours = minutes / 60;
@@ -159,45 +159,45 @@ String SystemController::formatUptime(unsigned long milliseconds) {
     minutes %= 60;
     hours %= 24;
     
-    String uptime = "";
+    Utils::Sstring uptime = "";
     if (days > 0) {
-        uptime += String(days) + "d ";
+        uptime += Utils::Sstring(days) + "d ";
     }
-    uptime += String(hours).c_str();
+    uptime += Utils::Sstring(hours).c_str();
     uptime += ":";
     if (minutes < 10) uptime += "0";
-    uptime += String(minutes).c_str();
+    uptime += Utils::Sstring(minutes).c_str();
     uptime += ":";
     if (seconds < 10) uptime += "0";
-    uptime += String(seconds).c_str();
+    uptime += Utils::Sstring(seconds).c_str();
     
     return uptime;
 }
 
-String SystemController::formatBytes(size_t bytes) {
+Utils::Sstring SystemController::formatBytes(size_t bytes) {
     if (bytes < 1024) {
-        return String(bytes) + " B";
+        return Utils::Sstring(bytes) + " B";
     } else if (bytes < 1024 * 1024) {
-        return String(bytes / 1024.0, 1) + " KB";
+        return Utils::Sstring(bytes / 1024.0, 1) + " KB";
     } else if (bytes < 1024 * 1024 * 1024) {
-        return String(bytes / (1024.0 * 1024.0), 1) + " MB";
+        return Utils::Sstring(bytes / (1024.0 * 1024.0), 1) + " MB";
     } else {
-        return String(bytes / (1024.0 * 1024.0 * 1024.0), 1) + " GB";
+        return Utils::Sstring(bytes / (1024.0 * 1024.0 * 1024.0), 1) + " GB";
     }
 }
 
 // Add these methods at the end of the file before the closing bracket
 
 Response SystemController::getHostname(Request& request) {
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     
     // Get hostname from configuration
-    String hostname = Configuration::get("hostname", WiFi.getHostname());
+    Utils::Sstring hostname = Configuration::get("hostname", WiFi.getHostname());
     
     response["success"] = true;
     response["hostname"] = hostname;
     response["current"] = WiFi.getHostname(); // Current active hostname
-    response["mdns"] = String(WiFi.getHostname()) + ".local";
+    response["mdns"] = Utils::Sstring(WiFi.getHostname()) + ".local";
     
     return Response(request.getServerRequest())
         .status(200)
@@ -207,7 +207,7 @@ Response SystemController::getHostname(Request& request) {
 // Add these new methods at the end of the file
 
 Response SystemController::getConfigurations(Request& request) {
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     
     // Get all configurations
     CsvDatabase* db = Model::getDatabase();
@@ -242,11 +242,11 @@ Response SystemController::getConfigurations(Request& request) {
 }
 
 Response SystemController::updateConfiguration(Request& request) {
-    String key = request.input("key");
-    String value = request.input("value");
-    JsonDocument response;
+    const char* key = request.input("key").c_str();
+    const char* value = request.input("value").c_str();
+    Utils::SpiJsonDocument response;
     
-    if (key.length() == 0) {
+    if (strlen(key) == 0) {
         response["success"] = false;
         response["message"] = "Configuration key is required";
         return Response(request.getServerRequest())
@@ -279,10 +279,10 @@ Response SystemController::updateConfiguration(Request& request) {
 }
 
 Response SystemController::updateHostname(Request& request) {
-    String newHostname = request.input("hostname");
-    JsonDocument response;
+    const char* newHostname = request.input("hostname").c_str();
+    Utils::SpiJsonDocument response;
     
-    if (newHostname.length() == 0) {
+    if (!newHostname || strlen(newHostname) == 0) {
         response["success"] = false;
         response["message"] = "Hostname is required";
         return Response(request.getServerRequest())
@@ -290,7 +290,7 @@ Response SystemController::updateHostname(Request& request) {
             .json(response);
     }
     
-    if (newHostname.length() > 32) {
+    if (strlen(newHostname) > 32) {
         response["success"] = false;
         response["message"] = "Hostname must be 32 characters or less";
         return Response(request.getServerRequest())
@@ -299,8 +299,8 @@ Response SystemController::updateHostname(Request& request) {
     }
     
     // Validate hostname (alphanumeric, dash)
-    for (size_t i = 0; i < newHostname.length(); i++) {
-        char c = newHostname.charAt(i);
+    for (size_t i = 0; i < strlen(newHostname); i++) {
+        char c = newHostname[i];
         if (!(isAlphaNumeric(c) || c == '-')) {
             response["success"] = false;
             response["message"] = "Hostname must contain only letters, numbers, and hyphens";
@@ -320,16 +320,16 @@ Response SystemController::updateHostname(Request& request) {
     }
     
     // Update current hostname
-    WiFi.setHostname(newHostname.c_str());
+    WiFi.setHostname(newHostname);
     
     // Update mDNS
     MDNS.end();
-    if (MDNS.begin(newHostname.c_str())) {
+    if (MDNS.begin(newHostname)) {
         MDNS.addService("http", "tcp", 80);
         response["success"] = true;
-        response["message"] = "Hostname updated to: " + newHostname;
+        response["message"] = String("Hostname updated to: ") + newHostname;
         response["hostname"] = newHostname;
-        response["mdns"] = newHostname + ".local";
+        response["mdns"] = String(newHostname) + ".local";
         response["restart_required"] = true;
     } else {
         response["success"] = false;

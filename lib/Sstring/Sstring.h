@@ -191,7 +191,7 @@ public:
      * @brief Convert to integer
      * @return Integer value
      */
-    int toInt();
+    int toInt() const;
 
     /**
      * @brief Get string length
@@ -209,7 +209,7 @@ public:
      * @brief Check if string is empty
      * @return true if empty
      */
-    bool isEmpty();
+    bool isEmpty() const;
 
     // Operator overloads for concatenation
     

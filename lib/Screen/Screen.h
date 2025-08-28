@@ -5,8 +5,6 @@
 #include <Wire.h>
 #include <U8g2lib.h>
 #include "Face/Face.h"
-#include "Config.h"
-#include "Logger.h"
 #include "I2CManager.h"
 #include "Bar/Bar.h"
 
@@ -14,7 +12,7 @@ namespace Screen {
 
 class Screen {
 public:
-    Screen(Utils::Logger *logger);
+    Screen();
     ~Screen();
 
     /**
@@ -23,7 +21,7 @@ public:
      * @param scl The SCL pin for I2C communication
      * @return true if initialization was successful, false otherwise
      */
-    bool init(int sda = 14, int scl = 15);
+    bool init(int sda = SDA, int scl = SCL, int width = 128, int height = 64);
 
     /**
      * Clear the screen
@@ -76,6 +74,8 @@ public:
      */
     void drawCircle(int x, int y, int radius, bool fill = false);
 
+    void setMicLevel(int level = 0);
+
     /**
      * Update the display (call this after drawing operations)
      */
@@ -111,9 +111,11 @@ private:
     SemaphoreHandle_t _mux;
     Face *_face;
     MicBar *_micBar;
+    int _micLevel;
+    int _width;
+    int _height;
     bool _holdFace;
     long _holdTimer;
-    Utils::Logger *_logger;
 
     bool _lock();
     void _unlock();

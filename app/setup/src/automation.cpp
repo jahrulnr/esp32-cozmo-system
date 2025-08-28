@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "setup/setup.h"
-#include "lib/Automation/Automation.h"
+#include "core/Automation/Automation.h"
 
 // Global variables for automation control (kept for compatibility)
 bool _enableAutomation = AUTOMATION_ENABLED;

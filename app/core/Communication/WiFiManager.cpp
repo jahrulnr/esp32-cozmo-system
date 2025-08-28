@@ -1,8 +1,10 @@
 #include "WiFiManager.h"
 #include "Config.h"
 
-#include "lib/Utils/SpiAllocator.h"
+#include "core/Utils/SpiAllocator.h"
 #include "FileManager.h"
+#include <Sstring.h>
+#include <setup/setup.h>
 
 namespace Communication {
 
@@ -36,7 +38,7 @@ bool WiFiManager::init() {
     return true;
 }
 
-bool WiFiManager::connect(const String& ssid, const String& password, uint32_t timeout) {
+bool WiFiManager::connect(const Utils::Sstring& ssid, const Utils::Sstring& password, uint32_t timeout) {
     if (!_initialized) {
         init();
     }
@@ -51,21 +53,20 @@ bool WiFiManager::connect(const String& ssid, const String& password, uint32_t t
     unsigned long startTime = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < timeout) {
         delay(500);
-        Serial.print(".");
+        logger->info(".");
     }
     
     if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("\nWiFi connected");
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
+        logger->info("\nWiFi connected");
+        logger->info("IP address: %s", WiFi.localIP().toString().c_str());
         return true;
     } else {
-        Serial.println("\nWiFi connection failed");
+        logger->info("\nWiFi connection failed");
         return false;
     }
 }
 
-bool WiFiManager::startAP(const String& ssid, const String& password) {
+bool WiFiManager::startAP(const Utils::Sstring& ssid, const Utils::Sstring& password) {
     if (!_initialized) {
         init();
     }
@@ -86,11 +87,10 @@ bool WiFiManager::startAP(const String& ssid, const String& password) {
     
     if (success) {
         _isAP = true;
-        Serial.println("AP started");
-        Serial.print("IP address: ");
-        Serial.println(WiFi.softAPIP());
+        logger->info("AP started");
+        logger->info("IP address: %s", WiFi.softAPIP().toString().c_str());
     } else {
-        Serial.println("AP failed to start");
+        logger->info("AP failed to start");
     }
     
     return success;
@@ -127,15 +127,15 @@ std::vector<WiFiManager::NetworkInfo> WiFiManager::scanNetworks() {
     return networks;
 }
 
-String WiFiManager::getIP() const {
+Utils::Sstring WiFiManager::getIP() const {
     if (_isAP) {
-        return WiFi.softAPIP().toString();
+        return WiFi.softAPIP().toString().c_str();
     } else {
-        return WiFi.localIP().toString();
+        return WiFi.localIP().toString().c_str();
     }
 }
 
-String WiFiManager::getMAC() const {
+Utils::Sstring WiFiManager::getMAC() const {
     if (_isAP) {
         return WiFi.softAPmacAddress();
     } else {
@@ -149,33 +149,33 @@ int32_t WiFiManager::getRSSI() const {
 
 bool WiFiManager::loadConfig() {
     // Debug output to help diagnose the issue
-    Serial.println("FileManager initialized successfully");
-    Serial.println("Checking for wifi.json...");
+    logger->info("FileManager initialized successfully");
+    logger->info("Checking for wifi.json...");
     
     if (!_fileManager->exists("/config/wifi.json")) {
-        Serial.println("No wifi.json found at /config/wifi.json, using default config");
+        logger->info("No wifi.json found at /config/wifi.json, using default config");
         return false;
     }
     
-    Serial.println("Found wifi.json, reading file");
-    String jsonContent = _fileManager->readFile("/config/wifi.json");
+    logger->info("Found wifi.json, reading file");
+    Utils::Sstring jsonContent = _fileManager->readFile("/config/wifi.json");
     if (jsonContent.isEmpty()) {
-        Serial.println("Failed to read wifi.json or file is empty");
+        logger->info("Failed to read wifi.json or file is empty");
         return false;
     }
     
     Utils::SpiJsonDocument doc;
-    DeserializationError error = deserializeJson(doc, jsonContent);
+    DeserializationError error = deserializeJson(doc, jsonContent.c_str());
     
     if (error) {
-        Serial.println("Failed to parse wifi.json: " + String(error.c_str()));
+        logger->info("Failed to parse wifi.json: %s", error.c_str());
         
         // If we had a parsing error, rename the broken config file for debugging
         if (_fileManager->exists("/config/wifi.json")) {
             // Create backup of broken file
-            _fileManager->writeFile("/config/wifi.json.broken", jsonContent);
+            _fileManager->writeFile("/config/wifi.json.broken", jsonContent.c_str());
             _fileManager->deleteFile("/config/wifi.json");
-            Serial.println("Renamed broken config to wifi.json.broken");
+            logger->info("Renamed broken config to wifi.json.broken");
         }
         
         return false;
@@ -186,7 +186,7 @@ bool WiFiManager::loadConfig() {
                    !doc["ap_ssid"].isUnbound() && !doc["ap_password"].isUnbound();
     
     if (!isValid) {
-        Serial.println("wifi.json is missing required fields");
+        logger->info("wifi.json is missing required fields");
         return false;
     }
     
@@ -198,24 +198,24 @@ bool WiFiManager::loadConfig() {
     
     // Validate that we have at least AP settings (minimum required)
     if (_config.apSsid.length() == 0) {
-        Serial.println("Warning: AP SSID is empty in config, using default");
+        logger->info("Warning: AP SSID is empty in config, using default");
         _config.apSsid = WIFI_AP_SSID;
     }
     
-    Serial.println("WiFi config loaded from file");
+    logger->info("WiFi config loaded from file");
     return true;
 }
 
 bool WiFiManager::saveConfig(const WiFiConfig& config) {
     if (!_fileManager->init()) {
-        Serial.println("Failed to initialize FileManager");
+        logger->info("Failed to initialize FileManager");
         return false;
     }
     
     // Create /config directory if it doesn't exist
     if (!_fileManager->exists("/config")) {
         if (!_fileManager->createDir("/config")) {
-            Serial.println("Failed to create /config directory");
+            logger->info("Failed to create /config directory");
         }
     }
     
@@ -226,12 +226,12 @@ bool WiFiManager::saveConfig(const WiFiConfig& config) {
         }
         
         // Create backup by reading and writing to new file
-        String backupContent = _fileManager->readFile("/config/wifi.json");
+        Utils::Sstring backupContent = _fileManager->readFile("/config/wifi.json");
         if (!backupContent.isEmpty()) {
-            if (!_fileManager->writeFile("/config/wifi.json.bak", backupContent)) {
-                Serial.println("Warning: Failed to create backup of wifi.json");
+            if (!_fileManager->writeFile("/config/wifi.json.bak", backupContent.c_str())) {
+                logger->info("Warning: Failed to create backup of wifi.json");
             } else {
-                Serial.println("Created backup of previous wifi.json");
+                logger->info("Created backup of previous wifi.json");
             }
         }
     }
@@ -259,8 +259,8 @@ bool WiFiManager::saveConfig(const WiFiConfig& config) {
     serializeJson(doc, jsonString);
     
     // Write to file
-    if (!_fileManager->writeFile("/config/wifi.json", jsonString)) {
-        Serial.println("Failed to write wifi.json");
+    if (!_fileManager->writeFile("/config/wifi.json", jsonString.c_str())) {
+        logger->info("Failed to write wifi.json");
         return false;
     }
     
@@ -268,18 +268,18 @@ bool WiFiManager::saveConfig(const WiFiConfig& config) {
     if (_fileManager->exists("/config/wifi.json")) {
         int fileSize = _fileManager->getSize("/config/wifi.json");
         if (fileSize > 10) {
-            Serial.println("WiFi config saved to file");
+            logger->info("WiFi config saved to file");
             return true;
         }
     }
     
     // If verification failed, restore backup if available
-    Serial.println("WiFi config verification failed, attempting to restore backup");
+    logger->info("WiFi config verification failed, attempting to restore backup");
     if (_fileManager->exists("/config/wifi.json.bak")) {
-        String backupContent = _fileManager->readFile("/config/wifi.json.bak");
+        Utils::Sstring backupContent = _fileManager->readFile("/config/wifi.json.bak");
         if (!backupContent.isEmpty()) {
-            if (_fileManager->writeFile("/config/wifi.json", backupContent)) {
-                Serial.println("Restored backup wifi.json");
+            if (_fileManager->writeFile("/config/wifi.json", backupContent.c_str())) {
+                logger->info("Restored backup wifi.json");
             }
         }
     }

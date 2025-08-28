@@ -40,11 +40,10 @@ void registerWebRoutes(Router* router) {
 		
 		// Static file serving for CSS, JS, and other assets
 		router->get("/assets/{file}", [](Request& request) -> Response {
-				String file = request.route("file");
-				String path = "/assets/" + file;
+				String path = "/assets/" + request.route("file");
 				
 				return Response(request.getServerRequest())
-						.file(path);
+						.file(path.c_str());
 		}).name("assets");
 
 

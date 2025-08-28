@@ -18,4 +18,4 @@ void speechRecognitionTask(void* param);
 // Function prototypes
 void protectCozmo();
 bool cliffDetected();
-void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback callback);
+void sendGPT(const Utils::Sstring &prompt, Communication::GPTAdapter::ResponseCallback callback);

@@ -36,7 +36,7 @@ public:
 private:
     // Helper methods
     static bool validateInput(const String& input);
-    static JsonDocument formatResponse(const String& data);
+    static Utils::SpiJsonDocument formatResponse(const String& data);
 };
 
 #endif
@@ -50,7 +50,7 @@ Create the implementation file (`.cpp`):
 #include "MyController.h"
 
 Response MyController::handleGet(Request& request) {
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["message"] = "Hello from MyController";
     response["timestamp"] = millis();
@@ -64,7 +64,7 @@ Response MyController::handlePost(Request& request) {
     String input = request.input("data");
     
     if (!validateInput(input)) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = "Invalid input data";
         
@@ -74,7 +74,7 @@ Response MyController::handlePost(Request& request) {
     }
     
     // Process the input
-    JsonDocument result = formatResponse(input);
+    Utils::SpiJsonDocument result = formatResponse(input);
     
     return Response(request.getServerRequest())
         .status(200)
@@ -85,8 +85,8 @@ bool MyController::validateInput(const String& input) {
     return input.length() > 0 && input.length() < 100;
 }
 
-JsonDocument MyController::formatResponse(const String& data) {
-    JsonDocument response;
+Utils::SpiJsonDocument MyController::formatResponse(const String& data) {
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["processed_data"] = data;
     response["length"] = data.length();
@@ -124,7 +124,7 @@ Best for simple, stateless operations:
 class StaticController : public Controller {
 public:
     static Response getInfo(Request& request) {
-        JsonDocument info;
+        Utils::SpiJsonDocument info;
         info["system"] = "ESP32 Cozmo";
         info["version"] = "1.0.0";
         
@@ -156,7 +156,7 @@ Better for complex operations requiring state:
 class ComplexController : public Controller {
 private:
     String currentUser;
-    JsonDocument cache;
+    Utils::SpiJsonDocument cache;
     
 public:
     ComplexController() {
@@ -176,7 +176,7 @@ public:
     
 private:
     Response unauthorized(Request& request) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = "Authentication required";
         
@@ -187,7 +187,7 @@ private:
     
     Response processUserRequest(Request& request) {
         // Complex processing with user context
-        JsonDocument result;
+        Utils::SpiJsonDocument result;
         result["user"] = currentUser;
         result["data"] = "processed data";
         
@@ -230,7 +230,7 @@ private:
     static bool isMotorEnabled();
     static bool validateMovementParams(Request& request);
     static void updateManualControlTime();
-    static JsonDocument formatSensorData();
+    static Utils::SpiJsonDocument formatSensorData();
 };
 
 #endif
@@ -244,7 +244,7 @@ Implementation:
 
 Response RobotController::moveForward(Request& request) {
     if (!isMotorEnabled()) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = "Motor system disabled";
         
@@ -254,7 +254,7 @@ Response RobotController::moveForward(Request& request) {
     }
     
     if (!validateMovementParams(request)) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = "Invalid movement parameters";
         
@@ -275,7 +275,7 @@ Response RobotController::moveForward(Request& request) {
         motors->stop();
     }
     
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["action"] = "forward";
     response["speed"] = speed;
@@ -287,7 +287,7 @@ Response RobotController::moveForward(Request& request) {
 }
 
 Response RobotController::getSensorData(Request& request) {
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["sensors"] = formatSensorData();
     response["timestamp"] = millis();
@@ -316,8 +316,8 @@ void RobotController::updateManualControlTime() {
     lastManualControlTime = millis();
 }
 
-JsonDocument RobotController::formatSensorData() {
-    JsonDocument sensors;
+Utils::SpiJsonDocument RobotController::formatSensorData() {
+    Utils::SpiJsonDocument sensors;
     
     if (DISTANCE_ENABLED && distanceSensor) {
         sensors["distance"] = distanceSensor->readDistance();
@@ -366,7 +366,7 @@ private:
     static bool isValidPath(const String& path);
     static bool isAllowedFileType(const String& filename);
     static String sanitizePath(const String& path);
-    static JsonDocument formatFileInfo(const String& path);
+    static Utils::SpiJsonDocument formatFileInfo(const String& path);
 };
 
 #endif
@@ -382,7 +382,7 @@ Response FileController::listFiles(Request& request) {
     directory = sanitizePath(directory);
     
     if (!isValidPath(directory)) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = "Invalid directory path";
         
@@ -391,7 +391,7 @@ Response FileController::listFiles(Request& request) {
             .json(error);
     }
     
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     JsonArray files = response["files"].to<JsonArray>();
     
     File dir = SPIFFS.open(directory);
@@ -428,7 +428,7 @@ Response FileController::uploadFile(Request& request) {
     String content = request.input("content");
     
     if (!isAllowedFileType(filename)) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = "File type not allowed";
         
@@ -441,7 +441,7 @@ Response FileController::uploadFile(Request& request) {
     
     File file = SPIFFS.open(path, "w");
     if (!file) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = "Failed to create file";
         
@@ -453,7 +453,7 @@ Response FileController::uploadFile(Request& request) {
     size_t bytesWritten = file.print(content);
     file.close();
     
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["filename"] = filename;
     response["bytes_written"] = bytesWritten;
@@ -502,7 +502,7 @@ public:
         // Check authentication
         User* user = AuthController::getCurrentUser(request);
         if (!user) {
-            JsonDocument error;
+            Utils::SpiJsonDocument error;
             error["success"] = false;
             error["message"] = "Authentication required";
             
@@ -516,7 +516,7 @@ public:
         bool isAdmin = (username == "admin");
         
         if (!isAdmin) {
-            JsonDocument error;
+            Utils::SpiJsonDocument error;
             error["success"] = false;
             error["message"] = "Admin access required";
             
@@ -527,7 +527,7 @@ public:
         }
         
         // Process authorized request
-        JsonDocument response;
+        Utils::SpiJsonDocument response;
         response["success"] = true;
         response["user"] = username;
         response["action"] = "performed";
@@ -548,7 +548,7 @@ public:
 class ErrorController : public Controller {
 private:
     static Response createErrorResponse(Request& request, int status, const String& message, const String& code = "") {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["success"] = false;
         error["message"] = message;
         error["timestamp"] = millis();
@@ -590,7 +590,7 @@ public:
 ```cpp
 class ValidationController : public Controller {
 private:
-    static bool validateRequired(Request& request, const String& field, JsonDocument& error) {
+    static bool validateRequired(Request& request, const String& field, Utils::SpiJsonDocument& error) {
         if (request.input(field).isEmpty()) {
             error["success"] = false;
             error["message"] = "Field '" + field + "' is required";
@@ -600,7 +600,7 @@ private:
         return true;
     }
     
-    static bool validateLength(Request& request, const String& field, int minLen, int maxLen, JsonDocument& error) {
+    static bool validateLength(Request& request, const String& field, int minLen, int maxLen, Utils::SpiJsonDocument& error) {
         String value = request.input(field);
         if (value.length() < minLen || value.length() > maxLen) {
             error["success"] = false;
@@ -613,7 +613,7 @@ private:
     
 public:
     static Response validateUserInput(Request& request) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         
         if (!validateRequired(request, "username", error)) {
             return Response(request.getServerRequest()).status(400).json(error);
@@ -632,7 +632,7 @@ public:
         }
         
         // If all validations pass
-        JsonDocument success;
+        Utils::SpiJsonDocument success;
         success["success"] = true;
         success["message"] = "Validation passed";
         
@@ -658,7 +658,7 @@ public:
         // Assert response status and JSON format
     }
     
-    static JsonDocument parseResponse(Response& response) {
+    static Utils::SpiJsonDocument parseResponse(Response& response) {
         // Parse JSON response for testing
     }
 };
@@ -670,7 +670,7 @@ void testSystemController() {
     
     TestHelper::assertJsonResponse(response, 200);
     
-    JsonDocument data = TestHelper::parseResponse(response);
+    Utils::SpiJsonDocument data = TestHelper::parseResponse(response);
     assert(data["success"] == true);
     assert(data.containsKey("data"));
 }
@@ -718,7 +718,7 @@ Controllers/
 
 ### 3. Memory Management
 - Always delete allocated objects (especially User* instances)
-- Use JsonDocument efficiently
+- Use Utils::SpiJsonDocument efficiently
 - Avoid large objects in static methods
 
 ### 4. Security

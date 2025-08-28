@@ -12,7 +12,7 @@ CommandMapper::CommandMapper(Utils::Logger *logger, Screen::Screen* screen, Moto
 
 void CommandMapper::initCommandHandlers() {
     // Face expression commands
-    _commandHandlers["FACE_NORMAL"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_NORMAL"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Normal();
             return true;
@@ -20,7 +20,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_ANGRY"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_ANGRY"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Angry();
             return true;
@@ -28,7 +28,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_GLEE"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_GLEE"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Glee();
             return true;
@@ -36,7 +36,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_HAPPY"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_HAPPY"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Happy();
             return true;
@@ -44,7 +44,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_SAD"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_SAD"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Sad();
             return true;
@@ -52,7 +52,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_WORRIED"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_WORRIED"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Worried();
             return true;
@@ -60,7 +60,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_FOCUSED"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_FOCUSED"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Focused();
             return true;
@@ -68,7 +68,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_ANNOYED"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_ANNOYED"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Annoyed();
             return true;
@@ -76,7 +76,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_SURPRISED"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_SURPRISED"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Surprised();
             return true;
@@ -84,7 +84,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_SKEPTIC"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_SKEPTIC"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Skeptic();
             return true;
@@ -92,7 +92,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_FRUSTRATED"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_FRUSTRATED"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Frustrated();
             return true;
@@ -100,7 +100,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_UNIMPRESSED"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_UNIMPRESSED"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Unimpressed();
             return true;
@@ -108,7 +108,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_SLEEPY"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_SLEEPY"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Sleepy();
             return true;
@@ -116,7 +116,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_SUSPICIOUS"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_SUSPICIOUS"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Suspicious();
             return true;
@@ -124,7 +124,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_SQUINT"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_SQUINT"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Squint();
             return true;
@@ -132,7 +132,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_FURIOUS"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_FURIOUS"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Furious();
             return true;
@@ -140,7 +140,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_SCARED"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_SCARED"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Scared();
             return true;
@@ -148,7 +148,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["FACE_AWE"] = [this](const String& param) -> bool {
+    _commandHandlers["FACE_AWE"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->Expression.GoTo_Awe();
             return true;
@@ -157,7 +157,7 @@ void CommandMapper::initCommandHandlers() {
     };
     
     // Look direction commands
-    _commandHandlers["LOOK_LEFT"] = [this](const String& param) -> bool {
+    _commandHandlers["LOOK_LEFT"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->LookLeft();
             return true;
@@ -165,7 +165,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["LOOK_RIGHT"] = [this](const String& param) -> bool {
+    _commandHandlers["LOOK_RIGHT"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->LookRight();
             return true;
@@ -173,7 +173,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["LOOK_FRONT"] = [this](const String& param) -> bool {
+    _commandHandlers["LOOK_FRONT"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->LookFront();
             return true;
@@ -181,7 +181,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["LOOK_TOP"] = [this](const String& param) -> bool {
+    _commandHandlers["LOOK_TOP"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->LookTop();
             return true;
@@ -189,7 +189,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["LOOK_BOTTOM"] = [this](const String& param) -> bool {
+    _commandHandlers["LOOK_BOTTOM"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->LookBottom();
             return true;
@@ -197,7 +197,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["BLINK"] = [this](const String& param) -> bool {
+    _commandHandlers["BLINK"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->DoBlink();
             return true;
@@ -206,51 +206,51 @@ void CommandMapper::initCommandHandlers() {
     };
     
     // Motor movement commands
-    _commandHandlers["MOVE_FORWARD"] = [this](const String& param) -> bool {
+    _commandHandlers["MOVE_FORWARD"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? _defaultMoveDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::FORWARD, duration);
-            _logger->debug("Moving forward for " + String(duration) + "ms");
+            _logger->debug("Moving forward for %dms", duration);
             delay(duration);  // Block until movement completes
             return true;
         }
         return false;
     };
     
-    _commandHandlers["MOVE_BACKWARD"] = [this](const String& param) -> bool {
+    _commandHandlers["MOVE_BACKWARD"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? _defaultMoveDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::BACKWARD, duration);
-            _logger->debug("Moving backward for " + String(duration) + "ms");
+            _logger->debug("Moving backward for %dms", duration);
             delay(duration);  // Block until movement completes
             return true;
         }
         return false;
     };
     
-    _commandHandlers["TURN_LEFT"] = [this](const String& param) -> bool {
+    _commandHandlers["TURN_LEFT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? _defaultTurnDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::LEFT, duration);
-            _logger->debug("Turning left for " + String(duration) + "ms");
+            _logger->debug("Turning left for %dms", duration);
             delay(duration);  // Block until movement completes
             return true;
         }
         return false;
     };
     
-    _commandHandlers["TURN_RIGHT"] = [this](const String& param) -> bool {
+    _commandHandlers["TURN_RIGHT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? _defaultTurnDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::RIGHT, duration);
-            _logger->debug("Turning right for " + String(duration) + "ms");
+            _logger->debug("Turning right for %dms", duration);
             delay(duration);  // Block until movement completes
             return true;
         }
         return false;
     };
     
-    _commandHandlers["STOP"] = [this](const String& param) -> bool {
+    _commandHandlers["STOP"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             _motors->stop();
             _logger->debug("Motors stopped");
@@ -260,7 +260,7 @@ void CommandMapper::initCommandHandlers() {
     };
     
     // Servo commands
-    _commandHandlers["HEAD_UP"] = [this](const String& param) -> bool {
+    _commandHandlers["HEAD_UP"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHead(180);
             _logger->debug("Head up");
@@ -269,7 +269,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["HEAD_DOWN"] = [this](const String& param) -> bool {
+    _commandHandlers["HEAD_DOWN"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHead(0);
             _logger->debug("Head down");
@@ -278,7 +278,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["HEAD_CENTER"] = [this](const String& param) -> bool {
+    _commandHandlers["HEAD_CENTER"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHead(90);
             _logger->debug("Head centered");
@@ -287,7 +287,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["HAND_UP"] = [this](const String& param) -> bool {
+    _commandHandlers["HAND_UP"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHand(180);
             _logger->debug("hand up");
@@ -296,7 +296,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["HAND_DOWN"] = [this](const String& param) -> bool {
+    _commandHandlers["HAND_DOWN"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHand(0);
             _logger->debug("hand down");
@@ -305,7 +305,7 @@ void CommandMapper::initCommandHandlers() {
         return false;
     };
     
-    _commandHandlers["HAND_CENTER"] = [this](const String& param) -> bool {
+    _commandHandlers["HAND_CENTER"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHand(90);
             _logger->debug("hand centered");
@@ -315,54 +315,54 @@ void CommandMapper::initCommandHandlers() {
     };
     
     // Custom position commands
-    _commandHandlers["HEAD_POSITION"] = [this](const String& param) -> bool {
+    _commandHandlers["HEAD_POSITION"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             int angle = param.isEmpty() ? 90 : param.toInt();
             // Constrain the angle to valid range
             angle = constrain(angle, 0, 180);
             _servos->setHead(angle);
-            _logger->debug("head position set to " + String(angle));
+            _logger->debug("head position set to %d", Utils::Sstring(angle));
             return true;
         }
         return false;
     };
     
-    _commandHandlers["HAND_POSITION"] = [this](const String& param) -> bool {
+    _commandHandlers["HAND_POSITION"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             int angle = param.isEmpty() ? 90 : param.toInt();
             // Constrain the angle to valid range
             angle = constrain(angle, 0, 180);
             _servos->setHand(angle);
-            _logger->debug("hand position set to " + String(angle));
+            _logger->debug("hand position set to %d", angle);
             return true;
         }
         return false;
     };
     
     // Custom motor movement commands with duration control
-    _commandHandlers["MOTOR_LEFT"] = [this](const String& param) -> bool {
+    _commandHandlers["MOTOR_LEFT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? 100 : param.toInt();
             // TODO: Implement motor duration control when available
             _motors->move(Motors::MotorControl::LEFT, duration);
-            _logger->debug("Left motor activated at duration " + String(duration) + " for " + String(duration) + "ms");
+            _logger->debug("Left motor activated at duration %d for %dms", duration, duration);
             return true;
         }
         return false;
     };
     
-    _commandHandlers["MOTOR_RIGHT"] = [this](const String& param) -> bool {
+    _commandHandlers["MOTOR_RIGHT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? 100 : param.toInt();
             // TODO: Implement motor duration control when available
             _motors->move(Motors::MotorControl::RIGHT, duration);
-            _logger->debug("Right motor activated at duration " + String(duration) + " for " + String(duration) + "ms");
+            _logger->debug("Right motor activated at duration %d for %dms", duration, duration);
             return true;
         }
         return false;
     };
     
-    _commandHandlers["LOOK_AROUND"] = [this](const String& param) -> bool {
+    _commandHandlers["LOOK_AROUND"] = [this](const Utils::Sstring& param) -> bool {
         if (_screen && _screen->getFace()) {
             _screen->getFace()->LookLeft();
             vTaskDelay(pdMS_TO_TICKS(500));
@@ -380,32 +380,32 @@ void CommandMapper::initCommandHandlers() {
     };
 }
 
-bool CommandMapper::executeCommand(const String& commandStr) {
+bool CommandMapper::executeCommand(const Utils::Sstring& commandStr) {
     // Extract command and parameter using regex
     std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
     std::cmatch matches;
     std::string cmdStrStd = commandStr.c_str();
     
     if (std::regex_match(cmdStrStd.c_str(), matches, cmdRegex)) {
-        String command = String(matches[1].str().c_str());
-        String parameter = matches.size() > 2 ? String(matches[2].str().c_str()) : "";
+        Utils::Sstring command = Utils::Sstring(matches[1].str().c_str());
+        Utils::Sstring parameter = matches.size() > 2 ? Utils::Sstring(matches[2].str().c_str()) : "";
         
-        _logger->debug("Executing command: " + command + (parameter.isEmpty() ? "" : " with param: " + parameter));
+        _logger->debug("Executing command: %s%s", command, parameter.isEmpty() ? "" : (String(" with param: ") + parameter.c_str()));
         
         // Look up command handler
         if (_commandHandlers.count(command.c_str()) > 0) {
             return _commandHandlers[command.c_str()](parameter);
         } else {
-            _logger->warning("Unknown command: " + command);
+            _logger->warning("Unknown command: %s", command.c_str());
             return false;
         }
     }
     
-    _logger->warning("Invalid command format: " + commandStr);
+    _logger->warning("Invalid command format: %s", commandStr.c_str());
     return false;
 }
 
-int CommandMapper::executeCommandString(const String& multiCommandStr) {
+int CommandMapper::executeCommandString(const Utils::Sstring& multiCommandStr) {
     // Extract all commands from string
     std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
     std::string multiCmdStd = multiCommandStr.c_str();
@@ -417,7 +417,7 @@ int CommandMapper::executeCommandString(const String& multiCommandStr) {
     // Execute each command
     for (; it != end; ++it) {
         std::smatch match = *it;
-        String cmdStr = match.str(0).c_str();
+        Utils::Sstring cmdStr = match.str(0).c_str();
         
         if (executeCommand(cmdStr)) {
             successCount++;
@@ -427,7 +427,7 @@ int CommandMapper::executeCommandString(const String& multiCommandStr) {
     return successCount;
 }
 
-String CommandMapper::extractCommands(const String& gptResponse) {
+Utils::Sstring CommandMapper::extractCommands(const Utils::Sstring& gptResponse) {
     // Extract all commands from GPT response
     std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
     std::string responseStd = gptResponse.c_str();
@@ -442,10 +442,10 @@ String CommandMapper::extractCommands(const String& gptResponse) {
         result += match.str(0);
     }
     
-    return String(result.c_str());
+    return Utils::Sstring(result.c_str());
 }
 
-String CommandMapper::extractText(const String& gptResponse) {
+Utils::Sstring CommandMapper::extractText(const Utils::Sstring& gptResponse) {
     // Remove all commands from GPT response to get just the text
     std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
     std::string responseStd = gptResponse.c_str();
@@ -457,10 +457,10 @@ String CommandMapper::extractText(const String& gptResponse) {
     result.erase(0, result.find_first_not_of(" \t\n\r"));
     result.erase(result.find_last_not_of(" \t\n\r") + 1);
     
-    return String(result.c_str());
+    return Utils::Sstring(result.c_str());
 }
 
-int CommandMapper::parseTimeParam(const String& param) {
+int CommandMapper::parseTimeParam(const Utils::Sstring& param) {
     int duration = 0;
     
     // Default if parsing fails
@@ -468,13 +468,13 @@ int CommandMapper::parseTimeParam(const String& param) {
         return _defaultMoveDuration;
     }
     
-    String numPart = "";
-    String unit = "s";  // Default to seconds
+    Utils::Sstring numPart = "";
+    Utils::Sstring unit = "s";  // Default to seconds
     
     // Extract number and unit
     for (size_t i = 0; i < param.length(); i++) {
-        if (isDigit(param[i])) {
-            numPart += param[i];
+        if (isDigit(param.c_str()[i])) {
+            numPart += param.c_str()[i];
         } else {
             unit = param.substring(i);
             break;

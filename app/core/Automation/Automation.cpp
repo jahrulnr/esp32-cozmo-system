@@ -105,7 +105,7 @@ bool Automation::isRandomBehaviorOrder() const {
 void Automation::setRandomBehaviorOrder(bool randomOrder) {
     _randomBehaviorOrder = randomOrder;
     if (_logger) {
-        _logger->info(String("Automation behavior order set to ") + (randomOrder ? "random" : "sequential"));
+        _logger->info("Automation behavior order set to %s", randomOrder ? "random" : "sequential");
     }
 }
 
@@ -215,7 +215,7 @@ void Automation::loadTemplateBehaviors() {
         int startPos = 0;
         int nextPos = 0;
         while ((nextPos = templateDefault.indexOf('\n', startPos)) != -1) {
-            String behavior = templateDefault.toString().substring(startPos, nextPos);
+            Utils::Sstring behavior = templateDefault.toString().substring(startPos, nextPos);
             behavior.trim();
             if (behavior.length() > 0) {
                 _templateBehaviors.push_back(behavior);
@@ -233,7 +233,7 @@ void Automation::loadTemplateBehaviors() {
         xSemaphoreGive(_behaviorsMutex);
         
         if (_logger) {
-            _logger->info("Loaded " + String(_templateBehaviors.size()) + " template behaviors");
+            _logger->info("Loaded %d template behaviors", _templateBehaviors.size());
         }
     }
 }
@@ -248,7 +248,7 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
         // Check if there's a vocalization message (text enclosed in asterisks)
         int startVoice = behavior.toString().indexOf('*');
         int endVoice = behavior.toString().lastIndexOf('*');
-        String voiceMessage = "";
+        Utils::Sstring voiceMessage = "";
         
         if (startVoice >= 0 && endVoice > startVoice) {
             voiceMessage = behavior.toString().substring(startVoice + 1, endVoice);
@@ -273,7 +273,7 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
 }
 
 // Add a new behavior to the templates
-bool Automation::addNewBehavior(const String& behavior) {
+bool Automation::addNewBehavior(const Utils::Sstring& behavior) {
     if (behavior.isEmpty()) {
         return false;
     }
@@ -281,7 +281,7 @@ bool Automation::addNewBehavior(const String& behavior) {
     // Take the mutex to safely modify the behaviors list
     if (xSemaphoreTake(_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
         // Add the new behavior to our list
-        _templateBehaviors.push_back(Utils::Sstring(behavior));
+        _templateBehaviors.push_back(behavior);
         
         // Save to file
         bool saveResult = saveBehaviorsToFile();
@@ -291,7 +291,7 @@ bool Automation::addNewBehavior(const String& behavior) {
         
         if (_logger) {
             if (saveResult) {
-                _logger->info("New behavior added: " + behavior);
+                _logger->info("New behavior added: %s", behavior.c_str());
             } else {
                 _logger->error("Failed to save new behavior to file");
             }
@@ -304,7 +304,7 @@ bool Automation::addNewBehavior(const String& behavior) {
 }
 
 // Fetch new behaviors from GPT and add them
-bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
+bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     if (!::gptAdapter) {
         if (_logger) {
             _logger->error("GPT adapter not available for generating behaviors");
@@ -313,7 +313,7 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
     }
     
     if (_logger) {
-        _logger->info("Requesting new behaviors from GPT with prompt: " + prompt);
+        _logger->info("Requesting new behaviors from GPT with prompt: %s", prompt.c_str());
     }
     
     // Create a semaphore for synchronizing with the callback
@@ -321,7 +321,7 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
     bool success = false;
     
     // Build a list of existing behaviors to avoid duplicates
-    String existingBehaviorsList = "";
+    Utils::Sstring existingBehaviorsList = "";
     int exampleCount = 0;
     
     // Take the mutex to safely access the behaviors list
@@ -342,7 +342,8 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
             
             // Get up to 5 examples
             for (size_t i = 0; i < std::min(static_cast<size_t>(5), _templateBehaviors.size()); ++i) {
-                existingBehaviorsList += "Example " + String(exampleCount + 1) + ": " + 
+                existingBehaviorsList += "Example ";
+                existingBehaviorsList += Utils::Sstring(exampleCount + 1) + ": " + 
                                          _templateBehaviors[indices[i]].toString() + "\n";
                 exampleCount++;
             }
@@ -353,7 +354,7 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
     }
     
     // Additional command to guide GPT in generating appropriate behaviors
-    String additionalCommand = 
+    Utils::Sstring additionalCommand = 
         "Generate 8 new robot behaviors in the exact format of existing templates. "
         "Each behavior should be on a new line and use only this format: "
         "[ACTION=time][ACTION2=time] *Robot vocalization*\n\n"
@@ -373,14 +374,15 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
         "Each behavior should represent a cohesive action with matching facial expression and vocalization.\n"
         "Create a mix of simple and complex behaviors.\n"
         "Do not include any explanations, numbering, or extra text.\n\n"
-        "Here are some examples of current behaviors:\n" + existingBehaviorsList;
+        "Here are some examples of current behaviors:\n"; 
+    additionalCommand += existingBehaviorsList;
         
     // Store a pointer to this for use in the lambda
     Automation* self = this;
         
     // Send the prompt to GPT using sendPromptWithCustomSystem for better memory management
     ::gptAdapter->sendPromptWithCustomSystem(prompt, additionalCommand, 
-        [self, doneSemaphore, &success](const String& response) {
+        [self, doneSemaphore, &success](const Utils::Sstring& response) {
         // Process the response from GPT
         int addedCount = 0;
         
@@ -393,7 +395,7 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
         int endPos = 0;
         
         while ((endPos = response.indexOf('\n', startPos)) != -1) {
-            String behavior = response.substring(startPos, endPos);
+            Utils::Sstring behavior = response.substring(startPos, endPos);
             behavior.trim();
             if (!behavior.isEmpty() && behavior.indexOf('[') >= 0) {
                 // This looks like a valid behavior template
@@ -405,7 +407,7 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
         }
         
         // Check for one last behavior after the last newline
-        String lastBehavior = response.substring(startPos);
+        Utils::Sstring lastBehavior = response.substring(startPos);
         lastBehavior.trim();
         if (!lastBehavior.isEmpty() && lastBehavior.indexOf('[') >= 0) {
             if (self->addNewBehavior(lastBehavior)) {
@@ -418,7 +420,7 @@ bool Automation::fetchAndAddNewBehaviors(const String& prompt) {
         
         if (self->_logger) {
             if (success) {
-                self->_logger->info("Added " + String(addedCount) + " new behaviors from GPT");
+                self->_logger->info("Added %d new behaviors from GPT", addedCount);
             } else {
                 self->_logger->warning("No valid behaviors found in GPT response");
             }
@@ -464,7 +466,7 @@ bool Automation::saveBehaviorsToFile() {
     int startPos = 0;
     int nextPos = 0;
     while ((nextPos = defaultTemplates.indexOf('\n', startPos)) != -1) {
-        String behavior = defaultTemplates.toString().substring(startPos, nextPos);
+        Utils::Sstring behavior = defaultTemplates.toString().substring(startPos, nextPos);
         behavior.trim();
         if (behavior.length() > 0) {
             defaultTemplatesList.push_back(behavior);
@@ -472,7 +474,7 @@ bool Automation::saveBehaviorsToFile() {
         startPos = nextPos + 1;
     }
     
-    String lastDefault = defaultTemplates.toString().substring(startPos);
+    Utils::Sstring lastDefault = defaultTemplates.toString().substring(startPos);
     lastDefault.trim();
     if (lastDefault.length() > 0) {
         defaultTemplatesList.push_back(lastDefault);
@@ -504,8 +506,8 @@ bool Automation::saveBehaviorsToFile() {
         size_t toRemove = totalBehaviors - AUTOMATION_MAX_BEHAVIORS;
         
         if (_logger) {
-            _logger->warning("Too many behaviors (" + String(totalBehaviors) + 
-                             "), removing " + String(toRemove) + " oldest behaviors");
+            _logger->warning("Too many behaviors (%d), removing %d oldest behaviors",
+                totalBehaviors, toRemove);
         }
         
         // First try to remove from default behaviors (they can be reloaded from file)
@@ -534,7 +536,7 @@ bool Automation::saveBehaviorsToFile() {
     }
     
     // Build the content to save, validating behavior size to avoid memory issues
-    String content = "";
+    Utils::Sstring content = "";
     size_t validBehaviors = 0;
     
     for (const auto& behavior : userBehaviors) {
@@ -553,19 +555,19 @@ bool Automation::saveBehaviorsToFile() {
     // Check if content is too large (rough estimate, allowing ~10KB max)
     if (content.length() > 10240) {
         if (_logger) {
-            _logger->error("Behavior content too large (" + String(content.length()) + 
-                           " bytes), truncating to prevent memory issues");
+            _logger->error("Behavior content too large (%d bytes), truncating to prevent memory issues",
+                content.length());
         }
         content = content.substring(0, 10240);
     }
     
     // Save to file (completely replace the templates_update.txt to ensure persistence)
-    bool success = _fileManager->writeFile("/config/templates_update.txt", content);
+    bool success = _fileManager->writeFile("/config/templates_update.txt", content.c_str());
     
     // Log the result
     if (_logger) {
         if (success) {
-            _logger->info("Successfully saved " + String(validBehaviors) + " user behaviors to templates_update.txt");
+            _logger->info("Successfully saved %d user behaviors to templates_update.txt", validBehaviors);
         } else {
             _logger->error("Failed to save behaviors to templates_update.txt");
         }

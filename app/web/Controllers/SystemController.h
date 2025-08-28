@@ -4,10 +4,11 @@
 #include "Http/Controller.h"
 #include "Http/Request.h"
 #include "Http/Response.h"
-#include <ArduinoJson.h>
+#include <core/Utils/SpiAllocator.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include "../../repository/Configuration.h"
+#include <Sstring.h>
 
 class SystemController : public Controller {
 public:
@@ -37,9 +38,9 @@ public:
 
 private:
     // Helper methods
-    static String formatUptime(unsigned long milliseconds);
-    static String formatBytes(size_t bytes);
-    static JsonDocument getSystemInfo();
+    static Utils::Sstring formatUptime(unsigned long milliseconds);
+    static Utils::Sstring formatBytes(size_t bytes);
+    static Utils::SpiJsonDocument getSystemInfo();
 };
 
 #endif

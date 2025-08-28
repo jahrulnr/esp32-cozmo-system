@@ -4,11 +4,12 @@
 #include <functional>
 #include <map>
 #include <regex>
-#include "lib/Motors/MotorControl.h"
-#include "lib/Motors/ServoControl.h"
-#include "lib/Sensors/OrientationSensor.h"
-#include "lib/Sensors/DistanceSensor.h"
-#include "lib/Screen/Screen.h"
+#include <Sstring.h>
+#include "core/Motors/MotorControl.h"
+#include "core/Motors/ServoControl.h"
+#include "core/Sensors/OrientationSensor.h"
+#include "core/Sensors/DistanceSensor.h"
+#include "Screen.h"
 #include "Logger.h"
 
 namespace Utils {
@@ -19,16 +20,16 @@ public:
     CommandMapper(Utils::Logger *logger, Screen::Screen* screen, Motors::MotorControl* motors, Motors::ServoControl* servos);
 
     // Execute a command string (format: [COMMAND] or [COMMAND=PARAM])
-    bool executeCommand(const String& commandStr);
+    bool executeCommand(const Utils::Sstring& commandStr);
     
     // Execute a series of commands in a single string
-    int executeCommandString(const String& multiCommandStr);
+    int executeCommandString(const Utils::Sstring& multiCommandStr);
     
     // Extract expression commands from GPT response
-    String extractCommands(const String& gptResponse);
+    Utils::Sstring extractCommands(const Utils::Sstring& gptResponse);
     
     // Extract the natural language text (after commands)
-    String extractText(const String& gptResponse);
+    Utils::Sstring extractText(const Utils::Sstring& gptResponse);
 
 private:
     Screen::Screen* _screen;
@@ -41,17 +42,17 @@ private:
     int _defaultTurnDuration = 400;  // milliseconds
     
     // Parse time parameters (e.g., "10s", "1m")
-    int parseTimeParam(const String& param);
+    int parseTimeParam(const Utils::Sstring& param);
     
     // Commands and handlers
-    typedef std::function<bool(const String&)> CommandHandler;
+    typedef std::function<bool(const Utils::Sstring&)> CommandHandler;
     std::map<String, CommandHandler> _commandHandlers;
     
     // Initialize all command handlers
     void initCommandHandlers();
     
     // Command regex pattern
-    const String _cmdPattern = "\\[([A-Z_]+)(?:=([0-9msh]+))?\\]";
+    const Utils::Sstring _cmdPattern = "\\[([A-Z_]+)(?:=([0-9msh]+))?\\]";
 };
 
 } // namespace Utils

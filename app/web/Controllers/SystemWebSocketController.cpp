@@ -2,8 +2,8 @@
 #include "setup/setup.h"
 
 WebSocketResponse SystemWebSocketController::getSystemStatus(WebSocketRequest& request) {
-    JsonDocument statusData = createSystemStatusData();
-    JsonDocument response = createSuccessResponse(statusData);
+    Utils::SpiJsonDocument statusData = createSystemStatusData();
+    Utils::SpiJsonDocument response = createSuccessResponse(statusData);
     
     return WebSocketResponse(request)
         .type("system_status")
@@ -11,8 +11,8 @@ WebSocketResponse SystemWebSocketController::getSystemStatus(WebSocketRequest& r
 }
 
 WebSocketResponse SystemWebSocketController::getStorageInfo(WebSocketRequest& request) {
-    JsonDocument storageData = createStorageData();
-    JsonDocument response = createSuccessResponse(storageData);
+    Utils::SpiJsonDocument storageData = createStorageData();
+    Utils::SpiJsonDocument response = createSuccessResponse(storageData);
     
     return WebSocketResponse(request)
         .type("storage_info")
@@ -20,17 +20,17 @@ WebSocketResponse SystemWebSocketController::getStorageInfo(WebSocketRequest& re
 }
 
 WebSocketResponse SystemWebSocketController::getStorageStatus(WebSocketRequest& request) {
-    String storageType = request.getParameter("storage_type", "STORAGE_SPIFFS");
+    Utils::Sstring storageType = request.getParameter("storage_type", "STORAGE_SPIFFS");
     
     if (!isValidStorageType(storageType)) {
-        JsonDocument error = createErrorResponse("Invalid storage type", "INVALID_STORAGE_TYPE");
+        Utils::SpiJsonDocument error = createErrorResponse("Invalid storage type", "INVALID_STORAGE_TYPE");
         return WebSocketResponse(request)
             .type("error")
             .data(error);
     }
     
-    JsonDocument statusData = createStorageStatusData(storageType);
-    JsonDocument response = createSuccessResponse(statusData);
+    Utils::SpiJsonDocument statusData = createStorageStatusData(storageType);
+    Utils::SpiJsonDocument response = createSuccessResponse(statusData);
     
     return WebSocketResponse(request)
         .type("storage_status")
@@ -38,8 +38,8 @@ WebSocketResponse SystemWebSocketController::getStorageStatus(WebSocketRequest& 
 }
 
 // Helper methods
-JsonDocument SystemWebSocketController::createSystemStatusData() {
-    JsonDocument statusData;
+Utils::SpiJsonDocument SystemWebSocketController::createSystemStatusData() {
+    Utils::SpiJsonDocument statusData;
     
     // WiFi status with more detailed information
     if (wifiManager) {
@@ -61,10 +61,10 @@ JsonDocument SystemWebSocketController::createSystemStatusData() {
 
     // Other system statuses
     statusData["battery"] = -1; // Sample data
-    statusData["memory"] = String(ESP.getFreeHeap() / 1024) + " KB";  // Actual free memory in KB
-    statusData["cpu"] = String(ESP.getCpuFreqMHz()) + "Mhz";
-    statusData["spiffs_total"] = String(SPIFFS.totalBytes() / 1024) + " KB"; // KB
-    statusData["spiffs_used"] = String((SPIFFS.totalBytes() - SPIFFS.usedBytes()) / 1024) + " KB"; // KB
+    statusData["memory"] = Utils::Sstring(ESP.getFreeHeap() / 1024) + " KB";  // Actual free memory in KB
+    statusData["cpu"] = Utils::Sstring(ESP.getCpuFreqMHz()) + "Mhz";
+    statusData["spiffs_total"] = Utils::Sstring(SPIFFS.totalBytes() / 1024) + " KB"; // KB
+    statusData["spiffs_used"] = Utils::Sstring((SPIFFS.totalBytes() - SPIFFS.usedBytes()) / 1024) + " KB"; // KB
     statusData["temperature"] = temperatureSensor ? temperatureSensor->readTemperature() : 0.0;
 
 #if MICROPHONE_I2S
@@ -83,8 +83,8 @@ JsonDocument SystemWebSocketController::createSystemStatusData() {
     return statusData;
 }
 
-JsonDocument SystemWebSocketController::createStorageData() {
-    JsonDocument storageData;
+Utils::SpiJsonDocument SystemWebSocketController::createStorageData() {
+    Utils::SpiJsonDocument storageData;
 
     // Get SPIFFS information
     size_t totalBytes = SPIFFS.totalBytes();
@@ -105,8 +105,8 @@ JsonDocument SystemWebSocketController::createStorageData() {
     return storageData;
 }
 
-JsonDocument SystemWebSocketController::createStorageStatusData(const String& storageType) {
-    JsonDocument statusData;
+Utils::SpiJsonDocument SystemWebSocketController::createStorageStatusData(const Utils::Sstring& storageType) {
+    Utils::SpiJsonDocument statusData;
     statusData["storage_type"] = storageType;
     
     if (storageType == "STORAGE_SPIFFS") {
@@ -144,8 +144,8 @@ JsonDocument SystemWebSocketController::createStorageStatusData(const String& st
     return statusData;
 }
 
-JsonDocument SystemWebSocketController::createErrorResponse(const String& message, const String& code) {
-    JsonDocument error;
+Utils::SpiJsonDocument SystemWebSocketController::createErrorResponse(const Utils::Sstring& message, const Utils::Sstring& code) {
+    Utils::SpiJsonDocument error;
     error["success"] = false;
     error["message"] = message;
     error["timestamp"] = millis();
@@ -157,8 +157,8 @@ JsonDocument SystemWebSocketController::createErrorResponse(const String& messag
     return error;
 }
 
-JsonDocument SystemWebSocketController::createSuccessResponse(const JsonDocument& data) {
-    JsonDocument response;
+Utils::SpiJsonDocument SystemWebSocketController::createSuccessResponse(const Utils::SpiJsonDocument& data) {
+    Utils::SpiJsonDocument response;
     response["success"] = true;
     response["timestamp"] = millis();
     
@@ -169,28 +169,28 @@ JsonDocument SystemWebSocketController::createSuccessResponse(const JsonDocument
     return response;
 }
 
-bool SystemWebSocketController::requiresAuthentication(const String& operation) {
+bool SystemWebSocketController::requiresAuthentication(const Utils::Sstring& operation) {
     // System status operations require authentication in production
     // You can make this more granular based on security requirements
     return operation != "system_status"; // Allow system_status without auth for basic monitoring
 }
 
 WebSocketResponse SystemWebSocketController::unauthorizedResponse(WebSocketRequest& request) {
-    JsonDocument error = createErrorResponse("Authentication required", "UNAUTHORIZED");
+    Utils::SpiJsonDocument error = createErrorResponse("Authentication required", "UNAUTHORIZED");
     return WebSocketResponse(request)
         .type("error")
         .data(error);
 }
 
-String SystemWebSocketController::formatBytes(size_t bytes) {
+Utils::Sstring SystemWebSocketController::formatBytes(size_t bytes) {
     if (bytes < 1024) {
-        return String(bytes) + " B";
+        return Utils::Sstring(bytes) + " B";
     } else if (bytes < 1024 * 1024) {
-        return String(bytes / 1024.0, 1) + " KB";
+        return Utils::Sstring(bytes / 1024.0, 1) + " KB";
     } else if (bytes < 1024 * 1024 * 1024) {
-        return String(bytes / (1024.0 * 1024.0), 1) + " MB";
+        return Utils::Sstring(bytes / (1024.0 * 1024.0), 1) + " MB";
     } else {
-        return String(bytes / (1024.0 * 1024.0 * 1024.0), 1) + " GB";
+        return Utils::Sstring(bytes / (1024.0 * 1024.0 * 1024.0), 1) + " GB";
     }
 }
 
@@ -202,7 +202,7 @@ bool SystemWebSocketController::isApOnlyMode() {
     return true; // Default to AP mode if no WiFi manager
 }
 
-bool SystemWebSocketController::isValidStorageType(const String& storageType) {
+bool SystemWebSocketController::isValidStorageType(const Utils::Sstring& storageType) {
     return storageType == "STORAGE_SPIFFS" || 
            storageType == "STORAGE_SD_MMC";
 }

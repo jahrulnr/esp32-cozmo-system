@@ -5,12 +5,11 @@ TaskHandle_t gptTaskHandle = nullptr;
 void gptChatTask(void * param) {
 	if (param != nullptr){
 		// Create additional command with comprehensive hardware and sensor context
-		String additionalCommand = "You are the AI brain of a Cozmo IoT Robot. Here's the current hardware status and sensor readings:\n\n";
+		Utils::Sstring additionalCommand = "You are the AI brain of a Cozmo IoT Robot. Here's the current hardware status and sensor readings:\n\n";
 		
 		// ---- SYSTEM INFORMATION ----
 		additionalCommand += "=== SYSTEM INFORMATION ===\n";
 		additionalCommand += "System version: Cozmo IoT System (June 2025)\n";
-		additionalCommand += "Serial baud rate: " + String(SERIAL_BAUD_RATE) + "\n";
 		
 		#if CONFIG_IDF_TARGET_ESP32
 		additionalCommand += "Hardware: ESP32CAM\n";
@@ -24,7 +23,9 @@ void gptChatTask(void * param) {
 		if (temperatureSensor != nullptr && temperatureSensor->isSupported()) {
 			float cpuTemp = temperatureSensor->readTemperature();
 			if (!isnan(cpuTemp)) {
-				additionalCommand += "CPU temperature: " + String(cpuTemp, 1) + "°C\n";
+				additionalCommand += "CPU temperature: "; 
+				additionalCommand += Utils::Sstring(cpuTemp, 1); 
+				additionalCommand += "°C\n";
 			} else {
 				additionalCommand += "CPU temperature: Not available\n";
 			}
@@ -38,22 +39,27 @@ void gptChatTask(void * param) {
 		// Distance sensor (ultrasonic) readings
 		if (distanceSensor != nullptr) {
 			float distance = distanceSensor->measureDistance();
-			additionalCommand += "Distance sensor: " + String(distance) + " cm\n";
+			additionalCommand += "Distance sensor: "; 
+			additionalCommand += Utils::Sstring(distance); 
+			additionalCommand += " cm\n";
 			bool isObstacle = (distance > 0 && distance < ULTRASONIC_OBSTACLE_TRESHOLD);
-			additionalCommand += "Obstacle detected: " + String(isObstacle ? "Yes" : "No") + "\n";
+			additionalCommand += "Obstacle detected: "; 
+			additionalCommand += isObstacle ? "Yes\n" : "No\n";
 		}
 		
 		// Cliff detector readings
 		if (cliffLeftDetector != nullptr) {
 			cliffLeftDetector->update(); // Ensure we have fresh data
 			bool leftCliffDetected = cliffLeftDetector->isCliffDetected();
-			additionalCommand += "Left cliff detector: " + String(leftCliffDetected ? "CLIFF DETECTED" : "No cliff") + "\n";
+			additionalCommand += "Left cliff detector: ";
+			additionalCommand += leftCliffDetected ? "CLIFF DETECTED\n" : "No cliff\n";
 		}
 		
 		if (cliffRightDetector != nullptr) {
 			cliffRightDetector->update(); // Ensure we have fresh data
 			bool rightCliffDetected = cliffRightDetector->isCliffDetected();
-			additionalCommand += "Right cliff detector: " + String(rightCliffDetected ? "CLIFF DETECTED" : "No cliff") + "\n";
+			additionalCommand += "Right cliff detector: ";
+			additionalCommand += rightCliffDetected ? "CLIFF DETECTED\n" : "No cliff\n";
 		}
 		
 		// Orientation sensor readings
@@ -61,8 +67,19 @@ void gptChatTask(void * param) {
 			// Add more specific orientation data if available
 			additionalCommand += "Orientation sensors: Active\n";
 			// If methods available, add specific values:
-			additionalCommand += "Gyro X: " + String(orientation->getX()) + ", Y: " + String(orientation->getY()) + ", Z: " + String(orientation->getZ()) + "\n";
-			additionalCommand += "Accel X: " + String(orientation->getAccelX()) + ", Y: " + String(orientation->getAccelY()) + ", Z: " + String(orientation->getAccelZ()) + "\n";
+			additionalCommand += "Gyro X: "; 
+			additionalCommand += Utils::Sstring(orientation->getX());
+			additionalCommand += ", Y: ";
+			additionalCommand += Utils::Sstring(orientation->getY()); 
+			additionalCommand += ", Z: ";
+			additionalCommand += Utils::Sstring(orientation->getZ()); 
+			additionalCommand += "\nAccel X: "; 
+			additionalCommand += Utils::Sstring(orientation->getAccelX()); 
+			additionalCommand += ", Y: "; 
+			additionalCommand += Utils::Sstring(orientation->getAccelY());
+			additionalCommand += ", Z: ";
+			additionalCommand += Utils::Sstring(orientation->getAccelZ());
+			additionalCommand += "\n";
 		}
 		
 		// ---- HARDWARE CONFIGURATION ----
@@ -71,8 +88,6 @@ void gptChatTask(void * param) {
 		// Motors configuration
 		if (motors != nullptr) {
 			additionalCommand += "Motors: Enabled \n";
-			additionalCommand += "- Left Motor: PIN1=" + String(LEFT_MOTOR_PIN1) + ", PIN2=" + String(LEFT_MOTOR_PIN2) + "\n";
-			additionalCommand += "- Right Motor: PIN1=" + String(RIGHT_MOTOR_PIN1) + ", PIN2=" + String(RIGHT_MOTOR_PIN2) + "\n";
 		} else {
 			additionalCommand += "Motors: Disabled\n";
 		}
@@ -80,8 +95,6 @@ void gptChatTask(void * param) {
 		// Servo information
 		#if SERVO_ENABLED
 		additionalCommand += "Servos: Enabled\n";
-		additionalCommand += "- Head servo: Pin=" + String(HEAD_SERVO_PIN) + ", Default angle=" + String(DEFAULT_HEAD_ANGLE) + "°\n";
-		additionalCommand += "- Hand servo: Pin=" + String(HAND_SERVO_PIN) + ", Default angle=" + String(DEFAULT_HAND_ANGLE) + "°\n";
 		#else
 		additionalCommand += "Servos: Disabled\n";
 		#endif
@@ -91,49 +104,44 @@ void gptChatTask(void * param) {
 		
 		// Ultrasonic sensor
 		#if ULTRASONIC_ENABLED
-		additionalCommand += "- Ultrasonic: Enabled (Trigger Pin=" + String(ULTRASONIC_TRIGGER_PIN) + ", Echo Pin=" + String(ULTRASONIC_ECHO_PIN) + ")\n";
-		additionalCommand += "  Range: 0-" + String(ULTRASONIC_MAX_DISTANCE) + " cm, Obstacle threshold: " + String(ULTRASONIC_OBSTACLE_TRESHOLD) + " cm\n";
+		additionalCommand += "- Ultrasonic: Enabled\n";
 		#else
 		additionalCommand += "- Ultrasonic: Disabled\n";
 		#endif
 		
 		// Cliff detectors
 		#if CLIFF_DETECTOR_ENABLED
-		additionalCommand += "- Cliff detectors: Enabled (Digital sensors)\n";
-		additionalCommand += "  Left detector pin: " + String(CLIFF_LEFT_DETECTOR_PIN) + " (1=cliff detected)\n";
-		additionalCommand += "  Right detector pin: " + String(CLIFF_RIGHT_DETECTOR_PIN) + " (1=cliff detected)\n";
+		additionalCommand += "- Cliff detectors: Enabled (Digital sensors)(1=cliff detected)\n";
 		#else
 		additionalCommand += "- Cliff detectors: Disabled\n";
 		#endif
 		
 		// Orientation sensors
 		#if ORIENTATION_ENABLED
-		additionalCommand += "- Orientation sensors: Enabled (I2C: SDA=" + String(ORIENTATION_SDA_PIN) + ", SCL=" + String(ORIENTATION_SCL_PIN) + ")\n";
+		additionalCommand += "- Orientation sensors: Enabled\n";
 		#else
 		additionalCommand += "- Orientation sensors: Disabled\n";
 		#endif
 		
 		// Camera configuration
-		#if CAMERA_ENABLED
-		#if CONFIG_IDF_TARGET_ESP32
+#if CAMERA_ENABLED
+	#if CONFIG_IDF_TARGET_ESP32
 		additionalCommand += "- Camera: Enabled (Model: AI-THINKER ESP32-CAM)\n";
-		#elif CONFIG_IDF_TARGET_ESP32S3
+	#elif CONFIG_IDF_TARGET_ESP32S3
 		additionalCommand += "- Camera: Enabled (Model: ESP32-S3 OV2640)\n";
-		#else
+	#else
 		additionalCommand += "- Camera: Enabled (Unknown model)\n";
-		#endif
-		additionalCommand += "  Resolution: " + String(CAMERA_FRAME_SIZE) + ", Quality: " + String(CAMERA_QUALITY) + ", FPS: " + String(CAMERA_FPS) + "\n";
-		#else
+	#endif
+#else
 		additionalCommand += "- Camera: Disabled\n";
-		#endif
+#endif
 		
 		// Display
-		#if SCREEN_ENABLED
-		additionalCommand += "- Screen: Enabled (OLED " + String(SCREEN_WIDTH) + "x" + String(SCREEN_HEIGHT) + " pixels)\n";
-		additionalCommand += "  I2C pins: SDA=" + String(SCREEN_SDA_PIN) + ", SCL=" + String(SCREEN_SCL_PIN) + "\n";
-		#else
+#if SCREEN_ENABLED
+		additionalCommand += "- Screen: Enabled\n";
+#else
 		additionalCommand += "- Screen: Disabled\n";
-		#endif
+#endif
 		
 		// Add tips for responding to the robot
 		additionalCommand += "\n=== RESPONSE GUIDELINES ===\n";
@@ -154,9 +162,9 @@ void gptChatTask(void * param) {
 		additionalCommand += "11. If asked about hardware capabilities, use this context to provide accurate information\n\n";
 		
 		// Send the prompt with enhanced context
-		// gptAdapter->sendPrompt(data->prompt, additionalCommand, [data](const String& gptResponse){
+		// gptAdapter->sendPrompt(data->prompt, additionalCommand, [data](const Utils::Sstring& gptResponse){
 		// 	// Process commands in the response if CommandMapper is available
-		// 	String processedResponse = gptResponse;
+		// 	Utils::Sstring processedResponse = gptResponse;
 			
 		// 	if (commandMapper != nullptr) {
 		// 		// Extract and execute any commands in the response
@@ -164,7 +172,7 @@ void gptChatTask(void * param) {
 		// 		int commandCount = commandMapper->executeCommandString(gptResponse);
 				
 		// 		if (commandCount > 0) {
-		// 			logger->debug("Executed " + String(commandCount) + " commands from GPT response");
+		// 			logger->debug("Executed " + Utils::Sstring(commandCount) + " commands from GPT response");
 					
 		// 			// Get just the text without commands
 		// 			processedResponse = commandMapper->extractText(gptResponse);

@@ -150,7 +150,7 @@ void registerCustomRoutes(Router* router) {
         
         // Simple API endpoint
         api.get("/status", [](Request& request) -> Response {
-            JsonDocument response;
+            Utils::SpiJsonDocument response;
             response["status"] = "online";
             response["timestamp"] = millis();
             response["free_memory"] = ESP.getFreeHeap();
@@ -171,7 +171,7 @@ router->group("/api/v1", [&](Router& api) {
     api.middleware({"json", "auth"});
     
     api.post("/move", [](Request& request) -> Response {
-        JsonDocument requestData = request.json();
+        Utils::SpiJsonDocument requestData = request.json();
         
         String direction = requestData["direction"];
         int duration = requestData["duration"];
@@ -179,7 +179,7 @@ router->group("/api/v1", [&](Router& api) {
         // Execute robot movement
         bool success = moveRobot(direction, duration);
         
-        JsonDocument response;
+        Utils::SpiJsonDocument response;
         response["success"] = success;
         response["message"] = success ? "Movement executed" : "Movement failed";
         
@@ -199,7 +199,7 @@ router->group("/api/v1", [&](Router& api) {
     
     // Public endpoints (no auth required)
     api.get("/info", [](Request& request) -> Response {
-        JsonDocument info;
+        Utils::SpiJsonDocument info;
         info["robot_name"] = "Cozmo";
         info["version"] = "1.0.0";
         return Response(request.getServerRequest()).json(info);
@@ -210,19 +210,19 @@ router->group("/api/v1", [&](Router& api) {
         robot.middleware({"auth"});
         
         robot.get("/sensors", [](Request& request) -> Response {
-            JsonDocument sensors;
+            Utils::SpiJsonDocument sensors;
             sensors["temperature"] = readTemperature();
             sensors["distance"] = readDistance();
             return Response(request.getServerRequest()).json(sensors);
         });
         
         robot.post("/speak", [](Request& request) -> Response {
-            JsonDocument data = request.json();
+            Utils::SpiJsonDocument data = request.json();
             String text = data["text"];
             
             bool success = speakText(text);
             
-            JsonDocument response;
+            Utils::SpiJsonDocument response;
             response["success"] = success;
             return Response(request.getServerRequest()).json(response);
         });
@@ -243,7 +243,7 @@ void registerCustomRoutes(Router* router) {
             Serial.printf("[WebSocket] Robot client %u connected\n", request.clientId());
             
             // Send initial robot status
-            JsonDocument status;
+            Utils::SpiJsonDocument status;
             status["type"] = "robot_status";
             status["battery"] = getBatteryLevel();
             status["mode"] = getCurrentMode();
@@ -256,7 +256,7 @@ void registerCustomRoutes(Router* router) {
             Serial.printf("[WebSocket] Robot client %u disconnected\n", request.clientId());
         })
         .onMessage([](WebSocketRequest& request, const String& message) {
-            JsonDocument doc;
+            Utils::SpiJsonDocument doc;
             DeserializationError error = deserializeJson(doc, message);
             
             if (error) {
@@ -272,9 +272,9 @@ void registerCustomRoutes(Router* router) {
 ### WebSocket Command Handler
 
 ```cpp
-void handleRobotCommand(WebSocketRequest& request, JsonDocument& command) {
+void handleRobotCommand(WebSocketRequest& request, Utils::SpiJsonDocument& command) {
     String type = command["type"];
-    JsonDocument response;
+    Utils::SpiJsonDocument response;
     
     if (type == "move") {
         String direction = command["direction"];
@@ -376,7 +376,7 @@ struct RobotCommand {
 
 router->post("/api/command", [](Request& request) -> Response {
     RobotCommand cmd;
-    JsonDocument data = request.json();
+    Utils::SpiJsonDocument data = request.json();
     
     cmd.action = data["action"];
     cmd.duration = data["duration"];
@@ -398,7 +398,7 @@ router->get("/api/sensors/{sensor}", [](Request& request) -> Response {
     try {
         float value = readSensor(sensorName);
         
-        JsonDocument response;
+        Utils::SpiJsonDocument response;
         response["sensor"] = sensorName;
         response["value"] = value;
         response["timestamp"] = millis();
@@ -408,7 +408,7 @@ router->get("/api/sensors/{sensor}", [](Request& request) -> Response {
             .json(response);
             
     } catch (const std::exception& e) {
-        JsonDocument error;
+        Utils::SpiJsonDocument error;
         error["error"] = "Sensor not found";
         error["message"] = e.what();
         
@@ -518,7 +518,7 @@ router->group("/api", [&](Router& api) {
 
 ```cpp
 router->post("/api/move", [](Request& request) -> Response {
-    JsonDocument data = request.json();
+    Utils::SpiJsonDocument data = request.json();
     
     if (!data.containsKey("direction") || !data.containsKey("speed")) {
         return Response(request.getServerRequest())
@@ -534,13 +534,13 @@ router->post("/api/move", [](Request& request) -> Response {
 
 ```cpp
 // Standard success response
-JsonDocument successResponse;
+Utils::SpiJsonDocument successResponse;
 successResponse["success"] = true;
 successResponse["data"] = responseData;
 successResponse["timestamp"] = millis();
 
 // Standard error response  
-JsonDocument errorResponse;
+Utils::SpiJsonDocument errorResponse;
 errorResponse["success"] = false;
 errorResponse["error"] = "Error message";
 errorResponse["timestamp"] = millis();

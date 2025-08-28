@@ -2,10 +2,10 @@
 
 namespace Screen {
 
-Screen::Screen(Utils::Logger *logger) : _u8g2(nullptr), _initialized(false), 
+Screen::Screen() : _u8g2(nullptr), _initialized(false), 
     _holdFace(false), _holdTimer(0),
+    _micLevel(0), _width(128), _height(64),
     _mux(xSemaphoreCreateMutex()), _face(nullptr) {
-    _logger = logger;
 }
 
 Screen::~Screen() {
@@ -16,11 +16,7 @@ Screen::~Screen() {
     vSemaphoreDelete(_mux);
 }
 
-bool Screen::init(int sda, int scl) {
-    #if SCREEN_ENABLED == false
-    return false;
-    #else
-
+bool Screen::init(int sda, int scl, int width, int height) {
     _u8g2 = new U8G2_SSD1306_128X64_NONAME_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
     Utils::I2CManager::getInstance().initBus("base", sda, scl);
     
@@ -31,7 +27,7 @@ bool Screen::init(int sda, int scl) {
     _u8g2->setFontPosTop();
     _u8g2->setFontDirection(0);
 
-    _face = new Face(_u8g2, SCREEN_WIDTH, SCREEN_HEIGHT, 40);
+    _face = new Face(_u8g2, width, height, 40);
     _face->Expression.GoTo_Normal();
 
     // Assign a weight to each emotion
@@ -71,10 +67,10 @@ bool Screen::init(int sda, int scl) {
     update();
 
     _micBar = new MicBar(_u8g2);
-    
+    _width = width;
+    _height = height;
     _initialized = true;
     return true;
-    #endif
 }
 
 void Screen::clear() {
@@ -105,9 +101,6 @@ void Screen::drawText(int x, int y, const String& text, const uint8_t* font) {
     _holdFace = true;
     _holdTimer = 0; // Reset timer to ensure it's initialized in update()
     _u8g2->drawStr(x, y, text.c_str());
-    
-    // Log the text being displayed
-    _logger->debug("Drawing text: " + text);
 }
 
 void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
@@ -130,9 +123,6 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
         _holdFace = true;
         _holdTimer = 0; // Reset timer to ensure it's initialized in update()
         _u8g2->drawStr(x, y, text.c_str());
-        
-        // Log the centered text being displayed
-        _logger->debug("Drawing centered text: " + text);
     } else {
         // Text is too long - handle wrapping
     
@@ -244,7 +234,7 @@ void Screen::update() {
             _holdTimer = millis() + 3000;
         }
 
-        _micBar->drawBar();
+        _micBar->drawBar(_micLevel);
         _u8g2->sendBuffer();
     } else {
         updateFace();
@@ -254,6 +244,11 @@ void Screen::update() {
         _holdFace = false;
         _holdTimer = 0;
     }
+}
+
+// level range 0-4096
+void Screen::setMicLevel(int level) {
+    _micLevel = level;
 }
 
 void Screen::mutexUpdate() {
@@ -271,7 +266,7 @@ void Screen::updateFace() {
     if (!_holdFace) {
         _u8g2->clearBuffer();
 
-        _micBar->drawBar();
+        _micBar->drawBar(_micLevel);
         _face->Update();
     }
 }

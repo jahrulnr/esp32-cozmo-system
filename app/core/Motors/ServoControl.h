@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <ESP32Servo.h>
-#include "lib/Screen/Screen.h"
+#include "Screen.h"
 #include "IOExtern.h"
 
 namespace Motors {

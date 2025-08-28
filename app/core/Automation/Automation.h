@@ -7,8 +7,8 @@
 #include "Logger.h"
 #include "Sstring.h"
 #include "FileManager.h"
-#include "lib/Utils/CommandMapper.h"
-#include "lib/Communication/GPTAdapter.h"
+#include "core/Utils/CommandMapper.h"
+#include "core/Communication/GPTAdapter.h"
 
 namespace Automation {
 
@@ -26,8 +26,8 @@ public:
     void setEnabled(bool enabled);
     bool isRandomBehaviorOrder() const;
     void setRandomBehaviorOrder(bool randomOrder = true);
-    bool addNewBehavior(const String& behavior);
-    bool fetchAndAddNewBehaviors(const String& prompt = "Generate new robot behaviors");
+    bool addNewBehavior(const Utils::Sstring& behavior);
+    bool fetchAndAddNewBehaviors(const Utils::Sstring& prompt = "Generate new robot behaviors");
     
     static void taskFunction(void* parameter);
 

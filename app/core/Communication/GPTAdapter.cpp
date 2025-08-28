@@ -1,6 +1,6 @@
 #include "GPTAdapter.h"
 #include <HTTPClient.h>
-#include "lib/Utils/SpiAllocator.h"
+#include "core/Utils/SpiAllocator.h"
 
 namespace Communication {
 
@@ -76,23 +76,23 @@ GPTAdapter::~GPTAdapter() {
     // Clean up resources if needed
 }
 
-bool GPTAdapter::init(const String& apiKey) {
+bool GPTAdapter::init(const Utils::Sstring& apiKey) {
     _apiKey = apiKey;
     _initialized = true;
     return true;
 }
 
-void GPTAdapter::sendPrompt(const String& prompt, ResponseCallback callback) {
+void GPTAdapter::sendPrompt(const Utils::Sstring& prompt, ResponseCallback callback) {
     sendPrompt(prompt, "", callback);
 }
 
-void GPTAdapter::sendPrompt(const String& prompt, const String& additionalCommand, ResponseCallback callback) {
+void GPTAdapter::sendPrompt(const Utils::Sstring& prompt, const Utils::Sstring& additionalCommand, ResponseCallback callback) {
     Utils::Sstring msg = _systemMessage;
     msg.replace("--*additional command*--", additionalCommand);
     sendPromptWithCustomSystem(prompt, msg.toString(), callback);
 }
 
-void GPTAdapter::sendPromptWithCustomSystem(const String& prompt, const String& systemCommand, ResponseCallback callback) {
+void GPTAdapter::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const Utils::Sstring& systemCommand, ResponseCallback callback) {
     if (!_initialized) {
         if (callback) {
             callback("Error: GPT adapter not initialized");
@@ -123,10 +123,10 @@ void GPTAdapter::sendPromptWithCustomSystem(const String& prompt, const String& 
     String payload;
     serializeJson(doc, payload);
     
-    int httpCode = http.POST(payload);
+    int httpCode = http.POST(payload.c_str());
     
     if (httpCode > 0) {
-        String response = http.getString();
+        Utils::Sstring response = http.getString();
         processResponse(response, callback);
     } else {
         if (callback) {
@@ -137,11 +137,11 @@ void GPTAdapter::sendPromptWithCustomSystem(const String& prompt, const String& 
     http.end();
 }
 
-void GPTAdapter::setModel(const String& model) {
+void GPTAdapter::setModel(const Utils::Sstring& model) {
     _model = model;
 }
 
-void GPTAdapter::setSystemMessage(const String& message) {
+void GPTAdapter::setSystemMessage(const Utils::Sstring& message) {
     _systemMessage = message;
 }
 
@@ -153,27 +153,27 @@ void GPTAdapter::setTemperature(float temperature) {
     _temperature = constrain(temperature, 0.0f, 1.0f);
 }
 
-void GPTAdapter::processResponse(const String& response, ResponseCallback callback) {
+void GPTAdapter::processResponse(const Utils::Sstring& response, ResponseCallback callback) {
     if (!callback) {
         return;
     }
     
     Utils::SpiJsonDocument doc;
-    DeserializationError error = deserializeJson(doc, response);
+    DeserializationError error = deserializeJson(doc, response.c_str());
     
     if (error) {
-        callback("Error parsing JSON: " + String(error.c_str()));
+        callback(Utils::Sstring("Error parsing JSON: ") + error.c_str());
         return;
     }
     
     if (!doc["error"].isUnbound()) {
-        callback("API Error: " + doc["error"]["message"].as<String>());
+        callback(Utils::Sstring("API Error: ") + doc["error"]["message"].as<String>());
         return;
     }
     
     // Extract the assistant's message
     if (!doc["choices"].isUnbound() && doc["choices"].size() > 0) {
-        String content = doc["choices"][0]["message"]["content"].as<String>();
+        Utils::Sstring content = doc["choices"][0]["message"]["content"].as<String>();
         callback(content);
     } else {
         callback("Error: Unexpected response format");

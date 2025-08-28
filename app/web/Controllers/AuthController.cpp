@@ -3,9 +3,9 @@
 
 Response AuthController::showLogin(Request& request) {
 		// Check if user is already authenticated
-		String token = request.header("Authorization");
+		Utils::Sstring token = request.header("Authorization");
 		if (token.length() > 0 && token.startsWith("Bearer ")) {
-				String authToken = token.substring(7);
+				Utils::Sstring authToken = token.substring(7);
 				if (verifyToken(authToken)) {
 						return Response(request.getServerRequest())
 								.redirect("/dashboard");
@@ -19,7 +19,7 @@ Response AuthController::showLogin(Request& request) {
 		}
 		
 		// Fallback if file doesn't exist
-		JsonDocument data;
+		Utils::SpiJsonDocument data;
 		data["title"] = "Login";
 		data["action"] = "/login";
 		data["redirect"] = request.get("redirect", "/dashboard");
@@ -29,13 +29,13 @@ Response AuthController::showLogin(Request& request) {
 }
 
 Response AuthController::login(Request& request) {
-		String username = request.input("username");
-		String password = request.input("password");
-		String redirect = request.input("redirect", "/dashboard");
+		Utils::Sstring username = request.input("username");
+		Utils::Sstring password = request.input("password");
+		Utils::Sstring redirect = request.input("redirect", "/dashboard");
 		
 		// Validate input
 		if (username.length() == 0 || password.length() == 0) {
-				JsonDocument error;
+				Utils::SpiJsonDocument error;
 				error["success"] = false;
 				error["message"] = "Username and password are required";
 				
@@ -47,7 +47,7 @@ Response AuthController::login(Request& request) {
 		// Validate credentials
 		User* user = nullptr;
 		if (!validateCredentials(username, password)) {
-				JsonDocument error;
+				Utils::SpiJsonDocument error;
 				error["success"] = false;
 				error["message"] = "Invalid username or password";
 				
@@ -57,12 +57,12 @@ Response AuthController::login(Request& request) {
 		}
 		
 		// Get user data from database
-		user = User::findByUsername(username);
+		user = User::findByUsername(username.c_str());
 		
 		// Generate JWT token
-		String token = generateToken(username);
+		Utils::Sstring token = generateToken(username);
 		
-		JsonDocument response;
+		Utils::SpiJsonDocument response;
 		response["success"] = true;
 		response["message"] = "Login successful";
 		response["token"] = token;
@@ -79,7 +79,7 @@ Response AuthController::login(Request& request) {
 
 Response AuthController::logout(Request& request) {
 		// In a real implementation, you might want to blacklist the token
-		JsonDocument response;
+		Utils::SpiJsonDocument response;
 		response["success"] = true;
 		response["message"] = "Logged out successfully";
 		response["redirect"] = "/login";
@@ -95,15 +95,15 @@ Response AuthController::dashboard(Request& request) {
 		// Serve dashboard page from SPIFFS
 		if (SPIFFS.exists("/views/dashboard.html")) {
 				File file = SPIFFS.open("/views/dashboard.html", "r");
-				String html = file.readString();
+				Utils::Sstring html = file.readString();
 				file.close();
 				
 				return Response(request.getServerRequest())
-						.html(html);
+						.html(html.c_str());
 		}
 		
 		// Fallback dashboard data (for JSON requests)
-		JsonDocument data;
+		Utils::SpiJsonDocument data;
 		data["title"] = "Dashboard";
 		data["user"]["username"] = "admin";
 		data["stats"] = JsonObject();
@@ -114,43 +114,43 @@ Response AuthController::dashboard(Request& request) {
 				.json(data);
 }
 
-bool AuthController::validateCredentials(const String& username, const String& password) {
+bool AuthController::validateCredentials(const Utils::Sstring& username, const Utils::Sstring& password) {
 		// Find user by username in CSV database
-		User* user = User::findByUsername(username);
+		User* user = User::findByUsername(username.c_str());
 		
 		if (user == nullptr) {
 				return false; // User not found
 		}
 		
 		// Authenticate with password
-		bool isValid = user->authenticate(password);
+		bool isValid = user->authenticate(password.c_str());
 		
 		delete user;
 		return isValid;
 }
 
-String AuthController::generateToken(const String& username) {
+Utils::Sstring AuthController::generateToken(const Utils::Sstring& username) {
 		// Simple token generation - in production use proper JWT library
 		// For demo, encode username in the token for easy extraction
-		String token = "cozmo_token_" + username + "_" + String(millis());
+		Utils::Sstring token = Utils::Sstring("cozmo_token_") + username + '_' + Utils::Sstring(millis());
 		// In real implementation, use proper JWT encoding with signature
 		return token;
 }
 
-bool AuthController::verifyToken(const String& token) {
+bool AuthController::verifyToken(const Utils::Sstring& token) {
 		// Simple token verification - in production use proper JWT verification
 		return token.startsWith("cozmo_token_") && token.length() > 20;
 }
 
-String AuthController::extractUsernameFromToken(const String& token) {
+Utils::Sstring AuthController::extractUsernameFromToken(const Utils::Sstring& token) {
 		// Simple username extraction - in production parse JWT payload
 		if (token.indexOf("cozmo_token_") == 0) {
 				// Extract username from token format: cozmo_token_username_timestamp
 				int firstUnderscore = token.indexOf('_', 11); // After "cozmo_token_"
-				int lastUnderscore = token.lastIndexOf('_');
+				int lastUnderscore = token.toString().lastIndexOf('_');
 				
 				if (firstUnderscore != -1 && lastUnderscore != -1 && firstUnderscore != lastUnderscore) {
-						String username = token.substring(11, lastUnderscore); // Extract username part\
+						Utils::Sstring username = token.substring(11, lastUnderscore); // Extract username part\
 						return username;
 				}
 		}
@@ -158,8 +158,8 @@ String AuthController::extractUsernameFromToken(const String& token) {
 }
 
 // Static helper methods for other controllers
-String AuthController::getCurrentUserUsername(Request& request) {
-		String token = request.header("Authorization");
+Utils::Sstring AuthController::getCurrentUserUsername(Request& request) {
+		Utils::Sstring token = request.header("Authorization");
 		
 		if (token.length() == 0) {
 				return "";
@@ -175,11 +175,11 @@ String AuthController::getCurrentUserUsername(Request& request) {
 		}
 		
 		// Extract username from token format: cozmo_token_username_timestamp
-		int tokenPrefix = String("cozmo_token_").length();
-		int lastUnderscore = token.lastIndexOf('_');
+		int tokenPrefix = Utils::Sstring("cozmo_token_").length();
+		int lastUnderscore = token.toString().lastIndexOf('_');
 		
 		if (lastUnderscore != -1) {
-				String username = token.substring(tokenPrefix, lastUnderscore); // Extract username part
+				Utils::Sstring username = token.substring(tokenPrefix, lastUnderscore); // Extract username part
 				return username;
 		}
 		
@@ -187,13 +187,13 @@ String AuthController::getCurrentUserUsername(Request& request) {
 }
 
 User* AuthController::getCurrentUser(Request& request) {
-		String username = getCurrentUserUsername(request);
+		Utils::Sstring username = getCurrentUserUsername(request);
 
 		if (username.length() == 0) {
 				return nullptr;
 		}
 		
-		User* user = User::findByUsername(username);
+		User* user = User::findByUsername(username.c_str());
 		return user;
 }
 
@@ -201,7 +201,7 @@ Response AuthController::getUserInfo(Request& request) {
 	// Use the same authentication logic as other methods
 	User* user = getCurrentUser(request);
 	if (user == nullptr) {
-		JsonDocument error;
+		Utils::SpiJsonDocument error;
 		error["success"] = false;
 		error["message"] = "Authentication required or user not found";
 		
@@ -211,7 +211,7 @@ Response AuthController::getUserInfo(Request& request) {
 	}
 	
 	// Return user info with permissions
-	JsonDocument response;
+	Utils::SpiJsonDocument response;
 	response["success"] = true;
 	response["user"]["username"] = user->getUsername();
 	

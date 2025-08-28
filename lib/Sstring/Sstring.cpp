@@ -229,7 +229,7 @@ const char* Sstring::toChar() const {
     return c_str();
 }
 
-int Sstring::toInt() {
+int Sstring::toInt() const {
     return buffer ? atoi(buffer) : 0;
 }
 
@@ -241,7 +241,7 @@ size_t Sstring::length() const {
     return len;
 }
 
-bool Sstring::isEmpty() {
+bool Sstring::isEmpty() const {
     return (len == 0);
 }
 

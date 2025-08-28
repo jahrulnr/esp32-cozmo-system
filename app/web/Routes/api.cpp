@@ -15,7 +15,7 @@ void registerApiRoutes(Router* router) {
 						
 						auth.post("/password", [authController](Request& request) -> Response {
 								// Password update endpoint (not implemented yet)
-								JsonDocument response;
+								Utils::SpiJsonDocument response;
 								response["success"] = false;
 								response["message"] = "Password update not implemented yet";
 								
@@ -33,7 +33,7 @@ void registerApiRoutes(Router* router) {
 						
 						admin.get("/users", [authController](Request& request) -> Response {
 								// Get all users (not implemented yet)
-								JsonDocument response;
+								Utils::SpiJsonDocument response;
 								response["success"] = true;
 								response["users"] = JsonArray();
 								

@@ -14,7 +14,7 @@ void setupCommandMapper() {
 }
 
 // Execute commands from text and return the regular text content
-String processTextCommands(const String& text) {
+Utils::Sstring processTextCommands(const Utils::Sstring& text) {
     if (!commandMapper) {
         logger->warning("CommandMapper not initialized, cannot process commands");
         return text;
@@ -24,7 +24,7 @@ String processTextCommands(const String& text) {
     int commandCount = commandMapper->executeCommandString(text);
     
     if (commandCount > 0) {
-        logger->debug("Executed " + String(commandCount) + " commands from text");
+        logger->debug("Executed %d commands from text", commandCount);
         
         // Return just the text content (without commands)
         return commandMapper->extractText(text);

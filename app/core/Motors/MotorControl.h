@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "lib/Screen/Screen.h"
+#include "Screen.h"
 #include "IOExtern.h"
 
 namespace Motors {

@@ -8,13 +8,12 @@
 
 void setup() {
   setCpuFrequencyMhz(240);
-  heap_caps_malloc_extmem_enable(1024 * 8);
+  heap_caps_malloc_extmem_enable(64);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
-  esp_log_level_set("*", ESP_LOG_DEBUG);
   if (Serial){
-    Serial.println("\n\nCozmo System Starting...");
+    Serial.println("Cozmo System Starting...");
   }
   
   esp_err_t esp_task_wdt_reconfigure(const esp_task_wdt_config_t *config);

@@ -5,18 +5,18 @@ void registerWebSocketRoutes(Router* router) {
 		.onConnect([](WebSocketRequest& request) {
 		  uint32_t clientId = request.clientId();
 			Serial.printf("[WebSocket] client %u connected\n", request.clientId());
-			String ip = request.clientIP();
-			logger->info("WebSocket client #" + String(clientId) + " connected from " + ip);
+			Utils::Sstring ip = request.clientIP();
+			logger->info("WebSocket client #%d connected from %s", clientId, ip.c_str());
 			sessions[clientId % 5].authenticated = false;
 			
 			// Send welcome message
-			JsonDocument welcome;
+			Utils::SpiJsonDocument welcome;
 			welcome["type"] = "welcome";
 			welcome["message"] = "Connected websocket";
 			
 			String welcomeMsg;
 			serializeJson(welcome, welcomeMsg);
-			request.send(welcomeMsg);
+			request.send(welcomeMsg.c_str());
 		})
 		.onDisconnect([](WebSocketRequest& request) {
 		  uint32_t clientId = request.clientId();
@@ -25,7 +25,7 @@ void registerWebSocketRoutes(Router* router) {
       sessions[clientId % 5].authenticated = false;
 		})
 		.onMessage([](WebSocketRequest& request, const String& message) {
-			JsonDocument doc;
+			Utils::SpiJsonDocument doc;
 			DeserializationError error = deserializeJson(doc, message);
 		  uint32_t clientId = request.clientId();
 			
@@ -34,9 +34,9 @@ void registerWebSocketRoutes(Router* router) {
 				return;
 			}
 
-			String type = doc["type"].as<String>();
+			Utils::Sstring type = doc["type"].as<String>();
 			JsonVariant data = doc["data"];
-			String version = doc["version"] | "0.0";
+			Utils::Sstring version = doc["version"] | "0.0";
 
 			if (type == "login") {
 

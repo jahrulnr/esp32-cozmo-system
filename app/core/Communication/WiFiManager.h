@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
+#include <Sstring.h>
 #include "FileManager.h"
 
 namespace Communication {
@@ -10,18 +11,18 @@ namespace Communication {
 class WiFiManager {
 public:
     struct NetworkInfo {
-        String ssid;
+        Utils::Sstring ssid;
         int32_t rssi;
         uint8_t encryptionType;
-        String bssid;
+        Utils::Sstring bssid;
         int32_t channel;
     };
     
     struct WiFiConfig {
-        String ssid;
-        String password;
-        String apSsid;
-        String apPassword;
+        Utils::Sstring ssid;
+        Utils::Sstring password;
+        Utils::Sstring apSsid;
+        Utils::Sstring apPassword;
     };
 
     WiFiManager(Utils::FileManager *fileManager);
@@ -40,7 +41,7 @@ public:
      * @param timeout Connection timeout in milliseconds
      * @return true if connection was successful, false otherwise
      */
-    bool connect(const String& ssid, const String& password, uint32_t timeout = 3000);
+    bool connect(const Utils::Sstring& ssid, const Utils::Sstring& password, uint32_t timeout = 3000);
 
     /**
      * Start access point mode
@@ -48,7 +49,7 @@ public:
      * @param password The AP password (empty for open network)
      * @return true if AP was started successfully, false otherwise
      */
-    bool startAP(const String& ssid, const String& password = "");
+    bool startAP(const Utils::Sstring& ssid, const Utils::Sstring& password = "");
 
     /**
      * Check if WiFi is connected
@@ -69,15 +70,15 @@ public:
 
     /**
      * Get the current IP address
-     * @return IP address as a string
+     * @return IP address as a Utils::sstring
      */
-    String getIP() const;
+    Utils::Sstring getIP() const;
 
     /**
      * Get the current MAC address
-     * @return MAC address as a string
+     * @return MAC address as a Utils::sstring
      */
-    String getMAC() const;
+    Utils::Sstring getMAC() const;
 
     /**
      * Get the current RSSI (signal strength)

@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <vector>
+#include <Sstring.h>
 
 namespace Utils {
 
@@ -84,9 +85,9 @@ public:
      * 
      * @param address I2C address of the device
      * @param wire The TwoWire instance to use (default = Wire)
-     * @return String Device name or "Unknown device"
+     * @return Utils::Sstring Device name or "Unknown device"
      */
-    static String identifyDevice(uint8_t address, TwoWire& wire = Wire);
+    static Utils::Sstring identifyDevice(uint8_t address, TwoWire& wire = Wire);
     
     /**
      * @brief Perform a detailed scan with device identification and connection quality

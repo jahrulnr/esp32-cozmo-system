@@ -10,7 +10,7 @@ namespace Communication {
 class GPTAdapter {
 public:
     // Callback type for GPT responses
-    using ResponseCallback = std::function<void(const String& response)>;
+    using ResponseCallback = std::function<void(const Utils::Sstring& response)>;
 
     GPTAdapter();
     ~GPTAdapter();
@@ -20,7 +20,7 @@ public:
      * @param apiKey The API key for GPT service
      * @return true if initialization was successful, false otherwise
      */
-    bool init(const String& apiKey);
+    bool init(const Utils::Sstring& apiKey);
     
     /**
      * Check if the adapter is initialized
@@ -33,21 +33,21 @@ public:
      * @param prompt The prompt to send
      * @param callback Callback function for the response
      */
-    void sendPrompt(const String& prompt, ResponseCallback callback);
-    void sendPrompt(const String& prompt, const String& additionalCommand, ResponseCallback callback);
-    void sendPromptWithCustomSystem(const String& prompt, const String& systemCommand, ResponseCallback callback);
+    void sendPrompt(const Utils::Sstring& prompt, ResponseCallback callback);
+    void sendPrompt(const Utils::Sstring& prompt, const Utils::Sstring& additionalCommand, ResponseCallback callback);
+    void sendPromptWithCustomSystem(const Utils::Sstring& prompt, const Utils::Sstring& systemCommand, ResponseCallback callback);
 
     /**
      * Set the model to use
      * @param model The model name (e.g., "gpt-3.5-turbo", "gpt-4")
      */
-    void setModel(const String& model);
+    void setModel(const Utils::Sstring& model);
 
     /**
      * Set the system message
      * @param message The system message to use
      */
-    void setSystemMessage(const String& message);
+    void setSystemMessage(const Utils::Sstring& message);
 
     /**
      * Set the maximum tokens for the response
@@ -70,7 +70,7 @@ private:
     bool _initialized;
     
     // Process the HTTP response
-    void processResponse(const String& response, ResponseCallback callback);
+    void processResponse(const Utils::Sstring& response, ResponseCallback callback);
 };
 
 } // namespace Communication
