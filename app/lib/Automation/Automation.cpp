@@ -140,7 +140,6 @@ void Automation::taskFunction(void* parameter) {
         }
 
         inprogress = true;
-        notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_PAUSE);
         // get servo position
         if (servos) {
             long lastServoUpdate = servoTimer;
@@ -164,6 +163,7 @@ void Automation::taskFunction(void* parameter) {
         // Check if automation is enabled and no manual control for a while
         if (automation->_enabled && 
             (millis() - automation->_lastManualControlTime > AUTOMATION_INACTIVITY_TIMEOUT)) {
+            notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_PAUSE);
             
             if (xSemaphoreTake(automation->_behaviorsMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
                 if (!automation->_templateBehaviors.empty()) {
@@ -188,6 +188,7 @@ void Automation::taskFunction(void* parameter) {
                     xSemaphoreGive(automation->_behaviorsMutex);
                 }
             }
+            notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_RESUME);
         }
 
         if (millis() - updateTimer > updateInterval) {
@@ -200,7 +201,6 @@ void Automation::taskFunction(void* parameter) {
         }
         
         inprogress = false;
-        notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_RESUME);
         
         // Check at regular intervals
         vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));

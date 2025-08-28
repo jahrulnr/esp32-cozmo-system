@@ -9,12 +9,7 @@ This guide covers flashing ESP-SR models for wake word detection and speech reco
 ### Build and Flash
 ```bash
 # Flash to your ESP32-S3-DevKitC-1-N16R8 (hiesp.csv partition table)
-
-# Flash spiffs
-esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x310000 ../.pio/build/esp32s3dev/spiffs.bin
-
-# Flash model
-esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x8F0000 srmodels.bin
+esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x47D000 srmodels.bin
 ```
 
 # References:

@@ -30,7 +30,7 @@ void setupWiFi() {
     }
     
     // Try to connect to WiFi using saved configuration
-    if (wifiManager->connect(config.ssid, config.password)) {
+    if (wifiManager->connect(config.ssid, config.password, 10000)) {
       logger->info("Connected to WiFi: " + config.ssid);
       logger->info("IP: " + wifiManager->getIP());
       
