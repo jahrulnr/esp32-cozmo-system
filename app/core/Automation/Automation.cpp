@@ -150,11 +150,11 @@ void Automation::taskFunction(void* parameter) {
         // Check if automation is enabled and no manual control for a while
         if (automation->_enabled && 
             (millis() - automation->_lastManualControlTime > AUTOMATION_INACTIVITY_TIMEOUT)) {
-            notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_PAUSE);
             
             if (xSemaphoreTake(automation->_behaviorsMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
                 if (!automation->_templateBehaviors.empty()) {
-                    // --- CHANGED: choose behavior index based on random/sequential ---
+                    notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_PAUSE);
+                    
                     size_t behaviorIdx = 0;
                     if (automation->_randomBehaviorOrder) {
                         behaviorIdx = random(0, automation->_templateBehaviors.size());
@@ -164,18 +164,18 @@ void Automation::taskFunction(void* parameter) {
                                                     automation->_templateBehaviors.size();
                     }
                     Utils::Sstring behavior = automation->_templateBehaviors[behaviorIdx];
-                    // --- END CHANGE ---
 
                     xSemaphoreGive(automation->_behaviorsMutex);
                     automation->executeBehavior(behavior);
                     automation->_lastManualControlTime = millis();
                     int randomDelay = random(5000, 10000);
+                    
+                    notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_RESUME);
                     vTaskDelay(pdMS_TO_TICKS(randomDelay));
                 } else {
                     xSemaphoreGive(automation->_behaviorsMutex);
                 }
             }
-            notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_RESUME);
         }
 
         if (millis() - updateTimer > updateInterval) {
