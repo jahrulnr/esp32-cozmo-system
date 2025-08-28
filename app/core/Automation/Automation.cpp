@@ -42,7 +42,7 @@ void Automation::start() {
         "automation",    // Task name
         8192,           // Stack size in words
         this,           // Parameter passed to the task
-        1,              // Priority
+        0,              // Priority
         &_taskHandle   // Task handle
     );
 
@@ -118,11 +118,30 @@ void Automation::taskFunction(void* parameter) {
     long servoTimer = updateTimer;
     long servoInterval = pdMS_TO_TICKS(10000);
     bool inprogress = false;
+    bool paused = false;
     
     // Run automation forever
+    TickType_t lastWakeTime = xTaskGetTickCount();
     while (true) {
-        if (inprogress){
-            vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL / 2));
+        // Check at regular intervals
+        vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
+
+        if (notification->has(NOTIFICATION_AUTOMATION)) {
+            const char* notif = (const char*)notification->consume(NOTIFICATION_AUTOMATION);
+            if (notif == EVENT_AUTOMATION_PAUSE){
+                paused = true;
+                automation->updateManualControlTime();
+            }
+            else if (notif == EVENT_AUTOMATION_RESUME){
+                paused = false;
+                automation->updateManualControlTime();
+                vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL * 5));
+            }
+        }
+
+        if (inprogress || paused){
+            if(paused) inprogress = false;
+            vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL / 2));
             continue;
         }
 
@@ -143,7 +162,7 @@ void Automation::taskFunction(void* parameter) {
             }
 
             if (restoreServo) {
-                vTaskDelay(pdMS_TO_TICKS(300));
+                vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(300));
             }
         }
 
@@ -153,8 +172,6 @@ void Automation::taskFunction(void* parameter) {
             
             if (xSemaphoreTake(automation->_behaviorsMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
                 if (!automation->_templateBehaviors.empty()) {
-                    notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_PAUSE);
-                    
                     size_t behaviorIdx = 0;
                     if (automation->_randomBehaviorOrder) {
                         behaviorIdx = random(0, automation->_templateBehaviors.size());
@@ -170,8 +187,7 @@ void Automation::taskFunction(void* parameter) {
                     automation->_lastManualControlTime = millis();
                     int randomDelay = random(5000, 10000);
                     
-                    notification->send(NOTIFICATION_SPEECH_RECOGNITION, (void*)EVENT_SR_RESUME);
-                    vTaskDelay(pdMS_TO_TICKS(randomDelay));
+                    vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(randomDelay));
                 } else {
                     xSemaphoreGive(automation->_behaviorsMutex);
                 }
@@ -188,10 +204,6 @@ void Automation::taskFunction(void* parameter) {
         }
         
         inprogress = false;
-        
-        // Check at regular intervals
-        vTaskDelay(pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL));
-		taskYIELD();
     }
 }
 

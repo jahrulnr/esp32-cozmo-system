@@ -46,7 +46,7 @@ void setupTasks() {
             "screenTaskHandler", 
             4096, 
             NULL, 
-            4, 
+            5, 
             NULL,
             1
         );
@@ -74,7 +74,7 @@ void setupTasks() {
             "speechRecognitionTask", 
             4 * 1024, 
             NULL, 
-            4, 
+            0, 
             NULL
         );
     #endif

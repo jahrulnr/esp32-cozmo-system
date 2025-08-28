@@ -43,6 +43,13 @@ void screenTask(void *param){
 					screen->getFace()->Expression.GoTo_Normal();
 				}
 				
+		#if MICROPHONE_ENABLED
+			#if MICROPHONE_ANALOG
+				screen->setMicLevel(amicrophone->readLevel());
+			#elif MICROPHONE_I2S
+				screen->setMicLevel(microphone->readLevel());
+			#endif
+		#endif
 				screen->mutexUpdate();
 		}
 }

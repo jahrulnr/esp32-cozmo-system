@@ -67,11 +67,6 @@ bool sayText(const char* text) {
     // Send text to PicoTTS engine using the correct API
     picotts_add(arr, sizeof(arr));
 
-    // Notify display that TTS is active
-    if (notification) {
-        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_TTS_ACTIVE);
-    }
-
     return true;
 }
 

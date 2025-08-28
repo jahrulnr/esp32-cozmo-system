@@ -4,7 +4,7 @@
 #if PICOTTS_ENABLED
 
 // Speed control factor (1.0 = normal, >1.0 = faster, <1.0 = slower)
-static float playback_speed = 1.0f;
+static float playback_speed = 1.1f;
 // Volume amplification factor (adjust as needed)
 const float volume_multiplier = 1.5f;
 
@@ -78,11 +78,6 @@ void picotts_idle_callback(void) {
         
         // Clear the buffer for next use
         collected_audio.clear();
-    }
-    
-    // Notify the management task that TTS is idle
-    if (notification) {
-        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_TTS_COMPLETE);
     }
 }
 

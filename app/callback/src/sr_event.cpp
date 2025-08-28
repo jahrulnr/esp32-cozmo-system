@@ -6,103 +6,61 @@
 void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {
     switch (event) {
         case SR_EVENT_WAKEWORD:
-            Serial.println("🎙️ Wake word 'Hi ESP' detected!");
-            if (notification) {
-                notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_WAKEWORD);
-            }
-            // Switch to command listening mode
+            logger->info("🎙️ Wake word 'Hi ESP' detected!");
+            notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION_PAUSE);
+
+            sayText("Hi, whats up?");
+            delay(2000);
             sr_set_mode(SR_MODE_COMMAND);
-            Serial.println("📞 Listening for commands...");
+            logger->info("📞 Listening for commands...");
             break;
             
         case SR_EVENT_WAKEWORD_CHANNEL:
-            Serial.printf("🎙️ Wake word detected on channel: %d\n", command_id);
-            if (notification) {
-                notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_WAKEWORD);
-            }
+            logger->info("🎙️ Wake word detected on channel: %d\n", command_id);
             sr_set_mode(SR_MODE_COMMAND);
             break;
             
         case SR_EVENT_COMMAND:
-            Serial.printf("✅ Command detected! ID=%d, Phrase=%d\n", command_id, phrase_id);
+            logger->info("✅ Command detected! ID=%d, Phrase=%d\n", command_id, phrase_id);
             
             // Handle specific command groups based on command_id (from voice_commands array)
             switch (command_id) {
                 case 0: // look to left
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_LOOK_LEFT);
+                    motors->move(motors->LEFT);
+                    delay(500);
+                    motors->stop();
                     break;
                     
                 case 1: // look to right
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_LOOK_RIGHT);
+                    motors->move(motors->RIGHT);
+                    delay(500);
+                    motors->stop();
                     break;
                     
                 case 2: // close your eyes
+                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    delay(100);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_CLOSE_EYE);
+                    servos->setHead(180);
                     break;
-                // case 0: 
-                //     Serial.println("💡 Action: Turning ON the light");
-                //     Serial.println("   🎯 Target: Light Control System (ON)");
-                //     // Add your light ON control logic here
-                //     if (notification) {
-                //         notification->send(NOTIFICATION_DISPLAY, (void*)"LIGHTS_ON");
-                //     }
-                //     break;
-                // case 1: 
-                //     Serial.println("💡 Action: Turning OFF the light");
-                //     Serial.println("   🎯 Target: Light Control System (OFF/DARK)");
-                //     // Add your light OFF control logic here
-                //     if (notification) {
-                //         notification->send(NOTIFICATION_DISPLAY, (void*)"LIGHTS_OFF");
-                //     }
-                //     break;
-                // case 2: 
-                //     Serial.println("🌀 Action: Starting fan");
-                //     Serial.println("   🎯 Target: Fan Control System (START)");
-                //     // Add your fan start control logic here
-                //     if (notification) {
-                //         notification->send(NOTIFICATION_DISPLAY, (void*)"FAN_START");
-                //     }
-                //     break;
-                // case 3: 
-                //     Serial.println("� Action: Stopping fan");
-                //     Serial.println("   🎯 Target: Fan Control System (STOP)");
-                //     // Add your fan stop control logic here
-                //     if (notification) {
-                //         notification->send(NOTIFICATION_DISPLAY, (void*)"FAN_STOP");
-                //     }
-                //     break;
                 default: 
-                    Serial.printf("❓ Unknown command ID: %d\n", command_id);
-                    Serial.println("   📋 Available commands:");
-                    for (int i = 0; i < (sizeof(voice_commands) / sizeof(sr_cmd_t)); i++) {
-                        Serial.printf("      [%d] Group %d: '%s' (%s)\n", 
-                                    i,
-                                    voice_commands[i].command_id, 
-                                    voice_commands[i].str, 
-                                    voice_commands[i].phoneme);
-                    }
+                    logger->info("❓ Unknown command ID: %d\n", command_id);
                     break;
             }
-            
-            // Return to wake word mode after command
             sr_set_mode(SR_MODE_WAKEWORD);
-            Serial.println("🔄 Returning to wake word detection mode");
-            break;
             
         case SR_EVENT_TIMEOUT:
-            Serial.println("⏰ Command timeout - returning to wake word mode");
-            Serial.println("   💭 No command detected within timeout period");
-            Serial.println("   🔄 Say 'Hi ESP' to activate again");
+            logger->info("⏰ Command timeout - returning to wake word mode");
+            sayText("Call me again if you need something.");
+            delay(5000);
+            notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION_RESUME);
             sr_set_mode(SR_MODE_WAKEWORD);
             break;
             
         default:
-            Serial.printf("❓ Unknown SR event: %d\n", event);
-            Serial.println("   📚 Known events:");
-            Serial.println("      SR_EVENT_WAKEWORD: Wake word detected");
-            Serial.println("      SR_EVENT_WAKEWORD_CHANNEL: Multi-channel wake word");
-            Serial.println("      SR_EVENT_COMMAND: Voice command detected");
-            Serial.println("      SR_EVENT_TIMEOUT: Command timeout occurred");
+            logger->info("❓ Unknown SR event: %d\n", event);
             break;
     }
 }

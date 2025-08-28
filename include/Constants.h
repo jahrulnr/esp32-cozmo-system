@@ -17,21 +17,24 @@ static const sr_cmd_t voice_commands[] = {
 // 	{3, "Stop fan", "STnP FaN"},
 };
 
-static const char* NOTIFICATION_WAKEWORD = "wakeword";
-static const char* NOTIFICATION_DISPLAY = "display";
 static const char* NOTIFICATION_SPEAKER = "speaker";
-static const char* NOTIFICATION_SPEECH_RECOGNITION = "speech_recognition";
 static const char* NOTIFICATION_COMMAND = "command";
 
+// Automation Events
+static const char* NOTIFICATION_AUTOMATION = "automation";
+static const char* EVENT_AUTOMATION_PAUSE = "pause";
+static const char* EVENT_AUTOMATION_RESUME = "resume";
+
 // Display Events
-static const char* EVENT_DISPLAY_WAKEWORD = "display_wakeword";
+static const char* NOTIFICATION_DISPLAY = "display";
+static const char* EVENT_DISPLAY_WAKEWORD = "wakeword";
 static const char* EVENT_DISPLAY_LOOK_LEFT = "look_left";
 static const char* EVENT_DISPLAY_LOOK_RIGHT = "look_right";
 static const char* EVENT_DISPLAY_CLOSE_EYE = "close_eye";
-static const char* EVENT_DISPLAY_TTS_ACTIVE = "tts_active";
-static const char* EVENT_DISPLAY_TTS_COMPLETE = "tts_complete";
 
 // SR Events
+static const char* NOTIFICATION_WAKEWORD = "wakeword";
+static const char* NOTIFICATION_SPEECH_RECOGNITION = "sr";
 static const char* EVENT_SR_WAKEWORD = "sr_wakeword";
 static const char* EVENT_SR_COMMAND = "sr_command";
 static const char* EVENT_SR_TIMEOUT = "sr_timeout";

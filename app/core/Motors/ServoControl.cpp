@@ -1,5 +1,6 @@
 #include "ServoControl.h"
 #include "Logger.h"
+#include <setup/setup.h>
 
 namespace Motors {
 
@@ -40,13 +41,13 @@ bool ServoControl::init(int headServoPin, int handServoPin) {
     _handServo.attach(_handServoPin, 500, 2500);
     
     _initialized = true;
-    Utils::Logger::getInstance().info("ServoControl: Initialized with direct GPIO pins");
+    logger->info("ServoControl: Initialized with direct GPIO pins");
     return true;
 }
 
 bool ServoControl::initWithExtender(Utils::IOExtern* ioExtender, int headServoPin, int handServoPin) {
     if (!ioExtender) {
-        Utils::Logger::getInstance().error("ServoControl: Invalid I/O extender provided");
+        logger->error("ServoControl: Invalid I/O extender provided");
         return false;
     }
     
@@ -75,8 +76,8 @@ bool ServoControl::initWithExtender(Utils::IOExtern* ioExtender, int headServoPi
     _ioExtender->digitalWrite(_handServoPin, LOW);
     
     _initialized = true;
-    Utils::Logger::getInstance().info("ServoControl: Initialized with I/O extender");
-    Utils::Logger::getInstance().warning("ServoControl: Note - I/O extender based servos use software PWM which may not be precise");
+    logger->info("ServoControl: Initialized with I/O extender");
+    logger->warning("ServoControl: Note - I/O extender based servos use software PWM which may not be precise");
     
     return true;
 }
@@ -115,7 +116,7 @@ void ServoControl::setHead(int angle) {
     
     if (_useIoExtender && _ioExtender) {
         // Software PWM implementation for I/O extender
-        Utils::Logger::getInstance().debug("ServoControl: Moving head to %d degrees using I/O extender", angle);
+        logger->debug("ServoControl: Moving head to %d degrees using I/O extender", angle);
         
         // Smooth movement implementation
         const int step = 2;  // smaller step for smoother movement
@@ -190,7 +191,7 @@ void ServoControl::setHand(int angle) {
     
     if (_useIoExtender && _ioExtender) {
         // Software PWM implementation for I/O extender
-        Utils::Logger::getInstance().debug("ServoControl: Moving hand to %d degrees using I/O extender", angle);
+        logger->debug("ServoControl: Moving hand to %d degrees using I/O extender", angle);
         
         // Smooth movement implementation
         const int step = 2;  // smaller step for smoother movement
