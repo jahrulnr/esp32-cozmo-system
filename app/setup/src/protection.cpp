@@ -12,8 +12,7 @@ bool handleCliffDetection() {
     if (!cliffDetected()) {
         return false;  // No cliff detected
     }
-
-    updateManualControlTime();
+    
     xTaskCreate([](void *param){
         if (screen) {
             screen->mutexClear();
@@ -50,7 +49,6 @@ bool handleObstacleDetection() {
     }
 
     bool pathFound = false;
-    updateManualControlTime();
     xTaskCreate([](void *param){
         if (screen) {
             screen->mutexClear();
@@ -137,9 +135,6 @@ void protectCozmo() {
         if (motors) {
             motors->stop();
         }
-
-        // Update last manual control time to prevent automation from taking over immediately
-        updateManualControlTime();
     }
 
     _protectInProgress = false;

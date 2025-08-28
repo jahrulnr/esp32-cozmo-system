@@ -17,10 +17,6 @@ void screenTask(void *param){
 							lastEvent = EVENT_DISPLAY_WAKEWORD;
 							screen->getFace()->LookFront();
 							screen->getFace()->Expression.GoTo_Happy();
-							xTaskCreate([](void* param){
-								playSpeakerRandomMP3();
-								vTaskDelete(NULL);
-							}, "playSpeakerTask", 1024*4, NULL, 19, NULL);
 					}
 					else if (strcmp(event, EVENT_DISPLAY_LOOK_LEFT) == 0) {
 							updateDelay = millis() + 6000;

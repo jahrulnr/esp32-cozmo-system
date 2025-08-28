@@ -33,11 +33,11 @@ bool isCameraStreaming() {
 
 /**
  * Camera streaming task
- * Captures frames from the camera and streams them via WebSocket
+ * Captures frames from the camera
  */
 void cameraStreamTask(void* parameter) {
-  // Check if camera and WebSocket are initialized
-  if (!camera || !webSocket) {
+  // Check if camera are initialized
+  if (!camera) {
     logger->error("Camera streaming task failed: components not initialized");
     cameraStreamTaskHandle = nullptr;
     vTaskDelete(NULL);
@@ -67,7 +67,6 @@ void cameraStreamTask(void* parameter) {
     camera_fb_t* fb = esp_camera_fb_get();
     
     if (fb) {
-      webSocket->sendBinary(-1, fb->buf, fb->len);
       esp_camera_fb_return(fb);
       logger->info("capturing image");
     } else {

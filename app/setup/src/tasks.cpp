@@ -62,33 +62,11 @@ void setupTasks() {
         &sensorMonitorTaskHandle   // Task handle
     );
     
-    // Initialize automation variables
-    _enableAutomation = AUTOMATION_ENABLED;
-    _lastManualControlTime = millis();
-    
     // Create automation task
     if (automation) {
         automation->start();
         automation->setRandomBehaviorOrder();
     }
-
-    // if (SPEAKER_ENABLED) {
-    //     xTaskCreate([](void *param){
-    //         while(1) {
-    //             if (isSpeakerPlaying()) {
-    //                 vTaskDelay(pdMS_TO_TICKS(5000));
-    //                 continue;
-    //             }
-
-    //             if (playSpeakerRandomMP3()){
-    //                 logger->info("success play a random mp3");
-    //             }
-                
-    //             vTaskDelay(pdMS_TO_TICKS(10000)); 
-	// 	        taskYIELD();
-    //         }
-    //     }, "autoSound", 4 * 1024, NULL, 4, NULL);
-    // }
 
     #if MICROPHONE_ENABLED
         xTaskCreate(

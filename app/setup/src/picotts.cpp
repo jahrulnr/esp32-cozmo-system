@@ -14,7 +14,7 @@ void setupPicoTTS() {
     #if SPEAKER_ENABLED
     
     // Ensure speaker is initialized first
-    if (!i2sSpeaker || !getSpeakerStatus()) {
+    if (!i2sSpeaker) {
         logger->error("Cannot setup PicoTTS: I2S speaker not initialized");
         return;
     }

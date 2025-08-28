@@ -13,14 +13,3 @@ void setupGPT(){
 	gptAdapter->setTemperature(GPT_TEMPERATURE);
   #endif
 }
-
-
-
-void sendGPT(const String &prompt, Communication::GPTAdapter::ResponseCallback callback){
-	gptRequest *data = new gptRequest{
-		prompt: prompt,
-		callback: callback,
-	};
-
-	xTaskCreate(gptChatTask, "gptChatTask", 20 * 1024, data, 10, &gptTaskHandle);
-}

@@ -78,10 +78,6 @@ JsonDocument SystemWebSocketController::createSystemStatusData() {
         statusData["microphone"]["level"] = amicrophone->readLevel();
     }
 #endif
-
-    statusData["speaker"]["enabled"] = getSpeakerStatus();
-    statusData["speaker"]["type"] = getSpeakerType();
-    statusData["speaker"]["playing"] = isSpeakerPlaying();
     statusData["uptime"] = millis() / 1000;
     
     return statusData;

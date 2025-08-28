@@ -8,7 +8,6 @@
 #include "Sstring.h"
 #include "FileManager.h"
 #include "lib/Utils/CommandMapper.h"
-#include "lib/Communication/WebSocketHandler.h"
 #include "lib/Communication/GPTAdapter.h"
 
 namespace Automation {
@@ -17,8 +16,7 @@ class Automation {
 public:
     Automation(Utils::FileManager* fileManager, 
                Utils::CommandMapper* commandMapper,
-               Utils::Logger* logger,
-               Communication::WebSocketHandler* webSocket);
+               Utils::Logger* logger);
     ~Automation();
 
     void start();
@@ -37,7 +35,6 @@ private:
     Utils::FileManager* _fileManager;
     Utils::CommandMapper* _commandMapper;
     Utils::Logger* _logger;
-    Communication::WebSocketHandler* _webSocket;
     
     TaskHandle_t _taskHandle;
     bool _enabled;

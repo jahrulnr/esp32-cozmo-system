@@ -7,12 +7,10 @@ namespace Automation {
 // Constructor
 Automation::Automation(Utils::FileManager* fileManager, 
                        Utils::CommandMapper* commandMapper,
-                       Utils::Logger* logger,
-                       Communication::WebSocketHandler* webSocket)
+                       Utils::Logger* logger)
     : _fileManager(fileManager)
     , _commandMapper(commandMapper)
     , _logger(logger)
-    , _webSocket(webSocket)
     , _taskHandle(NULL)
     , _enabled(AUTOMATION_ENABLED)
     , _lastManualControlTime(0)
@@ -97,17 +95,6 @@ bool Automation::isEnabled() const {
 // Set automation enabled status
 void Automation::setEnabled(bool enabled) {
     _enabled = enabled;
-    
-    // Send status to all connected clients
-    if (_webSocket) {
-        Utils::SpiJsonDocument statusDoc;
-        statusDoc["enabled"] = _enabled;
-        _webSocket->sendJsonMessage(-1, "automation_status", statusDoc);
-    }
-    
-    if (_logger) {
-        _logger->info(String("Automation ") + (enabled ? "enabled" : "disabled"));
-    }
 }
 
 // Add getter/setter for random order
@@ -272,7 +259,6 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
         // Display the message on the screen if available
         // The screen class already handles internal mutex locking in its mutexX methods
         if (::screen && !voiceMessage.isEmpty()) {
-            playBehaviorSound(behavior.toString());
             _commandMapper->executeCommandString(behavior.toString());
             vTaskDelay(pdMS_TO_TICKS(1000));
         } else {

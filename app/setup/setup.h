@@ -18,8 +18,6 @@
 #include "lib/Motors/MotorControl.h"
 #include "lib/Motors/ServoControl.h"
 #include "lib/Communication/WiFiManager.h"
-#include "lib/Communication/WebServer.h"
-#include "lib/Communication/WebSocketHandler.h"
 #include "lib/Communication/GPTAdapter.h"
 #include "lib/Utils/CommandMapper.h"
 #include "lib/Screen/Screen.h"
@@ -43,14 +41,6 @@
 struct {
   bool authenticated = false;
 } sessions[5];
-
-struct FileUploadState {
-  String path;
-  String name;
-  size_t size;
-  bool inProgress;
-};
-extern std::map<uint32_t, FileUploadState> fileUploads;
 #endif
 
 extern Notification* notification;
@@ -64,8 +54,6 @@ extern Sensors::TemperatureSensor* temperatureSensor;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
 extern Communication::WiFiManager* wifiManager;
-extern Communication::WebServer* webServer;
-extern Communication::WebSocketHandler* webSocket;
 extern Communication::GPTAdapter* gptAdapter;
 extern Screen::Screen* screen;
 extern Utils::FileManager* fileManager;
@@ -98,8 +86,6 @@ void setupMicrophone();
 void setupSpeakers();
 void setupScreen();
 void setupWiFi();
-void setupWebServer();
-void setupWebSocket();
 void setupGPT();
 void setupTasks();
 void setupCommandMapper();

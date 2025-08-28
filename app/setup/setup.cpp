@@ -1,7 +1,5 @@
 #include "setup.h"
 
-std::map<uint32_t, FileUploadState> fileUploads;
-
 void setupApp() {
 	setupLogger();
 	setupFilemanager();
@@ -19,8 +17,6 @@ void setupApp() {
   setupTemperatureSensor();
   setupMicrophone();
   setupSpeakers();
-  setupWebServer();
-  setupWebSocket();
   setupGPT();
   setupCommandMapper();
   setupAutomation();
@@ -41,9 +37,4 @@ void setupApp() {
     screen->drawCenteredText(40, "Ready!");
     screen->update();
   }
-  
-  delay(5000);
-  if (!playSpeakerMP3File("/audio/boot.mp3")) {
-    logger->error("Play boot mp3 failed");
-  };
 }

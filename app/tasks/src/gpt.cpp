@@ -3,9 +3,7 @@
 TaskHandle_t gptTaskHandle = nullptr;
 
 void gptChatTask(void * param) {
-	gptRequest *data = (gptRequest*) param;
-	
-	if (data != nullptr){
+	if (param != nullptr){
 		// Create additional command with comprehensive hardware and sensor context
 		String additionalCommand = "You are the AI brain of a Cozmo IoT Robot. Here's the current hardware status and sensor readings:\n\n";
 		
@@ -137,27 +135,6 @@ void gptChatTask(void * param) {
 		additionalCommand += "- Screen: Disabled\n";
 		#endif
 		
-		// Networking configuration
-		additionalCommand += "\nNetworking:\n";
-		#if WIFI_ENABLED
-		additionalCommand += "- WiFi: Enabled\n";
-		additionalCommand += "  Access Point: SSID=\"" + String(WIFI_AP_SSID) + "\"\n";
-		#else
-		additionalCommand += "- WiFi: Disabled\n";
-		#endif
-		
-		#if WEBSERVER_ENABLED
-		additionalCommand += "- Web Server: Enabled on port " + String(WEBSERVER_PORT) + "\n";
-		#else
-		additionalCommand += "- Web Server: Disabled\n";
-		#endif
-		
-		#if WEBSOCKET_ENABLED
-		additionalCommand += "- WebSocket: Enabled (for real-time communication)\n";
-		#else
-		additionalCommand += "- WebSocket: Disabled\n";
-		#endif
-		
 		// Add tips for responding to the robot
 		additionalCommand += "\n=== RESPONSE GUIDELINES ===\n";
 		additionalCommand += "1. Format your commands using exact syntax: [COMMAND] or [COMMAND=parameter]\n";
@@ -171,38 +148,38 @@ void gptChatTask(void * param) {
 		additionalCommand += "5. Advanced motor commands: [MOTOR_LEFT=duration], [MOTOR_RIGHT=duration] where duration in ms\n";
 		additionalCommand += "6. Servo commands: [HEAD_UP], [HEAD_DOWN], [HEAD_CENTER], [HAND_UP], [HAND_DOWN], [HAND_CENTER]\n";
 		additionalCommand += "7. Precise servo control: [HEAD_POSITION=angle], [HAND_POSITION=angle] where angle is 0-180\n";
-		additionalCommand += "8. Combined actions: [DANCE_SPIN], [LOOK_AROUND] or you can combine a few commands to make custom dances\n";
+		additionalCommand += "8. Combined actions: [LOOK_AROUND] or you can combine a few commands to make custom dances\n";
 		additionalCommand += "9. Consider sensor readings when responding (avoid cliffs, obstacles, etc)\n";
 		additionalCommand += "10. Be concise but helpful in your responses\n";
 		additionalCommand += "11. If asked about hardware capabilities, use this context to provide accurate information\n\n";
 		
 		// Send the prompt with enhanced context
-		gptAdapter->sendPrompt(data->prompt, additionalCommand, [data](const String& gptResponse){
-			// Process commands in the response if CommandMapper is available
-			String processedResponse = gptResponse;
+		// gptAdapter->sendPrompt(data->prompt, additionalCommand, [data](const String& gptResponse){
+		// 	// Process commands in the response if CommandMapper is available
+		// 	String processedResponse = gptResponse;
 			
-			if (commandMapper != nullptr) {
-				// Extract and execute any commands in the response
-				logger->debug("Processing commands in GPT response");
-				int commandCount = commandMapper->executeCommandString(gptResponse);
+		// 	if (commandMapper != nullptr) {
+		// 		// Extract and execute any commands in the response
+		// 		logger->debug("Processing commands in GPT response");
+		// 		int commandCount = commandMapper->executeCommandString(gptResponse);
 				
-				if (commandCount > 0) {
-					logger->debug("Executed " + String(commandCount) + " commands from GPT response");
+		// 		if (commandCount > 0) {
+		// 			logger->debug("Executed " + String(commandCount) + " commands from GPT response");
 					
-					// Get just the text without commands
-					processedResponse = commandMapper->extractText(gptResponse);
-				}
-			}
+		// 			// Get just the text without commands
+		// 			processedResponse = commandMapper->extractText(gptResponse);
+		// 		}
+		// 	}
 
-			// Call the callback with the processed response
-			data->callback(processedResponse);
+		// 	// Call the callback with the processed response
+		// 	data->callback(processedResponse);
 
-			if (screen){
-				screen->mutexClear();
-				screen->drawCenteredText(20, processedResponse);
-				screen->mutexUpdate();
-			}
-		});
+		// 	if (screen){
+		// 		screen->mutexClear();
+		// 		screen->drawCenteredText(20, processedResponse);
+		// 		screen->mutexUpdate();
+		// 	}
+		// });
 	}
 
 	gptTaskHandle = nullptr;
