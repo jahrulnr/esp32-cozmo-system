@@ -28,7 +28,7 @@ OrientationSensor::~OrientationSensor() {
 }
 
 bool OrientationSensor::init(int sda, int scl) {
-    if (!Utils::I2CManager::getInstance().initBus("base", sda, scl, 400000)) {
+    if (!Utils::I2CManager::getInstance().initBus("base", sda, scl)) {
         Serial.println("Failed to initialize I2C bus for gyroscope");
         return false;
     }

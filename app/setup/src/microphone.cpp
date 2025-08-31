@@ -71,7 +71,6 @@ void setupMicrophone() {
   #endif
   #else
   logger->info("Microphone sensor disabled in configuration");
-  microphoneSensor = nullptr;
   #endif
   delay(1000);  
 }

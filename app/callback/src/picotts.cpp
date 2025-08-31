@@ -32,7 +32,7 @@ std::vector<int16_t> apply_speed_adjustment(const std::vector<int16_t>& samples)
         
         if (index + 1 < samples.size()) {
             adjusted_samples.push_back(samples[index]);     // Left channel
-            adjusted_samples.push_back(samples[index + 1]); // Right channel
+            adjusted_samples.push_back(samples[index + 1]); // Right channelb
         }
     }
     

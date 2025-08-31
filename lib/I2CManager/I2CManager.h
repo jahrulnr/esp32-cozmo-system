@@ -27,7 +27,7 @@ public:
      * @param busName Unique name to identify this I2C bus
      * @param sda SDA pin number
      * @param scl SCL pin number
-     * @param frequency Bus frequency in Hz (default: 100000)
+     * @param frequency Bus frequency in Hz (default: 1000000)
      * @param useWire Use the default Wire object instead of creating a new one (default: true)
      * @return true if initialization was successful
      */

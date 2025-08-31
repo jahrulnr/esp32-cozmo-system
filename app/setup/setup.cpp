@@ -6,12 +6,13 @@ void setupApp() {
   setupNotification();
 
   // Initialize components
-  setupScreen();
+  setupCamera();
   setupExtender();
+  setupScreen();
+  setupOrientation();
   setupWiFi();
   setupMotors();
   setupServos();
-  setupOrientation();
   setupDistanceSensor();
   setupCliffDetector();
   setupTemperatureSensor();
@@ -20,7 +21,6 @@ void setupApp() {
   setupGPT();
   setupCommandMapper();
   setupAutomation();
-  setupCamera();
   setupSpeechRecognition();
   setupPicoTTS();
 
