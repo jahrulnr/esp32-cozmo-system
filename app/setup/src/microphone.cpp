@@ -38,9 +38,9 @@ void setupMicrophone() {
   #if MICROPHONE_I2S
   if (!microphone) {
     microphone = new I2SMicrophone(
-        (gpio_num_t)MICROPHONE_DIN,    // Data pin
-        (gpio_num_t)MICROPHONE_SCK,    // Clock pin  
-        (gpio_num_t)MICROPHONE_WS,     // Word select pin
+        MICROPHONE_DIN,    // Data pin
+        MICROPHONE_SCK,    // Clock pin  
+        MICROPHONE_WS,     // Word select pin
         I2S_NUM_1                      // Port 
     );
     esp_err_t ret = microphone->init(16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);

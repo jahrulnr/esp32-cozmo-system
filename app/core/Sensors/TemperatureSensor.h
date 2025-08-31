@@ -53,6 +53,9 @@ public:
 
 private:
     bool _initialized;
+    long _updateInterval;
+    long _lastUpdateTime;
+    float _lastTemp;
     
     #if SOC_TEMP_SENSOR_SUPPORTED
     // Handle for the ESP32S3 temperature sensor

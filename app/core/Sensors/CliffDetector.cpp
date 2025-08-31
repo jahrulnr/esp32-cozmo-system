@@ -48,12 +48,10 @@ void CliffDetector::update() {
         return;
     }
     // Use digitalRead: 1 means cliff detected
-    int value = readPin();
-    _cliffDetected = (value == HIGH);
+    _cliffDetected = readPin();
 }
 
 bool CliffDetector::isCliffDetected() {
-    update();
     return _cliffDetected;
 }
 

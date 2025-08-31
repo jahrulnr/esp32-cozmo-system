@@ -121,12 +121,12 @@ void protectCozmo() {
     bool protectionActivated = false;
 
     // Handle cliff detection first (higher priority)
-    if (handleCliffDetection()) {
+    if (cliffLeftDetector->isCliffDetected() || cliffRightDetector->isCliffDetected()) {
         protectionActivated = true;
     }
 
     // Then handle obstacle detection if no cliff was detected
-    else if (handleObstacleDetection()) {
+    else if (distanceSensor->isObstacleDetected()) {
         protectionActivated = true;
     }
 

@@ -13,13 +13,14 @@ void setupTasks() {
 
     #if PROTECT_COZMO
     // protect cozmo
-    xTaskCreate(
+    xTaskCreateUniversal(
             protectCozmoTask,       // Task function
             "protectCozmo",         // Task name
             4 * 1024,               // Stack size
             NULL,                   // Parameters
-            10,                      // Priority
-            NULL                    // Task handle
+            configMAX_PRIORITIES - 1, // Priority
+            NULL,                   // Task handle
+            1
         );
     #endif
     
@@ -53,13 +54,14 @@ void setupTasks() {
     }
     
     // Create sensor monitoring task
-    xTaskCreate(
+    xTaskCreateUniversal(
         sensorMonitorTask,         // Task function
         "SensorMonitor",           // Task name
         4096,                      // Stack size
         NULL,                      // Parameters
         0,                         // Priority
-        &sensorMonitorTaskHandle   // Task handle
+        &sensorMonitorTaskHandle,  // Task handle
+        1
     );
     
     // Create automation task
@@ -67,17 +69,6 @@ void setupTasks() {
         automation->start();
         automation->setRandomBehaviorOrder();
     }
-
-    #if MICROPHONE_ENABLED
-        xTaskCreate(
-            speechRecognitionTask,
-            "speechRecognitionTask", 
-            4 * 1024, 
-            NULL, 
-            0, 
-            NULL
-        );
-    #endif
 
     delay(1000);
     logger->info("Tasks initialized");

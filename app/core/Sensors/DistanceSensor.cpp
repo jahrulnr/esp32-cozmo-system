@@ -21,10 +21,14 @@ bool DistanceSensor::init(int triggerPin, int echoPin, int maxDistance) {
     _maxDistance = maxDistance;
     
     // Calculate the timeout based on the maximum distance
-    // Sound travels at ~343m/s or ~34.3cm/ms in air at 20°C
+    // Sound speed varies with temperature: v = 331.3 + (0.606 * temperature)
+    float temperatureCelsius = 20.0; // Default room temperature
+    float soundSpeed = 331.3 + (0.606 * temperatureCelsius); // m/s
+    float soundSpeedCmPerUs = soundSpeed / 10000.0; // Convert to cm/μs
+    
     // For round trip (echo), we need to wait for double the time
     // Plus a small buffer for sensor response time
-    _timeout = (unsigned long)((_maxDistance * 2.0) / 0.0343) + 1000; // microseconds
+    _timeout = (unsigned long)((_maxDistance * 2.0) / soundSpeedCmPerUs) + 1000; // microseconds
     
     // Configure pins
     pinMode(_triggerPin, OUTPUT);
@@ -68,7 +72,7 @@ float DistanceSensor::measureDistance() {
     _inprogress = false;
     
     // Check if the measurement is valid
-    if (duration == 0 || distance > _maxDistance) {
+    if (duration == 0) {
         return _lastValue > 0 ? _lastValue : -1.0; // Timeout or out of range
     }
     _lastValue = distance;

@@ -2,7 +2,7 @@
 
 namespace Sensors {
 
-TemperatureSensor::TemperatureSensor() : _initialized(false) {
+TemperatureSensor::TemperatureSensor() : _initialized(false), _updateInterval(5000), _lastUpdateTime(0), _lastTemp(-1) {
 #if SOC_TEMP_SENSOR_SUPPORTED
     _tempSensor = NULL;
 #endif
@@ -53,21 +53,25 @@ float TemperatureSensor::readTemperature() {
         return NAN; // Return NaN if initialization failed
     }
 
+    if (_lastUpdateTime > millis()) {
+        return _lastTemp;
+    }
+
+    float temp = NAN;
 #if CONFIG_IDF_TARGET_ESP32
     // ESP32 specific implementation
-    return (temprature_sens_read() - 32) / 1.8;
+    temp = (temprature_sens_read() - 32) / 1.8;
 #elif SOC_TEMP_SENSOR_SUPPORTED
     // ESP32-S3 and other supported chips
-    float temp = NAN;
     if (_tempSensor != NULL) {
         if (temperature_sensor_get_celsius(_tempSensor, &temp) != ESP_OK) {
             return NAN;
         }
     }
-    return temp;
-#else
-    return NAN; // Not supported
 #endif
+
+    _lastUpdateTime = millis() + _updateInterval;
+    return temp;
 }
 
 bool TemperatureSensor::isSupported() {

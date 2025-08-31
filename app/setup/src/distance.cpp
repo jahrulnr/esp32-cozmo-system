@@ -13,6 +13,7 @@ void setupDistanceSensor() {
       logger->info("HC-SR04 initialized successfully");
       
       // Perform a test measurement
+      delay(1000);
       float distance = distanceSensor->measureDistance();
       if (distance >= 0) {
         logger->info("Initial distance measurement: " + String(distance, 2) + " cm");

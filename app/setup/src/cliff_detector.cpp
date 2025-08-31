@@ -17,9 +17,3 @@ void setupCliffDetector(){
 	#endif
 	#endif
 }
-
-bool cliffDetected() {
-	bool leftCliff = cliffLeftDetector ? cliffLeftDetector->isCliffDetected() : false;
-	bool rightCliff = cliffRightDetector ? cliffRightDetector->isCliffDetected() : false;
-	return leftCliff || rightCliff;
-}
