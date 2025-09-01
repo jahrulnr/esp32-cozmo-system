@@ -20,7 +20,7 @@ void sensorMonitorTask(void* parameter) {
     String temperatureSensorTask = "temperatureSensorTask";
     
     TickType_t lastWakeTime = xTaskGetTickCount();
-    TickType_t updateFrequency = pdMS_TO_TICKS(50);
+    TickType_t updateFrequency = pdMS_TO_TICKS(100);
 
     // Monitor sensors forever
     while (true) {

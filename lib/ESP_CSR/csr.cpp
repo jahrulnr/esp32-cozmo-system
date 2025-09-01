@@ -106,12 +106,14 @@ void sr_handler_task(void *pvParam) {
   while (true) {
     sr_result_t result;
     if (xQueueReceive(g_sr_data->result_que, &result, portMAX_DELAY) != pdTRUE) {
+      ESP_LOGI(TAG, "data nothing");
       continue;
     }
 
     if (WAKENET_DETECTED == result.wakenet_mode) {
       if (g_sr_data->user_cb) {
         g_sr_data->user_cb(g_sr_data->user_cb_arg, SR_EVENT_WAKEWORD, -1, -1);
+        ESP_LOGI(TAG, "SR_EVENT_WAKEWORD");
       }
       continue;
     }
@@ -119,6 +121,7 @@ void sr_handler_task(void *pvParam) {
     if (WAKENET_CHANNEL_VERIFIED == result.wakenet_mode) {
       if (g_sr_data->user_cb) {
         g_sr_data->user_cb(g_sr_data->user_cb_arg, SR_EVENT_WAKEWORD_CHANNEL, result.command_id, -1);
+        ESP_LOGI(TAG, "SR_EVENT_WAKEWORD_CHANNEL");
       }
       continue;
     }
@@ -126,6 +129,7 @@ void sr_handler_task(void *pvParam) {
     if (ESP_MN_STATE_DETECTED == result.state) {
       if (g_sr_data->user_cb) {
         g_sr_data->user_cb(g_sr_data->user_cb_arg, SR_EVENT_COMMAND, result.command_id, result.phrase_id);
+        ESP_LOGI(TAG, "SR_EVENT_COMMAND");
       }
       continue;
     }
@@ -133,6 +137,7 @@ void sr_handler_task(void *pvParam) {
     if (ESP_MN_STATE_TIMEOUT == result.state) {
       if (g_sr_data->user_cb) {
         g_sr_data->user_cb(g_sr_data->user_cb_arg, SR_EVENT_TIMEOUT, -1, -1);
+        ESP_LOGI(TAG, "SR_EVENT_TIMEOUT");
       }
       continue;
     }
@@ -196,7 +201,7 @@ static void audio_feed_task(void *arg) {
 
     /* Feed samples of an audio stream to the AFE_SR */
     g_sr_data->afe_handle->feed(g_sr_data->afe_data, audio_buffer);
-    vTaskDelay(2);
+    vTaskDelay(1);
   }
   vTaskDelete(NULL);
 }
@@ -255,8 +260,9 @@ static void audio_detect_task(void *arg) {
       }
 
       if (ESP_MN_STATE_TIMEOUT == mn_state) {
+        esp_mn_results_t *mn_result = g_sr_data->multinet->get_results(g_sr_data->model_data);
         ::sr_set_mode(SR_MODE_OFF);
-        log_d("Time out");
+        log_d("Time out, text: %s", mn_result->string);
         sr_result_t result = {
           .wakenet_mode = WAKENET_NO_DETECT,
           .state = mn_state,
@@ -327,21 +333,21 @@ esp_err_t sr_start(
   g_sr_data = (sr_data_t*) heap_caps_calloc(1, sizeof(sr_data_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if(NULL == g_sr_data){
     ESP_LOGE(TAG, "Failed create sr data");
-    sr_stop();
+   ::sr_stop(); 
     return ESP_ERR_NO_MEM;
   }
 
   g_sr_data->result_que = xQueueCreate(3, sizeof(sr_result_t));
   if(NULL == g_sr_data->result_que) {
     ESP_LOGE(TAG, "Failed create result queue");
-    sr_stop();
+    ::sr_stop();
     return ESP_ERR_NO_MEM;
   }
 
   g_sr_data->event_group = xEventGroupCreate();
   if(NULL == g_sr_data->event_group) {
     ESP_LOGE(TAG, "Failed create event_group");
-    sr_stop();
+    ::sr_stop();
     return ESP_ERR_NO_MEM;
   }
 
@@ -390,26 +396,26 @@ esp_err_t sr_start(
 
   //Start tasks
   log_d("start tasks");
-  ret_val = xTaskCreatePinnedToCore(&audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 10, &g_sr_data->feed_task, 1);
+  ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 15, &g_sr_data->feed_task, 1);
   if(pdPASS != ret_val) {
     ESP_LOGE(TAG, "Failed create audio feed task");
-    sr_stop();
+    ::sr_stop();
     return ESP_FAIL;
   }
   
   vTaskDelay(10);
-  ret_val = xTaskCreatePinnedToCore(&audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 10, &g_sr_data->detect_task, 1);
+  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, 1);
   if(pdPASS != ret_val) {
     ESP_LOGE(TAG, "Failed create audio detect task");
-    sr_stop();
+    ::sr_stop();
     return ESP_FAIL;
   }
   
   vTaskDelay(10);
-  ret_val = xTaskCreatePinnedToCore(&sr_handler_task, "SR Handler Task", 6 * 1024, NULL, 19, &g_sr_data->handle_task, 0);
+  ret_val = xTaskCreatePinnedToCore(&SR::sr_handler_task, "SR Handler Task", 6 * 1024, NULL, configMAX_PRIORITIES - 1, &g_sr_data->handle_task, 0);
   if(pdPASS != ret_val) {
     ESP_LOGE(TAG, "Failed create audio handler task");
-    sr_stop();
+    ::sr_stop();
     return ESP_FAIL;
   }
 

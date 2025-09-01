@@ -18,7 +18,7 @@ void setupTasks() {
             "protectCozmo",         // Task name
             4 * 1024,               // Stack size
             NULL,                   // Parameters
-            configMAX_PRIORITIES - 1, // Priority
+            10, // Priority
             NULL,                   // Task handle
             0
         );
@@ -31,7 +31,7 @@ void setupTasks() {
             "CameraStream",          // Task name
             40 * 1024,               // Stack size
             NULL,                    // Parameters
-            4,                      // Priority
+            0,                      // Priority
             &cameraStreamTaskHandle,  // Task handle
             1
         );
@@ -54,15 +54,15 @@ void setupTasks() {
     }
     
     // Create sensor monitoring task
-    xTaskCreateUniversal(
-        sensorMonitorTask,         // Task function
-        "SensorMonitor",           // Task name
-        4096,                      // Stack size
-        NULL,                      // Parameters
-        0,                         // Priority
-        &sensorMonitorTaskHandle,  // Task handle
-        0
-    );
+    // xTaskCreateUniversal(
+    //     sensorMonitorTask,         // Task function
+    //     "SensorMonitor",           // Task name
+    //     4096,                      // Stack size
+    //     NULL,                      // Parameters
+    //     0,                         // Priority
+    //     &sensorMonitorTaskHandle,  // Task handle
+    //     0
+    // );
     
     // Create automation task
     if (automation) {

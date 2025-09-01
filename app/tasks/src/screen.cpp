@@ -47,7 +47,7 @@ void screenTask(void *param){
 			#if MICROPHONE_ANALOG
 				screen->setMicLevel(amicrophone->readLevel());
 			#elif MICROPHONE_I2S
-				screen->setMicLevel(microphone->readLevel() / 8);
+				screen->setMicLevel(microphone->readLevel());
 			#endif
 		#endif
 				screen->mutexUpdate();
