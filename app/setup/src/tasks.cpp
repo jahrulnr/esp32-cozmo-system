@@ -20,7 +20,7 @@ void setupTasks() {
             NULL,                   // Parameters
             configMAX_PRIORITIES - 1, // Priority
             NULL,                   // Task handle
-            1
+            0
         );
     #endif
     
@@ -49,7 +49,7 @@ void setupTasks() {
             NULL, 
             5, 
             NULL,
-            1
+            0
         );
     }
     
@@ -61,7 +61,7 @@ void setupTasks() {
         NULL,                      // Parameters
         0,                         // Priority
         &sensorMonitorTaskHandle,  // Task handle
-        1
+        0
     );
     
     // Create automation task

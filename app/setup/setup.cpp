@@ -16,8 +16,8 @@ void setupApp() {
   setupDistanceSensor();
   setupCliffDetector();
   setupTemperatureSensor();
-  setupSpeakers();
   setupMicrophone();
+  setupSpeakers();
   setupGPT();
   setupCommandMapper();
   setupAutomation();

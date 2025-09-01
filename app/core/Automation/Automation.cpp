@@ -367,7 +367,7 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     
     // Additional command to guide GPT in generating appropriate behaviors
     Utils::Sstring additionalCommand = 
-        "Generate 8 new robot behaviors in the exact format of existing templates. "
+        "Generate 10 new robot behaviors in the exact format of existing templates. "
         "Each behavior should be on a new line and use only this format: "
         "[ACTION=time][ACTION2=time] *Robot vocalization*\n\n"
         "Valid actions are:\n"
@@ -375,7 +375,7 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
         "Looking: LOOK_LEFT, LOOK_RIGHT, LOOK_TOP, LOOK_BOTTOM, LOOK_FRONT, LOOK_AROUND\n"
         "Head control: HEAD_UP, HEAD_DOWN, HEAD_CENTER, HEAD_POSITION\n"
         "Hand control: HAND_UP, HAND_DOWN, HAND_CENTER, HAND_POSITION\n"
-        "Advanced movement: MOTOR_LEFT, MOTOR_RIGHT, DANCE_SPIN\n"
+        "Advanced movement: MOTOR_LEFT, MOTOR_RIGHT\n"
         "Face expressions: FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, "
         "FACE_SKEPTIC, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, "
         "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY, FACE_NORMAL\n\n"

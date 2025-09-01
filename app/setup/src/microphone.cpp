@@ -29,7 +29,7 @@ int soundLevel = 0;
 int peakSoundLevel = 0;
 
 AnalogMicrophone* amicrophone = nullptr;
-I2SMicrophone* microphone;
+I2SMicrophone* microphone = nullptr;
 
 void setupMicrophone() {
   logger->info("Setting up MAX9814 microphone sensor...");

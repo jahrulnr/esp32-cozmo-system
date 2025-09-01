@@ -11,13 +11,13 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
 
             sayText("Hi, whats up?");
             delay(2000);
-            sr_set_mode(SR_MODE_COMMAND);
+            SR::sr_set_mode(SR_MODE_COMMAND);
             logger->info("📞 Listening for commands...");
             break;
             
         case SR_EVENT_WAKEWORD_CHANNEL:
             logger->info("🎙️ Wake word detected on channel: %d\n", command_id);
-            sr_set_mode(SR_MODE_COMMAND);
+            SR::sr_set_mode(SR_MODE_COMMAND);
             break;
             
         case SR_EVENT_COMMAND:
@@ -49,14 +49,14 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     logger->info("❓ Unknown command ID: %d\n", command_id);
                     break;
             }
-            sr_set_mode(SR_MODE_WAKEWORD);
+            SR::sr_set_mode(SR_MODE_WAKEWORD);
             
         case SR_EVENT_TIMEOUT:
             logger->info("⏰ Command timeout - returning to wake word mode");
             sayText("Call me again if you need something.");
             delay(5000);
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION_RESUME);
-            sr_set_mode(SR_MODE_WAKEWORD);
+            SR::sr_set_mode(SR_MODE_WAKEWORD);
             break;
             
         default:

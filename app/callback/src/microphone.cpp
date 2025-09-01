@@ -11,11 +11,13 @@ esp_err_t sr_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read,
     int samples_read = 0;
     
     #if MICROPHONE_I2S
-    if (microphone && microphone->isActive()) {
+    if (microphone){
+        if (!microphone->isActive()) microphone->start();
         samples_read = microphone->readSamples((int16_t*)out, samples_needed, timeout_ms);
     }
     #elif MICROPHONE_ANALOG
-    if (amicrophone && amicrophone->isActive()) {
+    if (amicrophone) {
+        if (!amicrophone->isActive()) amicrophone->start();
         samples_read = amicrophone->readSamples((int16_t*)out, samples_needed, timeout_ms);
     }
     #endif

@@ -1,20 +1,13 @@
 #ifndef BOOT_CONSTANTS_H
 #define BOOT_CONSTANTS_H
 
-#include "esp32-hal-sr.h"
+#include "csr.h"
 
 // Define voice commands (phonetic representations)
-static const sr_cmd_t voice_commands[] = {
+static const csr_cmd_t voice_commands[] = {
 	{0, "look to left", "LwK To LfFT"},
 	{1, "look to right", "LwK To RiT"},
 	{2, "close your eyes", "KLbS YeR iZ"},
-	// {0, "Turn on the light", "TkN nN jc LiT"},
-// 	{0, "Switch on the light", "SWgp nN jc LiT"},
-// 	{1, "Turn off the light", "TkN eF jc LiT"},
-// 	{1, "Switch off the light", "SWgp eF jc LiT"},
-// 	{1, "Go dark", "Gb DnRK"},
-// 	{2, "Start fan", "STnRT FaN"},
-// 	{3, "Stop fan", "STnP FaN"},
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";

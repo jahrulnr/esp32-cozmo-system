@@ -18,13 +18,13 @@ void setupSpeechRecognition() {
         return;
     }
 		
-		esp_err_t ret = sr_start(
+		esp_err_t ret = SR::sr_start(
 				sr_fill_callback,                                  // data fill callback
 				mic_instance,                                      // Microphone instance (I2SMicrophone or I2SMicrophone)
 				SR_CHANNELS_MONO,                                  // Single channel I2S input
 				SR_MODE_WAKEWORD,                                  // Start in wake word mode
 				voice_commands,                                    // Commands array
-				sizeof(voice_commands) / sizeof(sr_cmd_t),         // Number of commands
+				sizeof(voice_commands) / sizeof(csr_cmd_t),         // Number of commands
 				sr_event_callback,                                 // Event callback
 				NULL                                               // Event callback argument
 		);
@@ -32,8 +32,8 @@ void setupSpeechRecognition() {
 		if (ret == ESP_OK) {
 				sr_system_running = true;
 				logger->info("✅ Speech Recognition started successfully!");
-				logger->info("📋 Loaded %d voice commands:", sizeof(voice_commands) / sizeof(sr_cmd_t));
-				for (int i = 0; i < (sizeof(voice_commands) / sizeof(sr_cmd_t)); i++) {
+				logger->info("📋 Loaded %d voice commands:", sizeof(voice_commands) / sizeof(csr_cmd_t));
+				for (int i = 0; i < (sizeof(voice_commands) / sizeof(csr_cmd_t)); i++) {
 						logger->info("   [%d] Group %d: '%s' -> '%s'", 
 												i, 
 												voice_commands[i].command_id,
