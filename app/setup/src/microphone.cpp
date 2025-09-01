@@ -22,17 +22,17 @@ void setupMicrophone() {
         logger->error("[setupI2SMicrophone] ERROR: Failed to initialize I2S Standard driver: %s\n", esp_err_to_name(ret));
         return;
     }
-
-    ret = microphone->preloadDMA();
-    if (ret != ESP_OK) {
-        logger->error("[setupI2SMicrophone] ERROR: Failed to preload dma I2S Standard driver: %s\n", esp_err_to_name(ret));
-        return;
-    }
     
     // Start the I2S channel
     ret = microphone->start();
     if (ret != ESP_OK) {
         logger->error("[setupI2SMicrophone] ERROR: Failed to start I2S Standard driver: %s\n", esp_err_to_name(ret));
+        return;
+    }
+
+    ret = microphone->preloadDMA();
+    if (ret != ESP_OK) {
+        logger->error("[setupI2SMicrophone] ERROR: Failed to preload dma I2S Standard driver: %s\n", esp_err_to_name(ret));
         return;
     }
   }
