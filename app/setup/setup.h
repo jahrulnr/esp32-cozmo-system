@@ -69,8 +69,8 @@ extern bool sr_system_running;
 
 #if PICOTTS_ENABLED
 extern bool picotts_initialized;
-bool sayText(const char* text);
 #endif
+bool sayText(const char* text);
 
 void setupLogger();
 void setupNotification();

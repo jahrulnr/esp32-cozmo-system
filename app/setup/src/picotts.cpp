@@ -80,4 +80,8 @@ bool isPicoTTSInitialized() {
     return false;
 }
 
+bool sayText(const char* text) {
+    return false;
+};
+
 #endif

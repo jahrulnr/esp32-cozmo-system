@@ -41,7 +41,6 @@ void setupSpeakers() {
   
   #else
   logger->info("Speakers disabled in configuration");
-  pwmSpeaker = nullptr;
   i2sSpeaker = nullptr;
   audioSamples = nullptr;
   #endif
