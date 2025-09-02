@@ -345,7 +345,7 @@ Utils::SpiJsonDocument RobotController::formatSensorData() {
 #define FILE_CONTROLLER_H
 
 #include "Http/Controller.h"
-#include <SPIFFS.h>
+#include <LittleFS.h>
 
 class FileController : public Controller {
 public:
@@ -394,7 +394,7 @@ Response FileController::listFiles(Request& request) {
     Utils::SpiJsonDocument response;
     JsonArray files = response["files"].to<JsonArray>();
     
-    File dir = SPIFFS.open(directory);
+    File dir = LittleFS.open(directory);
     if (!dir || !dir.isDirectory()) {
         response["success"] = false;
         response["message"] = "Directory not found";
@@ -439,7 +439,7 @@ Response FileController::uploadFile(Request& request) {
     
     String path = "/" + sanitizePath(filename);
     
-    File file = SPIFFS.open(path, "w");
+    File file = LittleFS.open(path, "w");
     if (!file) {
         Utils::SpiJsonDocument error;
         error["success"] = false;

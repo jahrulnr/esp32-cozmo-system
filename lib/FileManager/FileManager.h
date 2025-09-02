@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
 #include <SD.h>
 #include <SPI.h>
 #ifdef CONFIG_IDF_TARGET_ESP32S3
@@ -16,6 +16,7 @@ class FileManager {
 public:
     enum StorageType {
         STORAGE_SPIFFS,
+        STORAGE_LITTLEFS,
         STORAGE_SD_MMC
     };
 
@@ -60,7 +61,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return The file contents as a string
      */
-    String readFile(const String& path, StorageType storageType = STORAGE_SPIFFS);
+    String readFile(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Write to a file
@@ -69,7 +70,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return true if successful, false otherwise
      */
-    bool writeFile(const String& path, const String& content, StorageType storageType = STORAGE_SPIFFS);
+    bool writeFile(const String& path, const String& content, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Append to a file
@@ -78,7 +79,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return true if successful, false otherwise
      */
-    bool appendFile(const String& path, const String& content, StorageType storageType = STORAGE_SPIFFS);
+    bool appendFile(const String& path, const String& content, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Delete a file
@@ -86,7 +87,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return true if successful, false otherwise
      */
-    bool deleteFile(const String& path, StorageType storageType = STORAGE_SPIFFS);
+    bool deleteFile(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Check if a file exists
@@ -94,7 +95,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return true if the file exists, false otherwise
      */
-    bool exists(const String& path, StorageType storageType = STORAGE_SPIFFS);
+    bool exists(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Get file size
@@ -102,7 +103,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return The file size in bytes, or -1 if the file doesn't exist
      */
-    int getSize(const String& path, StorageType storageType = STORAGE_SPIFFS);
+    int getSize(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * List files in a directory
@@ -110,7 +111,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return Vector of FileInfo structures
      */
-    std::vector<FileInfo> listFiles(String path = "/", StorageType storageType = STORAGE_SPIFFS);
+    std::vector<FileInfo> listFiles(String path = "/", StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Create a directory
@@ -118,7 +119,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return true if successful, false otherwise
      */
-    bool createDir(const String& path, StorageType storageType = STORAGE_SPIFFS);
+    bool createDir(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Remove a directory
@@ -126,7 +127,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return true if successful, false otherwise
      */
-    bool removeDir(const String& path, StorageType storageType = STORAGE_SPIFFS);
+    bool removeDir(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     // Stream reading methods
     /**
@@ -135,7 +136,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return File handle for streaming operations
      */
-    File openFileForReading(const String& path, StorageType storageType = STORAGE_SPIFFS);
+    File openFileForReading(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Read a chunk of data from file stream
@@ -155,7 +156,7 @@ public:
      * @param storageType Storage type (optional, uses default if not specified)
      * @return Number of bytes actually read
      */
-    size_t readStream(const String& path, size_t start, size_t end, uint8_t* buffer, StorageType storageType = STORAGE_SPIFFS);
+    size_t readStream(const String& path, size_t start, size_t end, uint8_t* buffer, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
      * Seek to position in file stream

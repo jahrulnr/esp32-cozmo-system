@@ -2,7 +2,7 @@
 
 namespace Utils {
 
-FileManager::FileManager() : _initialized(false), _sdInitialized(false), _sdmmcInitialized(false), _defaultStorage(STORAGE_SPIFFS) {
+FileManager::FileManager() : _initialized(false), _sdInitialized(false), _sdmmcInitialized(false), _defaultStorage(STORAGE_LITTLEFS) {
 }
 
 FileManager::~FileManager() {
@@ -10,15 +10,15 @@ FileManager::~FileManager() {
 }
 
 bool FileManager::init(bool enableSDMMC, bool use1bitMode, bool formatIfMountFailed, uint32_t sdmmcFreq) {
-    // Initialize SPIFFS
-    if (!_initialized && !SPIFFS.begin(false, "/spiffs", 10U, "spiffs")) {
-        Serial.println("SPIFFS mount failed");
+    // Initialize LittleFS
+    if (!_initialized && !LittleFS.begin(false)) {
+        Serial.println("LittleFS mount failed");
         return false;
     }
     _initialized = true;
 
     Serial.println("FileManager init successful in init()");
-    Serial.println("Files in SPIFFS root directory:");
+    Serial.println("Files in LittleFS root directory:");
     
     std::vector<Utils::FileManager::FileInfo> files = listFiles();
     for (const auto& fileInfo : files) {
@@ -100,7 +100,7 @@ fs::FS& FileManager::getFileSystem(StorageType storageType) {
         return SD_MMC;
     }
 #endif
-    return SPIFFS;
+    return LittleFS;
 }
 
 String FileManager::readFile(const String& path, StorageType storageType) {
@@ -110,8 +110,8 @@ String FileManager::readFile(const String& path, StorageType storageType) {
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
     
     fs::FS& fs = getFileSystem(storageType);
@@ -133,8 +133,8 @@ bool FileManager::writeFile(const String& path, const String& content, StorageTy
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
 
     fs::FS& fs = getFileSystem(storageType);
@@ -163,8 +163,8 @@ bool FileManager::appendFile(const String& path, const String& content, StorageT
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
     
     fs::FS& fs = getFileSystem(storageType);
@@ -186,8 +186,8 @@ bool FileManager::deleteFile(const String& path, StorageType storageType) {
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
     
     fs::FS& fs = getFileSystem(storageType);
@@ -327,8 +327,8 @@ bool FileManager::createDir(const String& path, StorageType storageType) {
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
     
     fs::FS& fs = getFileSystem(storageType);
@@ -342,8 +342,8 @@ bool FileManager::removeDir(const String& path, StorageType storageType) {
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
     
     fs::FS& fs = getFileSystem(storageType);
@@ -357,8 +357,8 @@ File FileManager::openFileForReading(const String& path, StorageType storageType
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
     
     fs::FS& fs = getFileSystem(storageType);
@@ -379,8 +379,8 @@ size_t FileManager::readStream(const String& path, size_t start, size_t end, uin
     
     // Check if SD_MMC is requested but not available
     if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
-        Serial.println("SD_MMC not available, falling back to SPIFFS");
-        storageType = STORAGE_SPIFFS;
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
     }
     
     fs::FS& fs = getFileSystem(storageType);

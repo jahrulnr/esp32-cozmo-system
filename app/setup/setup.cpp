@@ -23,6 +23,7 @@ void setupApp() {
   setupAutomation();
   setupSpeechRecognition();
   setupPicoTTS();
+  setupFTPServer();
 
   if (motors && screen)
     motors->setScreen(screen);

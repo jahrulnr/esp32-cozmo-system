@@ -13,6 +13,7 @@ void screenTask(void* param);
 void gptChatTask(void* parameter);
 void cameraStreamTask(void* parameter);
 void sensorMonitorTask(void* parameter);
+void ftpTask(void* param);
 
 // Function prototypes
 void protectCozmo();

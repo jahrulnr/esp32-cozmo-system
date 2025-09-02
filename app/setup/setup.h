@@ -22,6 +22,7 @@
 #include <I2SSpeaker.h>
 #include <AudioSamples.h>
 #include <MP3Player.h>
+#include <FTPServer.h>
 #include "core/Utils/SpiAllocator.h"
 #include "core/Automation/Automation.h"
 #include "core/Sensors/Camera.h"
@@ -65,6 +66,7 @@ extern AnalogMicrophone* amicrophone;
 extern I2SMicrophone* microphone;
 extern I2SSpeaker* i2sSpeaker;
 extern AudioSamples* audioSamples;
+extern FTPServer ftpSrv;
 
 extern bool sr_system_running;
 
@@ -94,5 +96,6 @@ void setupAutomation();
 void setupExtender();
 void setupSpeechRecognition();
 void setupPicoTTS();
+void setupFTPServer();
 
 void setupApp();

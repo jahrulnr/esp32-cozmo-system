@@ -1,5 +1,5 @@
 #include "AuthController.h"
-#include <SPIFFS.h>
+#include <LittleFS.h>
 
 Response AuthController::showLogin(Request& request) {
 		// Check if user is already authenticated
@@ -12,8 +12,8 @@ Response AuthController::showLogin(Request& request) {
 				}
 		}
 		
-		// Serve login page from SPIFFS
-		if (SPIFFS.exists("/views/login.html")) {
+		// Serve login page from LittleFS
+		if (LittleFS.exists("/views/login.html")) {
 				return Response(request.getServerRequest())
 						.file("/views/login.html");
 		}
@@ -92,9 +92,9 @@ Response AuthController::dashboard(Request& request) {
 		// For web requests, let the client-side JavaScript handle authentication
 		// The HTML page will check localStorage for token and redirect if needed
 		
-		// Serve dashboard page from SPIFFS
-		if (SPIFFS.exists("/views/dashboard.html")) {
-				File file = SPIFFS.open("/views/dashboard.html", "r");
+		// Serve dashboard page from LittleFS
+		if (LittleFS.exists("/views/dashboard.html")) {
+				File file = LittleFS.open("/views/dashboard.html", "r");
 				Utils::Sstring html = file.readString();
 				file.close();
 				

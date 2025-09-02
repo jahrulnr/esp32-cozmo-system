@@ -4,23 +4,9 @@
 bool sr_system_running = false;
 
 void setupSpeechRecognition() {
-    void* mic_instance = nullptr;
-#if MICROPHONE_ENABLED
-#if MICROPHONE_I2S
-    if (microphone && microphone->isInitialized()) {
-        mic_instance = (void*)microphone;
-#elif MICROPHONE_ANALOG
-    if (amicrophone && amicrophone->isInitialized()) {
-        mic_instance = (void*)amicrophone;
-#endif
-    } else {
-        logger->error("❌ Cannot setup SR: No active Analog implementation");
-        return;
-    }
-		
 		esp_err_t ret = SR::sr_start(
 				sr_fill_callback,                                  // data fill callback
-				mic_instance,                                      // Microphone instance (I2SMicrophone or I2SMicrophone)
+				NULL,																							 // data fill callback argument
 				SR_CHANNELS_MONO,                                  // Single channel I2S input
 				SR_MODE_WAKEWORD,                                  // Start in wake word mode
 				voice_commands,                                    // Commands array
@@ -44,5 +30,4 @@ void setupSpeechRecognition() {
 				logger->error("❌ Failed to start Speech Recognition: %s\n", esp_err_to_name(ret));
 				sr_system_running = false;
 		}
-#endif
 }

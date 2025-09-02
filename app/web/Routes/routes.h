@@ -3,7 +3,7 @@
 
 #include <MVCFramework.h>
 #include <setup/setup.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
 #include "Routing/Router.h"
 #include "../Controllers/AuthController.h"
 #include "../Controllers/SystemController.h"

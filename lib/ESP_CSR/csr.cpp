@@ -42,7 +42,7 @@
 #define ESP_GOTO_ON_FALSE(a, err_code, goto_tag, format, ...) \
   do {                                                        \
     if (unlikely(!(a))) {                                     \
-      log_e(format, ##__VA_ARGS__);                           \
+      ESP_LOGE(TAG, format, ##__VA_ARGS__);                           \
       ret = err_code;                                         \
       goto goto_tag;                                          \
     }                                                         \
@@ -52,7 +52,7 @@
 #define ESP_RETURN_ON_FALSE(a, err_code, format, ...) \
   do {                                                \
     if (unlikely(!(a))) {                             \
-      log_e(format, ##__VA_ARGS__);                   \
+      ESP_LOGE(TAG, format, ##__VA_ARGS__);                   \
       return err_code;                                \
     }                                                 \
   } while (0)
@@ -148,7 +148,7 @@ void sr_handler_task(void *pvParam) {
 static void audio_feed_task(void *arg) {
   size_t bytes_read = 0;
   int audio_chunksize = g_sr_data->afe_handle->get_feed_chunksize(g_sr_data->afe_data);
-  log_i("audio_chunksize=%d, feed_channel=%d", audio_chunksize, SR_CHANNEL_NUM);
+  ESP_LOGI(TAG, "audio_chunksize=%d, feed_channel=%d", audio_chunksize, SR_CHANNEL_NUM);
 
   /* Allocate audio buffer and check for result */
   int16_t *audio_buffer = (int16_t*) heap_caps_malloc(audio_chunksize * sizeof(int16_t) * SR_CHANNEL_NUM, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
@@ -170,6 +170,7 @@ static void audio_feed_task(void *arg) {
     /* Read audio data from I2S bus */
     //ToDo: handle error
     if (g_sr_data->fill_cb == NULL) {
+      ESP_LOGW(TAG, "fill_cb is null");
       vTaskDelay(100);
       continue;
     }
@@ -177,6 +178,7 @@ static void audio_feed_task(void *arg) {
       g_sr_data->fill_cb_arg, (char *)audio_buffer, audio_chunksize * g_sr_data->i2s_rx_chan_num * sizeof(int16_t), &bytes_read, portMAX_DELAY
     );
     if (err != ESP_OK) {
+      ESP_LOGW(TAG, "fill_cb is err: %s", esp_err_to_name(err));
       vTaskDelay(100);
       continue;
     }
@@ -195,6 +197,7 @@ static void audio_feed_task(void *arg) {
         audio_buffer[i * SR_CHANNEL_NUM + 0] = audio_buffer[i * 2 + 0];
       }
     } else {
+      ESP_LOGW(TAG, "i2s_rx_chan_num is invalid: %d", g_sr_data->i2s_rx_chan_num);
       vTaskDelay(100);
       continue;
     }
@@ -210,7 +213,7 @@ static void audio_detect_task(void *arg) {
   int afe_chunksize = g_sr_data->afe_handle->get_fetch_chunksize(g_sr_data->afe_data);
   int mu_chunksize = g_sr_data->multinet->get_samp_chunksize(g_sr_data->model_data);
   assert(mu_chunksize == afe_chunksize);
-  log_i("------------detect start------------");
+  ESP_LOGI(TAG, "------------detect start------------");
 
   while (true) {
     EventBits_t bits = xEventGroupGetBits(g_sr_data->event_group);
@@ -224,12 +227,13 @@ static void audio_detect_task(void *arg) {
 
     afe_fetch_result_t *res = g_sr_data->afe_handle->fetch(g_sr_data->afe_data);
     if (!res || res->ret_value == ESP_FAIL) {
+      ESP_LOGW(TAG, "failed fetch afe data: %d", res != nullptr ? esp_err_to_name(res->ret_value) : "null");
       continue;
     }
 
     if (g_sr_data->mode == SR_MODE_WAKEWORD) {
       if (res->wakeup_state == WAKENET_DETECTED) {
-        log_d("wakeword detected");
+        ESP_LOGD(TAG, "wakeword detected");
         sr_result_t result = {
           .wakenet_mode = WAKENET_DETECTED,
           .state = ESP_MN_STATE_DETECTING,
@@ -239,7 +243,7 @@ static void audio_detect_task(void *arg) {
         xQueueSend(g_sr_data->result_que, &result, 0);
       } else if (res->wakeup_state == WAKENET_CHANNEL_VERIFIED) {
         ::sr_set_mode(SR_MODE_OFF);
-        log_d("AFE_FETCH_CHANNEL_VERIFIED, channel index: %d", res->trigger_channel_id);
+        ESP_LOGD(TAG, "AFE_FETCH_CHANNEL_VERIFIED, channel index: %d", res->trigger_channel_id);
         sr_result_t result = {
           .wakenet_mode = WAKENET_CHANNEL_VERIFIED,
           .state = ESP_MN_STATE_DETECTING,
@@ -262,7 +266,7 @@ static void audio_detect_task(void *arg) {
       if (ESP_MN_STATE_TIMEOUT == mn_state) {
         esp_mn_results_t *mn_result = g_sr_data->multinet->get_results(g_sr_data->model_data);
         ::sr_set_mode(SR_MODE_OFF);
-        log_d("Time out, text: %s", mn_result->string);
+        ESP_LOGD(TAG, "Time out, text: %s", mn_result->string);
         sr_result_t result = {
           .wakenet_mode = WAKENET_NO_DETECT,
           .state = mn_state,
@@ -277,12 +281,12 @@ static void audio_detect_task(void *arg) {
         ::sr_set_mode(SR_MODE_OFF);
         esp_mn_results_t *mn_result = g_sr_data->multinet->get_results(g_sr_data->model_data);
         for (int i = 0; i < mn_result->num; i++) {
-          log_d("TOP %d, command_id: %d, phrase_id: %d, prob: %f", i + 1, mn_result->command_id[i], mn_result->phrase_id[i], mn_result->prob[i]);
+          ESP_LOGD(TAG, "TOP %d, command_id: %d, phrase_id: %d, prob: %f", i + 1, mn_result->command_id[i], mn_result->phrase_id[i], mn_result->prob[i]);
         }
 
         int sr_command_id = mn_result->command_id[0];
         int sr_phrase_id = mn_result->phrase_id[0];
-        log_d("Detected command : %d, phrase: %d", sr_command_id, sr_phrase_id);
+        ESP_LOGD(TAG, "Detected command : %d, phrase: %d", sr_command_id, sr_phrase_id);
         sr_result_t result = {
           .wakenet_mode = WAKENET_NO_DETECT,
           .state = mn_state,
@@ -292,7 +296,7 @@ static void audio_detect_task(void *arg) {
         xQueueSend(g_sr_data->result_que, &result, 0);
         continue;
       }
-      log_e("Exception unhandled");
+      ESP_LOGE(TAG, "Exception unhandled");
     }
   }
   vTaskDelete(NULL);
@@ -360,7 +364,7 @@ esp_err_t sr_start(
   g_sr_data->mode = mode;
 
   // Init Model
-  log_d("init model");
+  ESP_LOGD(TAG, "init model");
   models = esp_srmodel_init("model");
 
   // Load WakeWord Detection
@@ -368,34 +372,33 @@ esp_err_t sr_start(
   afe_config_t afe_config = AFE_CONFIG_DEFAULT();
   afe_config.wakenet_model_name = esp_srmodel_filter(models, ESP_WN_PREFIX, "hiesp");
   afe_config.aec_init = false;
-  log_d("load wakenet '%s'", afe_config.wakenet_model_name);
+  ESP_LOGD(TAG, "load wakenet '%s'", afe_config.wakenet_model_name);
   g_sr_data->afe_data = g_sr_data->afe_handle->create_from_config(&afe_config);
 
   // Load Custom Command Detection
   char *mn_name = esp_srmodel_filter(models, ESP_MN_PREFIX, ESP_MN_ENGLISH);
-  log_d("load multinet '%s'", mn_name);
+  ESP_LOGD(TAG, "load multinet '%s'", mn_name);
   g_sr_data->multinet = esp_mn_handle_from_name(mn_name);
-  log_d("load model_data '%s'", mn_name);
+  ESP_LOGD(TAG, "load model_data '%s'", mn_name);
   g_sr_data->model_data = g_sr_data->multinet->create(mn_name, 5760);
 
   // Add commands
   esp_mn_commands_alloc((esp_mn_iface_t *)g_sr_data->multinet, (model_iface_data_t *)g_sr_data->model_data);
-  log_i("add %d commands", cmd_number);
+  ESP_LOGI(TAG, "add %d commands", cmd_number);
   for (size_t i = 0; i < cmd_number; i++) {
     esp_mn_commands_add(sr_commands[i].command_id, (char *)(sr_commands[i].phoneme));
-    log_i("  cmd[%d] phrase[%d]:'%s'", sr_commands[i].command_id, i, sr_commands[i].str);
+    ESP_LOGI(TAG, "  cmd[%d] phrase[%d]:'%s'", sr_commands[i].command_id, i, sr_commands[i].str);
   }
 
   // Load commands
   esp_mn_error_t *err_id = esp_mn_commands_update();
   if (err_id) {
     for (int i = 0; i < err_id->num; i++) {
-      log_e("err cmd id:%d", err_id->phrases[i]->command_id);
+      ESP_LOGE(TAG, "err cmd id:%d", err_id->phrases[i]->command_id);
     }
   }
 
   //Start tasks
-  log_d("start tasks");
   ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 15, &g_sr_data->feed_task, 1);
   if(pdPASS != ret_val) {
     ESP_LOGE(TAG, "Failed create audio feed task");

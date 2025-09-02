@@ -100,7 +100,7 @@ router->get("/robot/{action}", [](Request& request) -> Response {
 });
 ```
 
-### Serving Files from SPIFFS
+### Serving Files from LittleFS
 
 ```cpp
 // Serve static files
@@ -108,7 +108,7 @@ router->get("/files/{filename}", [](Request& request) -> Response {
     String filename = request.route("filename");
     String path = "/data/" + filename;
     
-    if (SPIFFS.exists(path)) {
+    if (LittleFS.exists(path)) {
         return Response(request.getServerRequest())
             .file(path);
     }

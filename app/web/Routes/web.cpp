@@ -6,7 +6,7 @@ void registerWebRoutes(Router* router) {
 		// Single-page application route
 		router->get("/", [](Request& request) -> Response {
 				// Serve the app.html as the main entry point
-				if (SPIFFS.exists("/views/app.html")) {
+				if (LittleFS.exists("/views/app.html")) {
 						
 						return Response(request.getServerRequest())
 								.file("/views/app.html");

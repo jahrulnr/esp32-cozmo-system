@@ -5,6 +5,6 @@ Utils::FileManager *fileManager;
 void setupFilemanager() {
   fileManager = new Utils::FileManager();
   if (!fileManager->init()) {
-    logger->error("SPIFFS initialization failed");
+    logger->error("FileManager initialization failed");
   }
 }

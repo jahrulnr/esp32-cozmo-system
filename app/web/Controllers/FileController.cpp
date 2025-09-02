@@ -28,7 +28,7 @@ Response FileController::download(Request& request) {
             .json(error);
     }
     
-    if (!SPIFFS.exists(path)) {
+    if (!LittleFS.exists(path)) {
         Utils::SpiJsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
         return Response(request.getServerRequest())
             .status(404)
@@ -74,7 +74,7 @@ Response FileController::upload(Request& request) {
     
     // Ensure directory exists
     if (!targetPath.equals("/")) {
-        if (!SPIFFS.exists(targetPath) && SPIFFS.mkdir(targetPath)) {
+        if (!LittleFS.exists(targetPath) && LittleFS.mkdir(targetPath)) {
 						logger->info("Creating directory path: " + targetPath);
         }
     }
@@ -83,7 +83,7 @@ Response FileController::upload(Request& request) {
     fullPath = sanitizePath(fullPath).c_str();
     
     // Open file for writing
-    File file = SPIFFS.open(fullPath, "w");
+    File file = LittleFS.open(fullPath, "w");
     if (!file) {
         Utils::SpiJsonDocument error = createErrorResponse("Failed to create file", "FILE_CREATION_ERROR");
         return Response(request.getServerRequest())
@@ -132,8 +132,8 @@ Response FileController::listFiles(Request& request) {
     Utils::SpiJsonDocument responseData;
     JsonArray files = responseData["files"].to<JsonArray>();
     
-    // List all files in SPIFFS (SPIFFS doesn't have true directories)
-    File root = SPIFFS.open("/");
+    // List all files in LittleFS (LittleFS doesn't have true directories)
+    File root = LittleFS.open("/");
     if (!root) {
         Utils::SpiJsonDocument error = createErrorResponse("Failed to open root directory", "DIRECTORY_ACCESS_ERROR");
         return Response(request.getServerRequest())
@@ -173,9 +173,9 @@ Response FileController::listFiles(Request& request) {
     
     responseData["directory"] = directory;
     responseData["count"] = fileCount;
-    responseData["total_size"] = SPIFFS.totalBytes();
-    responseData["used_size"] = SPIFFS.usedBytes();
-    responseData["free_size"] = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+    responseData["total_size"] = LittleFS.totalBytes();
+    responseData["used_size"] = LittleFS.usedBytes();
+    responseData["free_size"] = LittleFS.totalBytes() - LittleFS.usedBytes();
     
     Utils::SpiJsonDocument response = createSuccessResponse(responseData);
     
@@ -209,7 +209,7 @@ Response FileController::deleteFile(Request& request) {
             .json(error);
     }
     
-    if (!SPIFFS.exists(path)) {
+    if (!LittleFS.exists(path)) {
         Utils::SpiJsonDocument error = createErrorResponse("File not found", "FILE_NOT_FOUND");
         return Response(request.getServerRequest())
             .status(404)
@@ -224,7 +224,7 @@ Response FileController::deleteFile(Request& request) {
             .json(error);
     }
     
-    if (SPIFFS.remove(path.c_str())) {
+    if (LittleFS.remove(path.c_str())) {
         logger->info("File deleted: %s" + path);
         
         Utils::SpiJsonDocument responseData;
@@ -280,15 +280,15 @@ Response FileController::getFileInfo(Request& request) {
 
 Response FileController::getStorageInfo(Request& request) {
     Utils::SpiJsonDocument responseData;
-    responseData["total_bytes"] = SPIFFS.totalBytes();
-    responseData["used_bytes"] = SPIFFS.usedBytes();
-    responseData["free_bytes"] = SPIFFS.totalBytes() - SPIFFS.usedBytes();
-    responseData["usage_percent"] = (SPIFFS.usedBytes() * 100) / SPIFFS.totalBytes();
+    responseData["total_bytes"] = LittleFS.totalBytes();
+    responseData["used_bytes"] = LittleFS.usedBytes();
+    responseData["free_bytes"] = LittleFS.totalBytes() - LittleFS.usedBytes();
+    responseData["usage_percent"] = (LittleFS.usedBytes() * 100) / LittleFS.totalBytes();
     
     // Format human-readable sizes
-    responseData["total_formatted"] = formatBytes(SPIFFS.totalBytes());
-    responseData["used_formatted"] = formatBytes(SPIFFS.usedBytes());
-    responseData["free_formatted"] = formatBytes(SPIFFS.totalBytes() - SPIFFS.usedBytes());
+    responseData["total_formatted"] = formatBytes(LittleFS.totalBytes());
+    responseData["used_formatted"] = formatBytes(LittleFS.usedBytes());
+    responseData["free_formatted"] = formatBytes(LittleFS.totalBytes() - LittleFS.usedBytes());
     
     Utils::SpiJsonDocument response = createSuccessResponse(responseData);
     
@@ -334,8 +334,8 @@ Utils::Sstring FileController::sanitizePath(const Utils::Sstring& path) {
 Utils::SpiJsonDocument FileController::formatFileInfo(const Utils::Sstring& path) {
     Utils::SpiJsonDocument info;
     
-    if (SPIFFS.exists(path.c_str())) {
-        File file = SPIFFS.open(path.c_str(), "r");
+    if (LittleFS.exists(path.c_str())) {
+        File file = LittleFS.open(path.c_str(), "r");
         if (file) {
             info["exists"] = true;
             info["path"] = path;

@@ -1,5 +1,5 @@
 #include "Logger.h"
-#include <SPIFFS.h>
+#include <LittleFS.h>
 
 namespace Utils {
 
@@ -23,9 +23,9 @@ bool Logger::init(bool serialEnabled, bool fileEnabled) {
         Serial.begin(115200);
     }
     
-    if (_fileEnabled && !SPIFFS.begin(false, "/spiffs", 10U, "spiffs")) {
+    if (_fileEnabled && !LittleFS.begin(false)) {
         if (_serialEnabled) {
-            Serial.println("Failed to mount SPIFFS");
+            Serial.println("Failed to mount LittleFS");
         }
         _fileEnabled = false;
         return false;

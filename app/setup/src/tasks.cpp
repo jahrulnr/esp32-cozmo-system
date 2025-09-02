@@ -70,6 +70,16 @@ void setupTasks() {
         automation->setRandomBehaviorOrder();
     }
 
+    xTaskCreateUniversal(
+        ftpTask, 
+        "ftpTaskHandler", 
+        1024 * 8, 
+        NULL, 
+        0, 
+        NULL,
+        0
+    );
+
     delay(1000);
     logger->info("Tasks initialized");
 }
