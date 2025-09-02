@@ -242,7 +242,7 @@ static void audio_detect_task(void *arg) {
         };
         xQueueSend(g_sr_data->result_que, &result, 0);
       } else if (res->wakeup_state == WAKENET_CHANNEL_VERIFIED) {
-        ::sr_set_mode(SR_MODE_OFF);
+        SR::sr_set_mode(SR_MODE_OFF);
         ESP_LOGD(TAG, "AFE_FETCH_CHANNEL_VERIFIED, channel index: %d", res->trigger_channel_id);
         sr_result_t result = {
           .wakenet_mode = WAKENET_CHANNEL_VERIFIED,
@@ -265,7 +265,7 @@ static void audio_detect_task(void *arg) {
 
       if (ESP_MN_STATE_TIMEOUT == mn_state) {
         esp_mn_results_t *mn_result = g_sr_data->multinet->get_results(g_sr_data->model_data);
-        ::sr_set_mode(SR_MODE_OFF);
+        SR::sr_set_mode(SR_MODE_OFF);
         ESP_LOGD(TAG, "Time out, text: %s", mn_result->string);
         sr_result_t result = {
           .wakenet_mode = WAKENET_NO_DETECT,
@@ -278,7 +278,7 @@ static void audio_detect_task(void *arg) {
       }
 
       if (ESP_MN_STATE_DETECTED == mn_state) {
-        ::sr_set_mode(SR_MODE_OFF);
+        SR::sr_set_mode(SR_MODE_OFF);
         esp_mn_results_t *mn_result = g_sr_data->multinet->get_results(g_sr_data->model_data);
         for (int i = 0; i < mn_result->num; i++) {
           ESP_LOGD(TAG, "TOP %d, command_id: %d, phrase_id: %d, prob: %f", i + 1, mn_result->command_id[i], mn_result->phrase_id[i], mn_result->prob[i]);
@@ -399,7 +399,7 @@ esp_err_t sr_start(
   }
 
   //Start tasks
-  ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 15, &g_sr_data->feed_task, 1);
+  ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 15, &g_sr_data->feed_task, 0);
   if(pdPASS != ret_val) {
     ESP_LOGE(TAG, "Failed create audio feed task");
     ::sr_stop();
@@ -407,7 +407,7 @@ esp_err_t sr_start(
   }
   
   vTaskDelay(10);
-  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, 1);
+  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, 0);
   if(pdPASS != ret_val) {
     ESP_LOGE(TAG, "Failed create audio detect task");
     ::sr_stop();

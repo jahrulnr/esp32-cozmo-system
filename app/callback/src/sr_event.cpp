@@ -53,7 +53,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             
         case SR_EVENT_TIMEOUT:
             logger->info("⏰ Command timeout - returning to wake word mode");
-            sayText("Call me again if you need something.");
             delay(5000);
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION_RESUME);
             SR::sr_set_mode(SR_MODE_WAKEWORD);

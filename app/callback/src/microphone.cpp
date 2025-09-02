@@ -12,7 +12,7 @@ esp_err_t sr_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read,
     #if MICROPHONE_I2S
     if (microphone){
         if (!microphone->isActive()) microphone->start();
-        samples_read = microphone->readSamples((int16_t*)out, len, timeout_ms);
+        return microphone->readAudioData(out, len, bytes_read, 100);
     }
     #elif MICROPHONE_ANALOG
     if (amicrophone) {
