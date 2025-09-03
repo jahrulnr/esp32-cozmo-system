@@ -54,15 +54,15 @@ void setupTasks() {
     }
     
     // Create sensor monitoring task
-    // xTaskCreateUniversal(
-    //     sensorMonitorTask,         // Task function
-    //     "SensorMonitor",           // Task name
-    //     4096,                      // Stack size
-    //     NULL,                      // Parameters
-    //     0,                         // Priority
-    //     &sensorMonitorTaskHandle,  // Task handle
-    //     0
-    // );
+    xTaskCreateUniversal(
+        sensorMonitorTask,         // Task function
+        "SensorMonitor",           // Task name
+        4096,                      // Stack size
+        NULL,                      // Parameters
+        0,                         // Priority
+        &sensorMonitorTaskHandle,  // Task handle
+        0
+    );
     
     // Create automation task
     if (automation) {
@@ -75,7 +75,7 @@ void setupTasks() {
         "ftpTaskHandler", 
         1024 * 8, 
         NULL, 
-        0, 
+        5, 
         NULL,
         0
     );

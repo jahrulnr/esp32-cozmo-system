@@ -52,6 +52,9 @@ public:
      */
     void move(Direction direction, unsigned long duration = 0);
 
+    void disable();
+    void enable();
+
     /**
      * Stop all motors
      */
@@ -75,6 +78,7 @@ private:
     bool _useIoExtender;
     Utils::IOExtern* _ioExtender;
     Screen::Screen *_screen;
+    bool _enable;
     
     void moveLook(Direction direction);
     bool isInterrupt();

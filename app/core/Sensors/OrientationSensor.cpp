@@ -1,5 +1,6 @@
 #include "OrientationSensor.h"
 #include <math.h>
+#include <esp_log.h>
 
 namespace Sensors {
 
@@ -11,17 +12,17 @@ const int BUFFER_X2 = 3; // original is 1
 const int BUFFER_Y2 = 1; // original is 3
 const int BUFFER_Z2 = 5;
 
-OrientationSensor::OrientationSensor() : _x(0), _y(0), _z(0), 
-               _accelX(0), _accelY(0), _accelZ(0),
-               _offsetX(0), _offsetY(0), _offsetZ(0),
-               _accelOffsetX(0), _accelOffsetY(0), _accelOffsetZ(0),
-               _initialized(false), _wire(nullptr),
-               _gyroRange(GYRO_RANGE_250_DEG), 
-               _accelRange(ACCEL_RANGE_2G),
-               _gyroScale(131.0), // Default scale for ±250°/s
-               _accelScale(16384.0) // Default scale for ±2g
-{
-}
+OrientationSensor::OrientationSensor() : TAG("OrientationSensor"),
+    _x(0), _y(0), _z(0), 
+    _accelX(0), _accelY(0), _accelZ(0),
+    _offsetX(0), _offsetY(0), _offsetZ(0),
+    _accelOffsetX(0), _accelOffsetY(0), _accelOffsetZ(0),
+    _initialized(false), _wire(nullptr),
+    _gyroRange(GYRO_RANGE_250_DEG), 
+    _accelRange(ACCEL_RANGE_2G),
+    _gyroScale(131.0), // Default scale for ±250°/s
+    _accelScale(16384.0) // Default scale for ±2g
+{}
 
 OrientationSensor::~OrientationSensor() {
     // Clean up resources if needed
@@ -29,13 +30,13 @@ OrientationSensor::~OrientationSensor() {
 
 bool OrientationSensor::init(int sda, int scl) {
     if (!Utils::I2CManager::getInstance().initBus("base", sda, scl)) {
-        Serial.println("Failed to initialize I2C bus for gyroscope");
+        ESP_LOGE(TAG, "Failed to initialize I2C bus for gyroscope");
         return false;
     }
     
     _wire = Utils::I2CManager::getInstance().getBus("base");
     if (!_wire) {
-        Serial.println("Failed to get I2C bus for gyroscope");
+        ESP_LOGE(TAG, "Failed to get I2C bus for gyroscope");
         return false;
     }
     
@@ -48,25 +49,25 @@ bool OrientationSensor::init(int sda, int scl) {
     
     // Wake up the MPU6050
     if (!Utils::I2CManager::getInstance().devicePresent("base", MPU6050_ADDR)) {
-        Serial.println("MPU6050 not detected");
+        ESP_LOGE(TAG, "MPU6050 not detected");
         return false;
     }
     
     // Initialize the MPU6050
     if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_PWR_MGMT_1, 0)) {
-        Serial.println("Failed to wake up MPU6050");
+        ESP_LOGE(TAG, "Failed to wake up MPU6050");
         return false;
     }
     
     // Configure the gyroscope with default range (±250°/s)
     if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_GYRO_CONFIG, _gyroRange)) {
-        Serial.println("Failed to configure gyroscope");
+        ESP_LOGE(TAG, "Failed to configure gyroscope");
         return false;
     }
     
     // Configure the accelerometer with default range (±2g)
     if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_ACCEL_CONFIG, _accelRange)) {
-        Serial.println("Failed to configure accelerometer");
+        ESP_LOGE(TAG, "Failed to configure accelerometer");
         return false;
     }
     
@@ -75,11 +76,11 @@ bool OrientationSensor::init(int sda, int scl) {
     
     // Configure digital low-pass filter
     if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_CONFIG, 0x03)) {
-        Serial.println("Failed to configure DLPF");
+        ESP_LOGE(TAG, "Failed to configure DLPF");
         return false;
     }
     
-    Serial.println("MPU6050 initialized successfully");
+    ESP_LOGI(TAG, "MPU6050 initialized successfully");
     _initialized = true;
     return true;
 }
@@ -109,7 +110,7 @@ void OrientationSensor::update() {
         _accelY -= _accelOffsetY;
         _accelZ -= _accelOffsetZ;
     } else {
-        Serial.println("Failed to read accelerometer data");
+        ESP_LOGE(TAG, "Failed to read accelerometer data");
     }
     
     // Read gyroscope data - 6 bytes total (2 bytes per axis x, y, z)
@@ -127,7 +128,7 @@ void OrientationSensor::update() {
         _y -= _offsetY;
         _z -= _offsetZ;
     } else {
-        Serial.println("Failed to read gyroscope data");
+        ESP_LOGE(TAG, "Failed to read gyroscope data");
     }
 }
 
@@ -165,7 +166,7 @@ bool OrientationSensor::calibrate() {
         return false;
     }
     
-    Serial.println("Starting gyroscope and accelerometer calibration...");
+    ESP_LOGI(TAG, "Starting gyroscope and accelerometer calibration...");
     
     // Calibration procedure
     const int samples = 100;
@@ -220,9 +221,9 @@ bool OrientationSensor::calibrate() {
     _accelOffsetY = sumAccelY / samples;
     _accelOffsetZ = sumAccelZ / samples;
     
-    Serial.printf("Calibration complete.\n");
-    Serial.printf("Gyro offsets: X=%.4f, Y=%.4f, Z=%.4f\n", _offsetX, _offsetY, _offsetZ);
-    Serial.printf("Accel offsets: X=%.4f, Y=%.4f, Z=%.4f\n", _accelOffsetX, _accelOffsetY, _accelOffsetZ);
+    ESP_LOGI(TAG, "Calibration complete.");
+    ESP_LOGI(TAG, "Gyro offsets: X=%.4f, Y=%.4f, Z=%.4f", _offsetX, _offsetY, _offsetZ);
+    ESP_LOGI(TAG, "Accel offsets: X=%.4f, Y=%.4f, Z=%.4f", _accelOffsetX, _accelOffsetY, _accelOffsetZ);
     
     return true;
 }
@@ -275,14 +276,14 @@ bool OrientationSensor::setGyroRange(GyroRange range) {
     
     // Configure the gyroscope with new range
     if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_GYRO_CONFIG, range)) {
-        Serial.println("Failed to change gyroscope range");
+        ESP_LOGE(TAG, "Failed to change gyroscope range");
         return false;
     }
     
     _gyroRange = range;
     updateScalingFactors();
     
-    Serial.printf("Gyroscope range changed to: %d\n", range);
+    ESP_LOGI(TAG, "Gyroscope range changed to: %d", range);
     return true;
 }
 
@@ -296,14 +297,14 @@ bool OrientationSensor::setAccelRange(AccelRange range) {
     
     // Configure the accelerometer with new range
     if (!Utils::I2CManager::getInstance().writeRegister("base", MPU6050_ADDR, MPU6050_REG_ACCEL_CONFIG, range)) {
-        Serial.println("Failed to change accelerometer range");
+        ESP_LOGE(TAG, "Failed to change accelerometer range");
         return false;
     }
     
     _accelRange = range;
     updateScalingFactors();
     
-    Serial.printf("Accelerometer range changed to: %d\n", range);
+    ESP_LOGI(TAG, "Accelerometer range changed to: %d", range);
     return true;
 }
 

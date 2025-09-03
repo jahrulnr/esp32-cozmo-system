@@ -118,6 +118,7 @@ public:
     AccelRange getAccelRange() const;
 
 private:
+    const char* TAG;
     float _x, _y, _z;  // Current gyroscope readings (degrees per second)
     float _accelX, _accelY, _accelZ;  // Current accelerometer readings (g)
     float _offsetX, _offsetY, _offsetZ;  // Gyro calibration offsets

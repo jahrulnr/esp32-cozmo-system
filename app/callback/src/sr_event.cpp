@@ -10,7 +10,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION_PAUSE);
 
             sayText("Hi, whats up?");
-            delay(2000);
+            delay(5000);
             SR::sr_set_mode(SR_MODE_COMMAND);
             logger->info("📞 Listening for commands...");
             break;
@@ -45,11 +45,22 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_CLOSE_EYE);
                     servos->setHead(180);
                     break;
+                case 3: // you can play
+                    sayText("Thankyou!");
+                    notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION_RESUME);
+                    break;
+                case 4: // silent
+                    sayText("Ok!");
+                    notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION_PAUSE);
+                    break;
+                
                 default: 
                     logger->info("❓ Unknown command ID: %d\n", command_id);
+                    sayText("Sorry, I not understand!");
                     break;
             }
-            SR::sr_set_mode(SR_MODE_WAKEWORD);
+            // SR::sr_set_mode(SR_MODE_COMMAND);
+            break;
             
         case SR_EVENT_TIMEOUT:
             logger->info("⏰ Command timeout - returning to wake word mode");

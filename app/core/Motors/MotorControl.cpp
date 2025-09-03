@@ -7,7 +7,7 @@ MotorControl::MotorControl() : _leftMotorPin1(-1), _leftMotorPin2(-1),
                                _rightMotorPin1(-1), _rightMotorPin2(-1),
                                _currentDirection(STOP), _initialized(false),
                                _useIoExtender(false), _ioExtender(nullptr),
-                               _screen(nullptr), _interrupt(false) {
+                               _screen(nullptr), _interrupt(false), _enable(true) {
 }
 
 MotorControl::~MotorControl() {
@@ -61,6 +61,9 @@ bool MotorControl::initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPi
     return true;
 }
 
+void MotorControl::disable() { _enable = false; }
+void MotorControl::enable() { _enable = true; }
+
 void MotorControl::setScreen(Screen::Screen *screen) {
     _screen = screen;
 }
@@ -88,6 +91,11 @@ void MotorControl::moveLook(MotorControl::Direction direction) {
 
 void MotorControl::move(Direction direction, unsigned long duration) {
     if (!_initialized) {
+        return;
+    }
+
+    if (!_enable) {
+        stop();
         return;
     }
 

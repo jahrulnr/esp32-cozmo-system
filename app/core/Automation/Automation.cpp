@@ -40,7 +40,7 @@ void Automation::start() {
     xTaskCreate(
         taskFunction,    // Function that implements the task
         "automation",    // Task name
-        8192,           // Stack size in words
+        4096 * 2,           // Stack size in words
         this,           // Parameter passed to the task
         0,              // Priority
         &_taskHandle   // Task handle
@@ -119,6 +119,7 @@ void Automation::taskFunction(void* parameter) {
     long servoInterval = pdMS_TO_TICKS(10000);
     bool inprogress = false;
     bool paused = false;
+    vTaskDelay(pdMS_TO_TICKS(10000));
     
     // Run automation forever
     TickType_t lastWakeTime = xTaskGetTickCount();

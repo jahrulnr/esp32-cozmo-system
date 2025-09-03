@@ -8,6 +8,8 @@ static const csr_cmd_t voice_commands[] = {
 	{0, "look to left", "LwK To LfFT"},
 	{1, "look to right", "LwK To RiT"},
 	{2, "close your eyes", "KLbS YeR iZ"},
+	{3, "you can play", "Yo KaN PLd"},
+	{4, "silent", "SiLcNT"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";

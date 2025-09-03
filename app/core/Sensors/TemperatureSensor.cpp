@@ -1,4 +1,5 @@
 #include "TemperatureSensor.h"
+#include <setup/setup.h>
 
 namespace Sensors {
 
@@ -64,7 +65,9 @@ float TemperatureSensor::readTemperature() {
 #elif SOC_TEMP_SENSOR_SUPPORTED
     // ESP32-S3 and other supported chips
     if (_tempSensor != NULL) {
-        if (temperature_sensor_get_celsius(_tempSensor, &temp) != ESP_OK) {
+        esp_err_t ret = temperature_sensor_get_celsius(_tempSensor, &temp);
+        if (ret != ESP_OK) {
+            logger->error("failed to read internal temperature: %s", esp_err_to_name(ret));
             return NAN;
         }
     }

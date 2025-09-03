@@ -42,7 +42,7 @@ void sensorMonitorTask(void* parameter) {
             cliffRightDetector->update();
         }
 
-        if (temperatureSensor) {
+        if (temperatureSensor && temperatureSensor->isSupported()) {
             temperature = temperatureSensor->readTemperature();
         }
 

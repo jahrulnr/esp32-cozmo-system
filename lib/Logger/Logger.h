@@ -9,12 +9,18 @@
 
 namespace Utils {
 
+#ifdef ARDUHAL_LOG_FORMAT
+#undef ARDUHAL_LOG_FORMAT
+#define ARDUHAL_LOG_FORMAT(letter, format)                                                                                                              \
+  ARDUHAL_LOG_COLOR_##letter "[" #letter "][%s:%u] %s(): " format ARDUHAL_LOG_RESET_COLOR "\r\n", \
+    pathToFileName(__FILE__), __LINE__, __FUNCTION__
+#endif
+
 enum class LogLevel {
     DEBUG,
     INFO,
     WARNING,
-    ERROR,
-    CRITICAL
+    ERROR
 };
 
 // Structure to hold log messages in the queue
@@ -95,14 +101,6 @@ public:
     void error(const String& format, ...);
     
     /**
-     * Log a formatted critical message (printf-style)
-     * @param format The format string with placeholders like %d, %s, etc.
-     * @param ... Variable arguments to fill the format
-     */
-    void critical(const char* format, ...);
-    void critical(const String& format, ...);
-    
-    /**
      * Log a message with a specific level
      * @param level The log level
      * @param message The message to log
@@ -118,6 +116,7 @@ public:
     void log(LogLevel level, const char* format, ...);
 
 private:
+    const char* TAG;
     Logger();
     ~Logger();
     
