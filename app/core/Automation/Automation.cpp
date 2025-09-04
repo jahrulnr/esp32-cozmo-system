@@ -2,30 +2,40 @@
 #include "setup/setup.h"
 #include <tasks/register.h>
 
-#define BEHAVIOR_PROMPT "STRICT INSTRUCTIONS: You are a robot behavior generator. You MUST follow these rules exactly:\n"\
-        "1. ONLY generate robot behaviors - NO explanations, comments, or other text\n" \
-        "2. Generate EXACTLY 10 behaviors, one per line\n" \
-        "3. MANDATORY format: [ACTION=time][ACTION2=time] *Robot vocalization*\n" \
-        "4. ONLY use these EXACT action names (case-sensitive):\n" \
-        "   Movement: MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT, STOP\n" \
-        "   Looking: LOOK_LEFT, LOOK_RIGHT, LOOK_TOP, LOOK_BOTTOM, LOOK_FRONT, LOOK_AROUND\n" \
-        "   Head: HEAD_UP, HEAD_DOWN, HEAD_CENTER, HEAD_POSITION\n" \
-        "   Hand: HAND_UP, HAND_DOWN, HAND_CENTER, HAND_POSITION\n" \
-        "   Motors: MOTOR_LEFT, MOTOR_RIGHT\n" \
-        "   Faces: FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, " \
-        "FACE_SKEPTIC, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, " \
-        "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY, FACE_NORMAL\n\n" \
-        "5. Time format: ONLY use 'ms' or 's' (e.g., 500ms, 2s)\n" \
-        "6. Position values: HEAD_POSITION/HAND_POSITION angles 0-180 only\n" \
-        "7. Motor values: MOTOR_LEFT/MOTOR_RIGHT speeds 0-100 only\n" \
-        "8. Vocalization: MUST be inside *asterisks* and be SHORT robot-like phrases\n" \
-        "9. NO numbering (1., 2., etc.), NO bullet points, NO headers\n" \
-        "10. NO explanatory text before or after behaviors\n" \
-        "11. Each line MUST start with '[' and contain at least one action\n" \
-        "12. Make behaviors different from existing examples below\n\n" \
-        "FORBIDDEN: Do NOT include any text that doesn't match the exact format above.\n" \
-        "REQUIRED OUTPUT: Start immediately with behaviors, no introduction.\n\n" \
-        "Examples of current behaviors:\n"
+#define BEHAVIOR_PROMPT "⚠️ CRITICAL: You are a robot behavior generator. ANY deviation from these rules will cause system failure!\n\n"\
+        "🔒 STRICT VALIDATION RULES:\n"\
+        "1. OUTPUT EXACTLY 10 lines of robot behaviors - NOTHING ELSE\n"\
+        "2. Each line format: [ACTION=time][ACTION2=time] *Complete vocalization*\n"\
+        "3. COPY THESE EXACT COMMANDS (no variations allowed):\n"\
+        "   ✅ VALID: MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT, STOP\n"\
+        "   ✅ VALID: LOOK_LEFT, LOOK_RIGHT, LOOK_TOP, LOOK_BOTTOM, LOOK_FRONT, LOOK_AROUND\n"\
+        "   ✅ VALID: HEAD_UP, HEAD_DOWN, HEAD_CENTER, HEAD_POSITION\n"\
+        "   ✅ VALID: HAND_UP, HAND_DOWN, HAND_CENTER, HAND_POSITION\n"\
+        "   ✅ VALID: MOTOR_LEFT, MOTOR_RIGHT\n"\
+        "   ✅ VALID: FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, "\
+        "FACE_SKEPTIC, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, "\
+        "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY, FACE_NORMAL\n\n"\
+        "❌ INVALID EXAMPLES (DO NOT USE):\n"\
+        "   HANDS_DOWN (wrong! use HAND_DOWN), HEADS_UP (wrong! use HEAD_UP)\n"\
+        "   [HEAD_POSITION=90=500ms] (wrong! use [HEAD_POSITION=90][FACE_HAPPY=500ms])\n"\
+        "   *Incomplete message (wrong! must close with *)\n\n"\
+        "✅ VALID SYNTAX EXAMPLES:\n"\
+        "   [HAND_DOWN=1s][FACE_HAPPY=2s] *Hello there!*\n"\
+        "   [MOVE_FORWARD=500ms][LOOK_AROUND=1s] *Moving forward!*\n"\
+        "   [HEAD_POSITION=45][FACE_SURPRISED=1s] *What is that?*\n\n"\
+        "🎯 REQUIREMENTS:\n"\
+        "• Time: ONLY 'ms' or 's' (500ms, 2s)\n"\
+        "• Angles: 0-180 for HEAD_POSITION/HAND_POSITION\n"\
+        "• Motor speeds: 0-100 for MOTOR_LEFT/MOTOR_RIGHT\n"\
+        "• Vocalization: MUST start and end with * (asterisk)\n"\
+        "• NO explanations, NO numbering, NO extra text\n"\
+        "• Each line MUST start with '['\n\n"\
+        "🚫 IMMEDIATE FAILURE if you include ANY:\n"\
+        "- Text before/after the 10 behaviors\n"\
+        "- Wrong command names (like HANDS_DOWN)\n"\
+        "- Malformed syntax (like =90=500ms)\n"\
+        "- Incomplete vocalizations (missing closing *)\n\n"\
+        "START OUTPUT NOW - 10 behaviors only:\n"
 
 namespace Automation {
 
