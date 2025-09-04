@@ -26,6 +26,9 @@ void setupApp() {
   setupSpeechRecognition();
   setupCamera();
 
+  delay(10);
+  setupWebServer();
+
   if (motors && screen)
     motors->setScreen(screen);
   if (servos && screen)

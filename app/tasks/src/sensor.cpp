@@ -53,12 +53,12 @@ void sensorMonitorTask(void* parameter) {
                     );
         }
 
-        // if (touchDetector) {
-        //     touchDetector->update();
+        if (touchDetector) {
+            touchDetector->update();
 
-        //     if (sendLog)
-        //         logger->info("touched: %s", touchDetector->detected() ? "yes":"no");
-        // }
+            if (sendLog)
+                logger->info("touched: %s", touchDetector->detected() ? "yes":"no");
+        }
 
         if (temperatureSensor) {
             temperature = temperatureSensor->readTemperature();

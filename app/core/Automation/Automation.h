@@ -49,6 +49,8 @@ private:
     void loadTemplateBehaviors();
     bool saveBehaviorsToFile();
     void executeBehavior(const Utils::Sstring& behavior);
+
+    const Utils::Sstring _behaviorPrompt;
 };
 
 } // namespace Automation

@@ -2,6 +2,31 @@
 #include "setup/setup.h"
 #include <tasks/register.h>
 
+#define BEHAVIOR_PROMPT "STRICT INSTRUCTIONS: You are a robot behavior generator. You MUST follow these rules exactly:\n"\
+        "1. ONLY generate robot behaviors - NO explanations, comments, or other text\n" \
+        "2. Generate EXACTLY 10 behaviors, one per line\n" \
+        "3. MANDATORY format: [ACTION=time][ACTION2=time] *Robot vocalization*\n" \
+        "4. ONLY use these EXACT action names (case-sensitive):\n" \
+        "   Movement: MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT, STOP\n" \
+        "   Looking: LOOK_LEFT, LOOK_RIGHT, LOOK_TOP, LOOK_BOTTOM, LOOK_FRONT, LOOK_AROUND\n" \
+        "   Head: HEAD_UP, HEAD_DOWN, HEAD_CENTER, HEAD_POSITION\n" \
+        "   Hand: HAND_UP, HAND_DOWN, HAND_CENTER, HAND_POSITION\n" \
+        "   Motors: MOTOR_LEFT, MOTOR_RIGHT\n" \
+        "   Faces: FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, " \
+        "FACE_SKEPTIC, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, " \
+        "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY, FACE_NORMAL\n\n" \
+        "5. Time format: ONLY use 'ms' or 's' (e.g., 500ms, 2s)\n" \
+        "6. Position values: HEAD_POSITION/HAND_POSITION angles 0-180 only\n" \
+        "7. Motor values: MOTOR_LEFT/MOTOR_RIGHT speeds 0-100 only\n" \
+        "8. Vocalization: MUST be inside *asterisks* and be SHORT robot-like phrases\n" \
+        "9. NO numbering (1., 2., etc.), NO bullet points, NO headers\n" \
+        "10. NO explanatory text before or after behaviors\n" \
+        "11. Each line MUST start with '[' and contain at least one action\n" \
+        "12. Make behaviors different from existing examples below\n\n" \
+        "FORBIDDEN: Do NOT include any text that doesn't match the exact format above.\n" \
+        "REQUIRED OUTPUT: Start immediately with behaviors, no introduction.\n\n" \
+        "Examples of current behaviors:\n"
+
 namespace Automation {
 
 // Constructor
@@ -17,9 +42,12 @@ Automation::Automation(Utils::FileManager* fileManager,
     , _behaviorIndex(0)
     , _timer(0)
     , _randomBehaviorOrder(false) // Add this line
+    , _behaviorPrompt(BEHAVIOR_PROMPT)
 {
     // Create a mutex for thread-safe access to behaviors
     _behaviorsMutex = xSemaphoreCreateMutex();
+
+    
 }
 
 // Destructor
@@ -367,27 +395,7 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     }
     
     // Additional command to guide GPT in generating appropriate behaviors
-    Utils::Sstring additionalCommand = 
-        "Generate 10 new robot behaviors in the exact format of existing templates. "
-        "Each behavior should be on a new line and use only this format: "
-        "[ACTION=time][ACTION2=time] *Robot vocalization*\n\n"
-        "Valid actions are:\n"
-        "Movement: MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT, STOP\n"
-        "Looking: LOOK_LEFT, LOOK_RIGHT, LOOK_TOP, LOOK_BOTTOM, LOOK_FRONT, LOOK_AROUND\n"
-        "Head control: HEAD_UP, HEAD_DOWN, HEAD_CENTER, HEAD_POSITION\n"
-        "Hand control: HAND_UP, HAND_DOWN, HAND_CENTER, HAND_POSITION\n"
-        "Advanced movement: MOTOR_LEFT, MOTOR_RIGHT\n"
-        "Face expressions: FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, "
-        "FACE_SKEPTIC, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, "
-        "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY, FACE_NORMAL\n\n"
-        "Times should be specified in ms (500ms) or s (2s).\n"
-        "Servo positions should be specified as angles 0-180: [HEAD_POSITION=90]\n"
-        "Motor speeds should be specified as values 0-100: [MOTOR_LEFT=75]\n"
-        "Make behaviors unique and different from existing ones.\n"
-        "Each behavior should represent a cohesive action with matching facial expression and vocalization.\n"
-        "Create a mix of simple and complex behaviors.\n"
-        "Do not include any explanations, numbering, or extra text.\n\n"
-        "Here are some examples of current behaviors:\n"; 
+    Utils::Sstring additionalCommand = _behaviorPrompt;
     additionalCommand += existingBehaviorsList;
         
     // Store a pointer to this for use in the lambda

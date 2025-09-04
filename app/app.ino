@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <sdkconfig.h>
 #include "esp_log.h"
 #include <soc/soc.h>
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems

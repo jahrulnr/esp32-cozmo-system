@@ -38,6 +38,7 @@
 #include "core/Utils/CommandMapper.h"
 #include "tasks/register.h"
 #include "callback/register.h"
+#include "web/Routes/routes.h"
 
 #ifndef WEB_VAR_H
 #define WEB_VAR_H
@@ -75,6 +76,7 @@ void setupApp();
 void setupLogger();
 void setupNotification();
 void setupFilemanager();
+void setupWebServer();
 void setupCamera();
 void setupMotors();
 void setupServos();
