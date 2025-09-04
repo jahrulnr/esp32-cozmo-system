@@ -23,23 +23,6 @@ void setupTasks() {
             0
         );
     #endif
-    
-    // Create camera streaming task
-    if (camera) {
-        xTaskCreateUniversal(
-            cameraStreamTask,        // Task function
-            "CameraStream",          // Task name
-            40 * 1024,               // Stack size
-            NULL,                    // Parameters
-            0,                      // Priority
-            &cameraStreamTaskHandle,  // Task handle
-            1
-        );
-        
-        logger->info("Camera streaming task initialized");
-    } else {
-        logger->warning("Camera not initialized, skipping camera stream task");
-    }
 
     if (screen) {
         xTaskCreateUniversal(

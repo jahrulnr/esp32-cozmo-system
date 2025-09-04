@@ -67,6 +67,7 @@ public:
     void adjustSettings(int brightness, int contrast, int saturation);
 
 private:
+    const char* TAG;
     framesize_t _resolution;
     bool _initialized;
     uint32_t _streamingInterval;
