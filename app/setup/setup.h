@@ -70,12 +70,7 @@ extern I2SSpeaker* i2sSpeaker;
 extern AudioSamples* audioSamples;
 extern FTPServer ftpSrv;
 
-extern bool sr_system_running;
-
-#if PICOTTS_ENABLED
-extern bool picotts_initialized;
-#endif
-bool sayText(const char* text);
+void setupApp();
 
 void setupLogger();
 void setupNotification();
@@ -101,4 +96,7 @@ void setupSpeechRecognition();
 void setupPicoTTS();
 void setupFTPServer();
 
-void setupApp();
+#if PICOTTS_ENABLED
+extern bool picotts_initialized;
+#endif
+bool sayText(const char* text);

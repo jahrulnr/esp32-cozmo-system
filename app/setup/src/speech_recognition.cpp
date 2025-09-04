@@ -1,8 +1,6 @@
 #include "setup/setup.h"
 #include "tasks/register.h"
 
-bool sr_system_running = false;
-
 void setupSpeechRecognition() {
 		esp_err_t ret = SR::sr_start(
 				sr_fill_callback,                                  // data fill callback
@@ -20,7 +18,6 @@ void setupSpeechRecognition() {
 		);
 		
 		if (ret == ESP_OK) {
-				sr_system_running = true;
 				logger->info("✅ Speech Recognition started successfully!");
 				logger->info("📋 Loaded %d voice commands:", sizeof(voice_commands) / sizeof(csr_cmd_t));
 				for (int i = 0; i < (sizeof(voice_commands) / sizeof(csr_cmd_t)); i++) {
@@ -32,6 +29,5 @@ void setupSpeechRecognition() {
 				}
 		} else {
 				logger->error("❌ Failed to start Speech Recognition: %s\n", esp_err_to_name(ret));
-				sr_system_running = false;
 		}
 }
