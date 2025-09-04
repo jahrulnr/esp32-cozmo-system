@@ -4,7 +4,7 @@
 
 #define BEHAVIOR_PROMPT "⚠️ CRITICAL: You are a robot behavior generator. ANY deviation from these rules will cause system failure!\n\n"\
         "🔒 STRICT VALIDATION RULES:\n"\
-        "1. OUTPUT EXACTLY 10 lines of robot behaviors - NOTHING ELSE\n"\
+        "1. OUTPUT EXACTLY 50 lines of robot behaviors - NOTHING ELSE\n"\
         "2. Each line format: [ACTION=time][ACTION2=time] *Complete vocalization*\n"\
         "3. COPY THESE EXACT COMMANDS (no variations allowed):\n"\
         "   ✅ VALID: MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT, STOP\n"\
@@ -332,34 +332,6 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
     }
 }
 
-// Validate behavior syntax and commands
-bool Automation::validateBehavior(const Utils::Sstring& behavior) {
-    // Simple, lightweight validation
-    if (behavior.isEmpty() || behavior.length() > AUTOMATION_MAX_BEHAVIOR_LENGTH) {
-        return false;
-    }
-    
-    // Must start with '[' and contain '*'
-    if (!behavior.startsWith("[") || behavior.indexOf('*') == -1) {
-        return false;
-    }
-    
-    // Quick check for closing asterisk
-    String behaviorStr = behavior.toString();
-    int firstAsterisk = behavior.indexOf('*');
-    int lastAsterisk = behaviorStr.lastIndexOf('*');
-    if (firstAsterisk == lastAsterisk) {
-        return false; // No closing asterisk
-    }
-    
-    // Quick check for obvious corruption (double equals)
-    if (behaviorStr.indexOf("==") >= 0) {
-        return false;
-    }
-    
-    return true; // Accept if basic format is correct
-}
-
 // Fetch new behaviors from GPT and add them
 bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     if (!::gptAdapter) {
@@ -419,6 +391,11 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
         if (self->_logger) {
             self->_logger->info("GPT Response received");
             self->_logger->info("%s", response.c_str());
+        }
+
+        if (self->_templateBehaviors.size() > 100) {
+            self->_templateBehaviors.erase(self->_templateBehaviors.begin(), 
+                self->_templateBehaviors.begin() + 50);
         }
 
         int nextPos = 0;

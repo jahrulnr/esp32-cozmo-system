@@ -47,7 +47,6 @@ private:
     
     void loadTemplateBehaviors();
     void executeBehavior(const Utils::Sstring& behavior);
-    bool validateBehavior(const Utils::Sstring& behavior);
 
     const Utils::Sstring _behaviorPrompt;
     const char* _templatesFile;
