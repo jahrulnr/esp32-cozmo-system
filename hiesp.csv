@@ -7,3 +7,7 @@ picotts_sg, data, spiffs,     0x3B0000,   0xCD000,
 model,     data, spiffs,     0x47D000,  0x400000,
 spiffs,    data, spiffs,   0x87D000,  0x773000,
 coredump,  data, coredump,   0xFF0000,   0x10000,
+
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x310000 model/picoTTS/en-US_ta.bin
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x3B0000 model/picoTTS/en-US_lh0_sg.bin
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x47D000 model/srmodels.bin

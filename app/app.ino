@@ -9,7 +9,7 @@
 
 void setup() {
   setCpuFrequencyMhz(240);
-  heap_caps_malloc_extmem_enable(4096);
+  heap_caps_malloc_extmem_enable(32);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
@@ -24,6 +24,7 @@ void setup() {
   };
   esp_task_wdt_reconfigure(&config);
 
+  LittleFS.begin(false);
   setupApp();
   setupTasks();
 }

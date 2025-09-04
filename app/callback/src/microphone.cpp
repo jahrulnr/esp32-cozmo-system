@@ -7,10 +7,26 @@ float mic_volume_multiplier = 1.0f;
 // Analog fill callback for ESP-SR system
 esp_err_t sr_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read, uint32_t timeout_ms) {
     #if MICROPHONE_I2S
-    if (microphone){
-        if (!microphone->isActive()) microphone->start();
-        return microphone->readAudioData(out, len, bytes_read);
+    if (!microphone)
+        return ESP_ERR_INVALID_STATE;
+    if (!microphone->isActive()) microphone->start();
+    esp_err_t ret = microphone->readAudioData(out, len, bytes_read);
+    if (ret != ESP_OK)
+        return ret;
+        
+    if (mic_volume_multiplier == 1.0f) {
+        return ret;
     }
+    
+    int16_t* samples = (int16_t*)out;
+    for (int i = 0; i < len; i++) {
+        int32_t adjusted = (int32_t)(samples[i] * mic_volume_multiplier);
+        // can't define max() / min() because of conflicts with C++
+        samples[i] = (int16_t)_max(-32768, _min(32767, adjusted));
+    }
+    
+    out = samples;
+    return ret;
     #elif MICROPHONE_ANALOG
     // Calculate how many 16-bit samples we need
     int samples_needed = len / sizeof(int16_t);

@@ -13,6 +13,7 @@ void registerWebRoutes(Router* router) {
 				}
 				
 				return Response(request.getServerRequest())
+						.content("no content available")
 						.status(404);
 		}).name("app");
 		

@@ -13,14 +13,14 @@
         "   ✅ VALID: HAND_UP, HAND_DOWN, HAND_CENTER, HAND_POSITION\n"\
         "   ✅ VALID: MOTOR_LEFT, MOTOR_RIGHT\n"\
         "   ✅ VALID: FACE_HAPPY, FACE_SAD, FACE_ANGRY, FACE_SURPRISED, FACE_WORRIED, "\
-        "FACE_SKEPTIC, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, "\
+        "FACE_SURPRISED, FACE_FOCUSED, FACE_UNIMPRESSED, FACE_FRUSTRATED, "\
         "FACE_SQUINT, FACE_AWE, FACE_GLEE, FACE_FURIOUS, FACE_SUSPICIOUS, FACE_SCARED, FACE_SLEEPY, FACE_NORMAL\n\n"\
         "❌ INVALID EXAMPLES (DO NOT USE):\n"\
         "   HANDS_DOWN (wrong! use HAND_DOWN), HEADS_UP (wrong! use HEAD_UP)\n"\
         "   [HEAD_POSITION=90=500ms] (wrong! use [HEAD_POSITION=90][FACE_HAPPY=500ms])\n"\
         "   *Incomplete message (wrong! must close with *)\n\n"\
         "✅ VALID SYNTAX EXAMPLES FROM TEMPLATES:\n"\
-        "   [LOOK_LEFT=1s][FACE_SKEPTIC=2s] *Hmm, what's that?*\n"\
+        "   [LOOK_LEFT=1s][FACE_SURPRISED=2s] *Hmm, what's that?*\n"\
         "   [MOVE_FORWARD=2s][FACE_HAPPY=1s] *Let's go explore!*\n"\
         "   [TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=2s] *Spinning around!*\n"\
         "   [HEAD_UP=1s][LOOK_TOP=2s][FACE_SURPRISED=1s] *Wow, look up there!*\n"\
@@ -42,7 +42,7 @@
         "- Wrong command names (like HANDS_DOWN)\n"\
         "- Malformed syntax (like =90=500ms)\n"\
         "- Incomplete vocalizations (missing closing *)\n\n"\
-        "START OUTPUT NOW - 10 behaviors only:\n"
+        "START OUTPUT NOW - 50 behaviors only\n"
 
 namespace Automation {
 
@@ -60,6 +60,8 @@ Automation::Automation(Utils::FileManager* fileManager,
     , _timer(0)
     , _randomBehaviorOrder(false) // Add this line
     , _behaviorPrompt(BEHAVIOR_PROMPT)
+    , _templatesFile("/config/templates.txt")
+    , _templatesUpdateFile("/config/templates_update.txt")
 {
     // Create a mutex for thread-safe access to behaviors
     _behaviorsMutex = xSemaphoreCreateMutex();
@@ -81,9 +83,6 @@ void Automation::start() {
     // Load behaviors before starting task
     loadTemplateBehaviors();
     
-    // Clean up any corrupt behaviors from previous runs
-    cleanupCorruptBehaviors();
-    
     // Create the task
     xTaskCreate(
         taskFunction,    // Function that implements the task
@@ -94,7 +93,7 @@ void Automation::start() {
         &_taskHandle   // Task handle
     );
 
-    if (_fileManager && !_fileManager->exists("/config/templates_update.txt")) {
+    if (_fileManager && !_fileManager->exists(_templatesUpdateFile)) {
         xTaskCreatePinnedToCore(
             [](void * param){
                 vTaskDelay(pdMS_TO_TICKS(20099));
@@ -162,7 +161,7 @@ void Automation::taskFunction(void* parameter) {
     // Convert parameter to Automation instance
     Automation* automation = static_cast<Automation*>(parameter);
     long updateTimer = millis();
-    long updateInterval = pdMS_TO_TICKS(60000 * 30);
+    long updateInterval = pdMS_TO_TICKS(60000);
     long servoTimer = updateTimer;
     long servoInterval = pdMS_TO_TICKS(10000);
     bool inprogress = false;
@@ -264,12 +263,12 @@ void Automation::loadTemplateBehaviors() {
         
         // Load template behaviors from file
         Utils::Sstring templateDefault = "";
-        if (_fileManager && _fileManager->exists("/config/templates.txt")) {
-            templateDefault = _fileManager->readFile("/config/templates.txt");
+        if (_fileManager && _fileManager->exists(_templatesFile)) {
+            templateDefault = _fileManager->readFile(_templatesFile);
         }
 
-        if (_fileManager && _fileManager->exists("/config/templates_update.txt")) {
-            templateDefault += _fileManager->readFile("/config/templates_update.txt");
+        if (_fileManager && _fileManager->exists(_templatesUpdateFile)) {
+            templateDefault += _fileManager->readFile(_templatesUpdateFile);
         }
         
         // Split template behaviors into an array
@@ -361,62 +360,6 @@ bool Automation::validateBehavior(const Utils::Sstring& behavior) {
     return true; // Accept if basic format is correct
 }
 
-// Add a new behavior to the templates
-bool Automation::addNewBehavior(const Utils::Sstring& behavior) {
-    if (behavior.isEmpty()) {
-        return false;
-    }
-    
-    // Validate the behavior before adding
-    if (!validateBehavior(behavior)) {
-        if (_logger) {
-            _logger->warning("Invalid behavior rejected: %s", behavior.c_str());
-        }
-        return false;
-    }
-    
-    // Take the mutex to safely modify the behaviors list
-    if (xSemaphoreTake(_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
-        // Check for duplicates
-        bool isDuplicate = false;
-        for (const auto& existingBehavior : _templateBehaviors) {
-            if (existingBehavior.equals(behavior)) {
-                isDuplicate = true;
-                break;
-            }
-        }
-        
-        if (isDuplicate) {
-            xSemaphoreGive(_behaviorsMutex);
-            if (_logger) {
-                _logger->debug("Duplicate behavior skipped: %s", behavior.c_str());
-            }
-            return false;
-        }
-        
-        // Add the new behavior to our list
-        _templateBehaviors.push_back(behavior);
-        
-        // Save to file
-        bool saveResult = saveBehaviorsToFile();
-        
-        // Give the mutex back
-        xSemaphoreGive(_behaviorsMutex);
-        
-        if (_logger) {
-            if (saveResult) {
-                _logger->info("New behavior added: %s", behavior.c_str());
-            } else {
-                _logger->error("Failed to save new behavior to file");
-            }
-        }
-        
-        return saveResult;
-    }
-    
-    return false;
-}
-
 // Fetch new behaviors from GPT and add them
 bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     if (!::gptAdapter) {
@@ -473,44 +416,34 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     // Send the prompt to GPT using sendPromptWithCustomSystem for better memory management
     ::gptAdapter->sendPromptWithCustomSystem(prompt, _behaviorPrompt, 
         [self, doneSemaphore, &success](const Utils::Sstring& response) {
-        // Process the response from GPT
-        int addedCount = 0;
-        
         if (self->_logger) {
-            self->_logger->debug("GPT Response received");
+            self->_logger->info("GPT Response received");
+            self->_logger->info("%s", response.c_str());
         }
-        
-        // Split the response by newlines
+
+        int nextPos = 0;
         int startPos = 0;
-        int endPos = 0;
-        
-        while ((endPos = response.indexOf('\n', startPos)) != -1) {
-            Utils::Sstring behavior = response.substring(startPos, endPos);
+        int total = 0;
+        while ((nextPos = response.indexOf('\n', startPos)) != -1) {
+            Utils::Sstring behavior = response.toString().substring(startPos, nextPos);
             behavior.trim();
-            if (!behavior.isEmpty() && behavior.indexOf('[') >= 0) {
-                // This looks like a valid behavior template
-                if (self->addNewBehavior(behavior)) {
-                    addedCount++;
-                }
+            if (behavior.length() > 0) {
+                self->_templateBehaviors.push_back(behavior);
+                total++;
             }
-            startPos = endPos + 1;
-        }
-        
-        // Check for one last behavior after the last newline
-        Utils::Sstring lastBehavior = response.substring(startPos);
-        lastBehavior.trim();
-        if (!lastBehavior.isEmpty() && lastBehavior.indexOf('[') >= 0) {
-            if (self->addNewBehavior(lastBehavior)) {
-                addedCount++;
-            }
+            startPos = nextPos + 1;
         }
         
         // Set success flag if we added at least one behavior
-        success = (addedCount > 0);
+        success = (startPos > 0);
         
         if (self->_logger) {
             if (success) {
-                self->_logger->info("Added %d new behaviors from GPT", addedCount);
+                self->_fileManager->writeFile(
+                    self->_templatesUpdateFile, 
+                    response.c_str()
+                );
+                self->_logger->info("Added %d new behaviors from GPT", total);
             } else {
                 self->_logger->warning("No valid behaviors found in GPT response");
             }
@@ -532,239 +465,6 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     
     // Clean up
     vSemaphoreDelete(doneSemaphore);
-    return success;
-}
-
-// Clean up corrupt behaviors from templates_update.txt
-void Automation::cleanupCorruptBehaviors() {
-    if (!_fileManager || !_fileManager->exists("/config/templates_update.txt")) {
-        return;
-    }
-    
-    if (_logger) {
-        _logger->info("Cleaning up corrupt behaviors from templates_update.txt");
-    }
-    
-    // Read the current file
-    Utils::Sstring content = _fileManager->readFile("/config/templates_update.txt");
-    std::vector<Utils::Sstring> validBehaviors;
-    std::vector<Utils::Sstring> seenBehaviors; // For duplicate detection
-    
-    // Split by lines and validate each behavior
-    int startPos = 0;
-    int nextPos = 0;
-    int validCount = 0;
-    int corruptCount = 0;
-    
-    while ((nextPos = content.indexOf('\n', startPos)) != -1) {
-        Utils::Sstring behavior = content.substring(startPos, nextPos);
-        behavior.trim();
-        
-        if (behavior.length() > 0) {
-            if (validateBehavior(behavior)) {
-                // Check for duplicates
-                bool isDuplicate = false;
-                for (const auto& seen : seenBehaviors) {
-                    if (seen.equals(behavior)) {
-                        isDuplicate = true;
-                        break;
-                    }
-                }
-                
-                if (!isDuplicate) {
-                    validBehaviors.push_back(behavior);
-                    seenBehaviors.push_back(behavior);
-                    validCount++;
-                } else {
-                    corruptCount++; // Count duplicates as corrupt
-                }
-            } else {
-                corruptCount++;
-                if (_logger) {
-                    // Log only first few corrupt behaviors to avoid spam
-                    if (corruptCount <= 5) {
-                        _logger->warning("Removing corrupt behavior: %s", behavior.c_str());
-                    }
-                }
-            }
-        }
-        startPos = nextPos + 1;
-    }
-    
-    // Handle the last line
-    Utils::Sstring lastBehavior = content.substring(startPos);
-    lastBehavior.trim();
-    if (lastBehavior.length() > 0) {
-        if (validateBehavior(lastBehavior)) {
-            // Check for duplicates
-            bool isDuplicate = false;
-            for (const auto& seen : seenBehaviors) {
-                if (seen.equals(lastBehavior)) {
-                    isDuplicate = true;
-                    break;
-                }
-            }
-            
-            if (!isDuplicate) {
-                validBehaviors.push_back(lastBehavior);
-                validCount++;
-            } else {
-                corruptCount++;
-            }
-        } else {
-            corruptCount++;
-        }
-    }
-    
-    // Write back only valid behaviors
-    Utils::Sstring cleanContent = "";
-    for (const auto& behavior : validBehaviors) {
-        cleanContent += behavior.toString() + "\n";
-    }
-    
-    bool success = _fileManager->writeFile("/config/templates_update.txt", cleanContent.c_str());
-    
-    if (_logger) {
-        if (success) {
-            _logger->info("Cleanup complete: %d valid behaviors kept, %d corrupt behaviors removed", 
-                         validCount, corruptCount);
-        } else {
-            _logger->error("Failed to write cleaned behaviors to file");
-        }
-    }
-    
-    // Reload behaviors to update internal list
-    loadTemplateBehaviors();
-}
-
-// Save the current behaviors to file
-bool Automation::saveBehaviorsToFile() {
-    if (!_fileManager) {
-        return false;
-    }
-    
-    // First, separate default behaviors (from templates.txt) from user-added behaviors
-    std::vector<Utils::Sstring> defaultBehaviors;
-    std::vector<Utils::Sstring> userBehaviors;
-    
-    // Load default behaviors to identify them
-    Utils::Sstring defaultTemplates = "";
-    if (_fileManager && _fileManager->exists("/config/templates.txt")) {
-        defaultTemplates = _fileManager->readFile("/config/templates.txt");
-    }
-    
-    // Parse default behaviors
-    std::vector<Utils::Sstring> defaultTemplatesList;
-    int startPos = 0;
-    int nextPos = 0;
-    while ((nextPos = defaultTemplates.indexOf('\n', startPos)) != -1) {
-        Utils::Sstring behavior = defaultTemplates.toString().substring(startPos, nextPos);
-        behavior.trim();
-        if (behavior.length() > 0) {
-            defaultTemplatesList.push_back(behavior);
-        }
-        startPos = nextPos + 1;
-    }
-    
-    Utils::Sstring lastDefault = defaultTemplates.toString().substring(startPos);
-    lastDefault.trim();
-    if (lastDefault.length() > 0) {
-        defaultTemplatesList.push_back(lastDefault);
-    }
-    
-    // Separate user-added behaviors from default behaviors
-    for (const auto& behavior : _templateBehaviors) {
-        // Check if this behavior is in the default list
-        bool isDefault = false;
-        for (const auto& defaultBehavior : defaultTemplatesList) {
-            if (behavior.equals(defaultBehavior)) {
-                isDefault = true;
-                break;
-            }
-        }
-        
-        if (isDefault) {
-            defaultBehaviors.push_back(behavior);
-        } else {
-            userBehaviors.push_back(behavior.toString());
-        }
-    }
-    
-    // Apply LRU (Least Recently Used) logic to prevent memory issues
-    // Prefer keeping user-added behaviors, only trim if absolutely necessary
-    size_t totalBehaviors = defaultBehaviors.size() + userBehaviors.size();
-    if (totalBehaviors > AUTOMATION_MAX_BEHAVIORS) {
-        // Calculate how many behaviors to remove
-        size_t toRemove = totalBehaviors - AUTOMATION_MAX_BEHAVIORS;
-        
-        if (_logger) {
-            _logger->warning("Too many behaviors (%d), removing %d oldest behaviors",
-                totalBehaviors, toRemove);
-        }
-        
-        // First try to remove from default behaviors (they can be reloaded from file)
-        if (toRemove <= defaultBehaviors.size()) {
-            defaultBehaviors.erase(defaultBehaviors.begin(), defaultBehaviors.begin() + toRemove);
-            toRemove = 0;
-        } else {
-            toRemove -= defaultBehaviors.size();
-            defaultBehaviors.clear(); // Remove all default behaviors
-            
-            // If we still need to remove more, start removing user behaviors
-            if (toRemove > 0 && !userBehaviors.empty()) {
-                userBehaviors.erase(userBehaviors.begin(), userBehaviors.begin() + std::min(toRemove, userBehaviors.size()));
-            }
-        }
-        
-        // Rebuild the template behaviors list
-        _templateBehaviors.clear();
-        _templateBehaviors.insert(_templateBehaviors.end(), defaultBehaviors.begin(), defaultBehaviors.end());
-        _templateBehaviors.insert(_templateBehaviors.end(), userBehaviors.begin(), userBehaviors.end());
-        
-        // Adjust behaviorIndex if needed to prevent out-of-bounds access
-        if (_behaviorIndex >= _templateBehaviors.size() && !_templateBehaviors.empty()) {
-            _behaviorIndex = 0;
-        }
-    }
-    
-    // Build the content to save, validating behavior size to avoid memory issues
-    Utils::Sstring content = "";
-    size_t validBehaviors = 0;
-    
-    for (const auto& behavior : userBehaviors) {
-        // Skip behaviors that are too large
-        if (behavior.length() > AUTOMATION_MAX_BEHAVIOR_LENGTH) {
-            if (_logger) {
-                _logger->warning("Skipping oversized behavior: " + behavior.toString().substring(0, 30) + "...");
-            }
-            continue;
-        }
-        
-        content += behavior.toString() + "\n";
-        validBehaviors++;
-    }
-    
-    // Check if content is too large (rough estimate, allowing ~10KB max)
-    if (content.length() > 10240) {
-        if (_logger) {
-            _logger->error("Behavior content too large (%d bytes), truncating to prevent memory issues",
-                content.length());
-        }
-        content = content.substring(0, 10240);
-    }
-    
-    // Save to file (completely replace the templates_update.txt to ensure persistence)
-    bool success = _fileManager->writeFile("/config/templates_update.txt", content.c_str());
-    
-    // Log the result
-    if (_logger) {
-        if (success) {
-            _logger->info("Successfully saved %d user behaviors to templates_update.txt", validBehaviors);
-        } else {
-            _logger->error("Failed to save behaviors to templates_update.txt");
-        }
-    }
-    
     return success;
 }
 

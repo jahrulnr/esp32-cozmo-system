@@ -26,9 +26,7 @@ public:
     void setEnabled(bool enabled);
     bool isRandomBehaviorOrder() const;
     void setRandomBehaviorOrder(bool randomOrder = true);
-    bool addNewBehavior(const Utils::Sstring& behavior);
     bool fetchAndAddNewBehaviors(const Utils::Sstring& prompt = "Generate new robot behaviors");
-    void cleanupCorruptBehaviors();
     
     static void taskFunction(void* parameter);
 
@@ -48,11 +46,12 @@ private:
     long _timer;
     
     void loadTemplateBehaviors();
-    bool saveBehaviorsToFile();
     void executeBehavior(const Utils::Sstring& behavior);
     bool validateBehavior(const Utils::Sstring& behavior);
 
     const Utils::Sstring _behaviorPrompt;
+    const char* _templatesFile;
+    const char* _templatesUpdateFile;
 };
 
 } // namespace Automation
