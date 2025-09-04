@@ -55,7 +55,7 @@ public:
     void adjustSettings(int brightness, int contrast, int saturation);
 
 private:
-    char* TAG;
+    const char* TAG;
     framesize_t _resolution;
     bool _initialized;
 };

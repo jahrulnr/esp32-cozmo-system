@@ -28,6 +28,7 @@ public:
     void setRandomBehaviorOrder(bool randomOrder = true);
     bool addNewBehavior(const Utils::Sstring& behavior);
     bool fetchAndAddNewBehaviors(const Utils::Sstring& prompt = "Generate new robot behaviors");
+    void cleanupCorruptBehaviors();
     
     static void taskFunction(void* parameter);
 
@@ -49,6 +50,7 @@ private:
     void loadTemplateBehaviors();
     bool saveBehaviorsToFile();
     void executeBehavior(const Utils::Sstring& behavior);
+    bool validateBehavior(const Utils::Sstring& behavior);
 
     const Utils::Sstring _behaviorPrompt;
 };

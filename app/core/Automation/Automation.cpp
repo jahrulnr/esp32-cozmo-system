@@ -19,10 +19,17 @@
         "   HANDS_DOWN (wrong! use HAND_DOWN), HEADS_UP (wrong! use HEAD_UP)\n"\
         "   [HEAD_POSITION=90=500ms] (wrong! use [HEAD_POSITION=90][FACE_HAPPY=500ms])\n"\
         "   *Incomplete message (wrong! must close with *)\n\n"\
-        "✅ VALID SYNTAX EXAMPLES:\n"\
-        "   [HAND_DOWN=1s][FACE_HAPPY=2s] *Hello there!*\n"\
-        "   [MOVE_FORWARD=500ms][LOOK_AROUND=1s] *Moving forward!*\n"\
-        "   [HEAD_POSITION=45][FACE_SURPRISED=1s] *What is that?*\n\n"\
+        "✅ VALID SYNTAX EXAMPLES FROM TEMPLATES:\n"\
+        "   [LOOK_LEFT=1s][FACE_SKEPTIC=2s] *Hmm, what's that?*\n"\
+        "   [MOVE_FORWARD=2s][FACE_HAPPY=1s] *Let's go explore!*\n"\
+        "   [TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=2s] *Spinning around!*\n"\
+        "   [HEAD_UP=1s][LOOK_TOP=2s][FACE_SURPRISED=1s] *Wow, look up there!*\n"\
+        "   [HAND_UP=2s][FACE_HAPPY=1s][BLINK=1s] *Hello there!*\n"\
+        "   [MOVE_BACKWARD=1s][FACE_WORRIED=2s] *Oops, better back up!*\n"\
+        "   [LOOK_AROUND=3s][FACE_FOCUSED=2s] *Scanning the area*\n"\
+        "   [HEAD_DOWN=2s][FACE_SLEEPY=3s] *Time for a little nap*\n"\
+        "   [TURN_LEFT=3s][FACE_HAPPY=2s] *Dancing to the left!*\n"\
+        "   [MOVE_FORWARD=1s][TURN_LEFT=1s][MOVE_BACKWARD=1s][TURN_RIGHT=1s][FACE_HAPPY=2s] *Square dance time!*\n\n"\
         "🎯 REQUIREMENTS:\n"\
         "• Time: ONLY 'ms' or 's' (500ms, 2s)\n"\
         "• Angles: 0-180 for HEAD_POSITION/HAND_POSITION\n"\
@@ -73,6 +80,9 @@ void Automation::start() {
     
     // Load behaviors before starting task
     loadTemplateBehaviors();
+    
+    // Clean up any corrupt behaviors from previous runs
+    cleanupCorruptBehaviors();
     
     // Create the task
     xTaskCreate(
@@ -323,14 +333,67 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
     }
 }
 
+// Validate behavior syntax and commands
+bool Automation::validateBehavior(const Utils::Sstring& behavior) {
+    // Simple, lightweight validation
+    if (behavior.isEmpty() || behavior.length() > AUTOMATION_MAX_BEHAVIOR_LENGTH) {
+        return false;
+    }
+    
+    // Must start with '[' and contain '*'
+    if (!behavior.startsWith("[") || behavior.indexOf('*') == -1) {
+        return false;
+    }
+    
+    // Quick check for closing asterisk
+    String behaviorStr = behavior.toString();
+    int firstAsterisk = behavior.indexOf('*');
+    int lastAsterisk = behaviorStr.lastIndexOf('*');
+    if (firstAsterisk == lastAsterisk) {
+        return false; // No closing asterisk
+    }
+    
+    // Quick check for obvious corruption (double equals)
+    if (behaviorStr.indexOf("==") >= 0) {
+        return false;
+    }
+    
+    return true; // Accept if basic format is correct
+}
+
 // Add a new behavior to the templates
 bool Automation::addNewBehavior(const Utils::Sstring& behavior) {
     if (behavior.isEmpty()) {
         return false;
     }
     
+    // Validate the behavior before adding
+    if (!validateBehavior(behavior)) {
+        if (_logger) {
+            _logger->warning("Invalid behavior rejected: %s", behavior.c_str());
+        }
+        return false;
+    }
+    
     // Take the mutex to safely modify the behaviors list
     if (xSemaphoreTake(_behaviorsMutex, portMAX_DELAY) == pdTRUE) {
+        // Check for duplicates
+        bool isDuplicate = false;
+        for (const auto& existingBehavior : _templateBehaviors) {
+            if (existingBehavior.equals(behavior)) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        
+        if (isDuplicate) {
+            xSemaphoreGive(_behaviorsMutex);
+            if (_logger) {
+                _logger->debug("Duplicate behavior skipped: %s", behavior.c_str());
+            }
+            return false;
+        }
+        
         // Add the new behavior to our list
         _templateBehaviors.push_back(behavior);
         
@@ -403,16 +466,12 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
         // Release the mutex
         xSemaphoreGive(_behaviorsMutex);
     }
-    
-    // Additional command to guide GPT in generating appropriate behaviors
-    Utils::Sstring additionalCommand = _behaviorPrompt;
-    additionalCommand += existingBehaviorsList;
         
     // Store a pointer to this for use in the lambda
     Automation* self = this;
         
     // Send the prompt to GPT using sendPromptWithCustomSystem for better memory management
-    ::gptAdapter->sendPromptWithCustomSystem(prompt, additionalCommand, 
+    ::gptAdapter->sendPromptWithCustomSystem(prompt, _behaviorPrompt, 
         [self, doneSemaphore, &success](const Utils::Sstring& response) {
         // Process the response from GPT
         int addedCount = 0;
@@ -474,6 +533,108 @@ bool Automation::fetchAndAddNewBehaviors(const Utils::Sstring& prompt) {
     // Clean up
     vSemaphoreDelete(doneSemaphore);
     return success;
+}
+
+// Clean up corrupt behaviors from templates_update.txt
+void Automation::cleanupCorruptBehaviors() {
+    if (!_fileManager || !_fileManager->exists("/config/templates_update.txt")) {
+        return;
+    }
+    
+    if (_logger) {
+        _logger->info("Cleaning up corrupt behaviors from templates_update.txt");
+    }
+    
+    // Read the current file
+    Utils::Sstring content = _fileManager->readFile("/config/templates_update.txt");
+    std::vector<Utils::Sstring> validBehaviors;
+    std::vector<Utils::Sstring> seenBehaviors; // For duplicate detection
+    
+    // Split by lines and validate each behavior
+    int startPos = 0;
+    int nextPos = 0;
+    int validCount = 0;
+    int corruptCount = 0;
+    
+    while ((nextPos = content.indexOf('\n', startPos)) != -1) {
+        Utils::Sstring behavior = content.substring(startPos, nextPos);
+        behavior.trim();
+        
+        if (behavior.length() > 0) {
+            if (validateBehavior(behavior)) {
+                // Check for duplicates
+                bool isDuplicate = false;
+                for (const auto& seen : seenBehaviors) {
+                    if (seen.equals(behavior)) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+                
+                if (!isDuplicate) {
+                    validBehaviors.push_back(behavior);
+                    seenBehaviors.push_back(behavior);
+                    validCount++;
+                } else {
+                    corruptCount++; // Count duplicates as corrupt
+                }
+            } else {
+                corruptCount++;
+                if (_logger) {
+                    // Log only first few corrupt behaviors to avoid spam
+                    if (corruptCount <= 5) {
+                        _logger->warning("Removing corrupt behavior: %s", behavior.c_str());
+                    }
+                }
+            }
+        }
+        startPos = nextPos + 1;
+    }
+    
+    // Handle the last line
+    Utils::Sstring lastBehavior = content.substring(startPos);
+    lastBehavior.trim();
+    if (lastBehavior.length() > 0) {
+        if (validateBehavior(lastBehavior)) {
+            // Check for duplicates
+            bool isDuplicate = false;
+            for (const auto& seen : seenBehaviors) {
+                if (seen.equals(lastBehavior)) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            
+            if (!isDuplicate) {
+                validBehaviors.push_back(lastBehavior);
+                validCount++;
+            } else {
+                corruptCount++;
+            }
+        } else {
+            corruptCount++;
+        }
+    }
+    
+    // Write back only valid behaviors
+    Utils::Sstring cleanContent = "";
+    for (const auto& behavior : validBehaviors) {
+        cleanContent += behavior.toString() + "\n";
+    }
+    
+    bool success = _fileManager->writeFile("/config/templates_update.txt", cleanContent.c_str());
+    
+    if (_logger) {
+        if (success) {
+            _logger->info("Cleanup complete: %d valid behaviors kept, %d corrupt behaviors removed", 
+                         validCount, corruptCount);
+        } else {
+            _logger->error("Failed to write cleaned behaviors to file");
+        }
+    }
+    
+    // Reload behaviors to update internal list
+    loadTemplateBehaviors();
 }
 
 // Save the current behaviors to file

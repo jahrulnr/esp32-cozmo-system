@@ -1,50 +1,48 @@
-[LOOK_LEFT=1s][FACE_SKEPTIC=2s] *Hmm, what's that?*
-[MOVE_FORWARD=2s][FACE_HAPPY=1s] *Let's go explore!*
-[TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=2s] *Spinning around!*
-[HEAD_UP=1s][LOOK_TOP=2s][FACE_SURPRISED=1s] *Wow, look up there!*
-[HAND_UP=2s][FACE_HAPPY=1s][BLINK=1s] *Hello there!*
-[MOVE_BACKWARD=1s][FACE_WORRIED=2s] *Oops, better back up!*
+[LOOK_LEFT=1s][FACE_SURPRISED=2s] *What's that over there?*
+[MOVE_FORWARD=2s][FACE_HAPPY=1s] *Let's go play!*
+[TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=2s] *Wheee! Spinning is fun!*
+[HEAD_UP=1s][LOOK_TOP=2s][FACE_SURPRISED=1s] *Wow! Look up there!*
+[HAND_UP=2s][FACE_HAPPY=1s][BLINK=1s] *Hi there, friend!*
+[MOVE_BACKWARD=1s][FACE_WORRIED=2s] *Oops! Going back!*
 [LOOK_RIGHT=1s][HEAD_POSITION=45][FACE_FOCUSED=2s] *What's over here?*
-[HAND_DOWN=1s][FACE_SAD=2s] *Feeling a bit down today*
-[TURN_RIGHT=2s][FACE_SLEEPY=1s] *Whoa, getting dizzy!*
-[HEAD_CENTER=1s][FACE_NORMAL=2s] *Back to normal mode*
-[MOVE_FORWARD=1s][MOVE_BACKWARD=1s][FACE_WORRIED=2s] *Can't decide which way!*
-[LOOK_AROUND=3s][FACE_FOCUSED=2s] *Scanning the area*
-[HEAD_DOWN=2s][FACE_SLEEPY=3s] *Time for a little nap*
-[HAND_CENTER=1s][FACE_UNIMPRESSED=2s] *Not particularly exciting*
-[BLINK=1s][BLINK=1s][FACE_SUSPICIOUS=2s] *Something seems fishy*
+[HAND_DOWN=1s][FACE_SAD=2s] *I'm feeling sleepy*
+[TURN_RIGHT=2s][FACE_SLEEPY=1s] *Getting dizzy!*
+[HEAD_CENTER=1s][FACE_NORMAL=2s] *All better now*
+[MOVE_FORWARD=1s][MOVE_BACKWARD=1s][FACE_WORRIED=2s] *Which way should I go?*
+[LOOK_AROUND=3s][FACE_FOCUSED=2s] *Looking for friends*
+[HEAD_DOWN=2s][FACE_SLEEPY=3s] *Time for a nap*
+[HAND_CENTER=1s][FACE_UNIMPRESSED=2s] *That's not very exciting*
+[BLINK=1s][BLINK=1s][FACE_SUSPICIOUS=2s] *Something looks funny*
 [TURN_LEFT=3s][FACE_HAPPY=2s] *Dancing to the left!*
-[MOVE_FORWARD=2s][STOP=1s][FACE_SURPRISED=1s] *Sudden stop!*
-[LOOK_BOTTOM=2s][FACE_WORRIED=1s] *Watch out below!*
-[HEAD_UP=1s][HEAD_DOWN=1s][HEAD_UP=1s][FACE_GLEE=2s] *Nodding enthusiastically!*
-[HAND_UP=1s][HAND_DOWN=1s][HAND_UP=1s][FACE_HAPPY=2s] *Waving hello!*
-[TURN_RIGHT=1s][TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=3s] *Dance move number one!*
-[MOVE_FORWARD=1s][TURN_LEFT=1s][MOVE_BACKWARD=1s][TURN_RIGHT=1s][FACE_HAPPY=2s] *Square dance time!*
-[LOOK_LEFT=1s][LOOK_RIGHT=1s][LOOK_LEFT=1s][LOOK_RIGHT=1s][FACE_EXCITED=2s] *Head bobbing dance!*
-[HEAD_POSITION=180][HAND_POSITION=0][FACE_FURIOUS=2s] *I'm getting angry!*
-[HEAD_POSITION=0][HAND_POSITION=180][FACE_SCARED=2s] *Something's scary down there!*
-[MOTOR_LEFT=500][MOTOR_RIGHT=500][FACE_DETERMINED=2s] *Powering up both motors!*
-[TURN_LEFT=2s][TURN_RIGHT=2s][TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=3s] *Spin dance spectacular!*
-[MOVE_FORWARD=1s][HEAD_UP=1s][MOVE_BACKWARD=1s][HEAD_DOWN=1s][FACE_HAPPY=2s] *Forward-back head dance!*
-[LOOK_AROUND=2s][TURN_LEFT=1s][LOOK_AROUND=2s][FACE_FOCUSED=2s] *Surveillance mode activated*
-[HAND_UP=1s][TURN_LEFT=1s][HAND_DOWN=1s][TURN_RIGHT=1s][FACE_GLEE=3s] *Hand wave dance!*
-[BLINK=1s][HEAD_POSITION=45][BLINK=1s][HEAD_POSITION=135][FACE_PLAYFUL=2s] *Winking dance!*
-[MOVE_FORWARD=2s][TURN_LEFT=2s][MOVE_FORWARD=2s][TURN_LEFT=2s][FACE_HAPPY=3s] *Square patrol dance!*
-[HEAD_UP=1s][HAND_UP=1s][HEAD_DOWN=1s][HAND_DOWN=1s][FACE_SYNCHRONIZED=2s] *Synchronized movement!*
-[LOOK_LEFT=1s][TURN_LEFT=1s][LOOK_RIGHT=1s][TURN_RIGHT=1s][FACE_COORDINATED=2s] *Look and turn combo!*
-[MOTOR_LEFT=1s][HEAD_LEFT=1s][MOTOR_RIGHT=1s][HEAD_RIGHT=1s][FACE_TECHNICAL=2s] *Technical dance routine!*
-[FACE_ANGRY=1s][TURN_LEFT=2s][FACE_HAPPY=1s][TURN_RIGHT=2s][FACE_GLEE=1s] *Emotion spinning dance!*
-[MOVE_BACKWARD=1s][LOOK_BOTTOM=1s][MOVE_FORWARD=1s][LOOK_TOP=1s][FACE_ADVENTUROUS=2s] *Exploring high and low!*
-[HAND_POSITION=90][HEAD_POSITION=90][BLINK=2s][FACE_CENTERED=2s] *Perfect balance achieved*
-[TURN_RIGHT=3s][FACE_SLEEPY=2s][STOP=2s][FACE_WORRIED=1s] *Dizzy spin recovery!*
-[LOOK_LEFT=1s][MOVE_LEFT=1s][LOOK_RIGHT=1s][MOVE_RIGHT=1s][FACE_FLOWING=2s] *Flowing side-to-side dance!*
-[HEAD_UP=1s][MOVE_FORWARD=1s][HEAD_DOWN=1s][MOVE_BACKWARD=1s][FACE_RHYTHMIC=3s] *Rhythmic forward-back dance!*
-[FACE_SURPRISED=1s][TURN_LEFT=1s][FACE_HAPPY=1s][TURN_RIGHT=1s][FACE_GLEE=1s] *Surprise spin dance!*
-[HAND_UP=2s][LOOK_TOP=1s][HAND_DOWN=2s][LOOK_BOTTOM=1s][FACE_EXPRESSIVE=2s] *Hand-eye coordination dance!*
-[MOVE_FORWARD=1s][TURN_LEFT=1s][MOVE_FORWARD=1s][TURN_LEFT=1s][FACE_SYSTEMATIC=3s] *Systematic left turn dance!*
-[BLINK=1s][HEAD_POSITION=60][BLINK=1s][HEAD_POSITION=120][FACE_PLAYFUL=2s] *Playful head tilt dance!*
-[MOTOR_RIGHT=2s][FACE_POWERFUL=1s][MOTOR_LEFT=2s][FACE_BALANCED=1s] *Power balance dance!*
-[LOOK_AROUND=3s][TURN_RIGHT=2s][LOOK_AROUND=3s][FACE_OBSERVANT=2s] *Observational spin dance!*
-[HEAD_CENTER=1s][HAND_CENTER=1s][FACE_NORMAL=1s][BLINK=1s] *Reset to center position*
-[TURN_LEFT=1s][TURN_RIGHT=1s][TURN_LEFT=1s][TURN_RIGHT=1s][TURN_LEFT=1s][FACE_ENERGETIC=3s] *Five-turn energy dance!*
-[MOVE_FORWARD=2s][HEAD_UP=1s][MOVE_BACKWARD=2s][HEAD_DOWN=1s][FACE_FLOWING=3s] *Forward-back flow dance!*
+[MOVE_FORWARD=2s][STOP=1s][FACE_SURPRISED=1s] *Whoops! Stop!*
+[LOOK_BOTTOM=2s][FACE_WORRIED=1s] *Watch out down there!*
+[HEAD_UP=1s][HEAD_DOWN=1s][HEAD_UP=1s][FACE_GLEE=2s] *Yes yes yes!*
+[HAND_UP=1s][HAND_DOWN=1s][HAND_UP=1s][FACE_HAPPY=2s] *Hi hi hi!*
+[TURN_RIGHT=1s][TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=3s] *Dance time!*
+[MOVE_FORWARD=1s][TURN_LEFT=1s][MOVE_BACKWARD=1s][TURN_RIGHT=1s][FACE_HAPPY=2s] *I can dance!*
+[LOOK_LEFT=1s][LOOK_RIGHT=1s][LOOK_LEFT=1s][LOOK_RIGHT=1s][FACE_HAPPY=2s] *Looking everywhere!*
+[HEAD_POSITION=180][HAND_POSITION=0][FACE_FURIOUS=2s] *I'm getting mad!*
+[HEAD_POSITION=0][HAND_POSITION=180][FACE_SCARED=2s] *That's scary!*
+[MOTOR_LEFT=500][MOTOR_RIGHT=500][FACE_FOCUSED=2s] *I'm getting stronger!*
+[TURN_LEFT=2s][TURN_RIGHT=2s][TURN_LEFT=1s][TURN_RIGHT=1s][FACE_GLEE=3s] *Super spin dance!*
+[MOVE_FORWARD=1s][HEAD_UP=1s][MOVE_BACKWARD=1s][HEAD_DOWN=1s][FACE_HAPPY=2s] *Up and down dance!*
+[LOOK_AROUND=2s][TURN_LEFT=1s][LOOK_AROUND=2s][FACE_FOCUSED=2s] *I'm a good lookout!*
+[HAND_UP=1s][TURN_LEFT=1s][HAND_DOWN=1s][TURN_RIGHT=1s][FACE_GLEE=3s] *Wave and turn!*
+[BLINK=1s][HEAD_POSITION=45][BLINK=1s][HEAD_POSITION=135][FACE_HAPPY=2s] *Wink wink!*
+[MOVE_FORWARD=2s][TURN_LEFT=2s][MOVE_FORWARD=2s][TURN_LEFT=2s][FACE_HAPPY=3s] *Walking in a square!*
+[HEAD_UP=1s][HAND_UP=1s][HEAD_DOWN=1s][HAND_DOWN=1s][FACE_HAPPY=2s] *Everything together!*
+[LOOK_LEFT=1s][TURN_LEFT=1s][LOOK_RIGHT=1s][TURN_RIGHT=1s][FACE_FOCUSED=2s] *Look and turn!*
+[MOTOR_LEFT=1s][HEAD_POSITION=45][MOTOR_RIGHT=1s][HEAD_POSITION=135][FACE_FOCUSED=2s] *I'm so smart!*
+[FACE_ANGRY=1s][TURN_LEFT=2s][FACE_HAPPY=1s][TURN_RIGHT=2s][FACE_GLEE=1s] *Happy spin dance!*
+[MOVE_BACKWARD=1s][LOOK_BOTTOM=1s][MOVE_FORWARD=1s][LOOK_TOP=1s][FACE_HAPPY=2s] *Up and down exploring!*
+[TURN_RIGHT=3s][FACE_SLEEPY=2s][STOP=2s][FACE_WORRIED=1s] *Whoa! Too dizzy!*
+[LOOK_LEFT=1s][TURN_LEFT=1s][LOOK_RIGHT=1s][TURN_RIGHT=1s][FACE_HAPPY=2s] *Side to side dance!*
+[HEAD_UP=1s][MOVE_FORWARD=1s][HEAD_DOWN=1s][MOVE_BACKWARD=1s][FACE_HAPPY=3s] *Forward back dance!*
+[FACE_SURPRISED=1s][TURN_LEFT=1s][FACE_HAPPY=1s][TURN_RIGHT=1s][FACE_GLEE=1s] *Surprise dance!*
+[HAND_UP=2s][LOOK_TOP=1s][HAND_DOWN=2s][LOOK_BOTTOM=1s][FACE_HAPPY=2s] *Hand and eye game!*
+[MOVE_FORWARD=1s][TURN_LEFT=1s][MOVE_FORWARD=1s][TURN_LEFT=1s][FACE_FOCUSED=3s] *Left turn march!*
+[BLINK=1s][HEAD_POSITION=60][BLINK=1s][HEAD_POSITION=120][FACE_HAPPY=2s] *Silly head wiggle!*
+[MOTOR_RIGHT=2s][MOTOR_LEFT=2s] *I'm getting strong!*
+[LOOK_AROUND=3s][TURN_RIGHT=2s][LOOK_AROUND=3s][FACE_FOCUSED=2s] *Looking everywhere spin!*
+[TURN_LEFT=1s][TURN_RIGHT=1s][TURN_LEFT=1s][TURN_RIGHT=1s][TURN_LEFT=1s][FACE_GLEE=3s] *Super energy dance!*
+[MOVE_FORWARD=2s][HEAD_UP=1s][MOVE_BACKWARD=2s][HEAD_DOWN=1s][FACE_HAPPY=3s] *Smooth dance moves!*
