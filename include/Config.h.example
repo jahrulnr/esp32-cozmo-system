@@ -1,51 +1,99 @@
 #pragma once
 
-// Camera configuration
-#define CAMERA_ENABLED false
-#define CAMERA_FRAME_SIZE FRAMESIZE_VGA
-#define CAMERA_QUALITY 12
-#define CAMERA_FPS 15
+#define GPT_API_KEY ""
+#define FTP_USER "root"
+#define FTP_PASS "root"
 
-// Utility examples configuration
-#define ENABLE_SPI_JSON_EXAMPLE false
-#define ENABLE_I2C_SCANNER_EXAMPLE false
-#define ENABLE_SSTRING_EXAMPLE false
+#define PROTECT_COZMO true
+#define AUTOMATION_ENABLED false
+#define AUTOMATION_INACTIVITY_TIMEOUT 10000  // 10 seconds inactivity before resuming automation
+#define AUTOMATION_CHECK_INTERVAL 2000      // Check for automation resumption every 1 second
+#define AUTOMATION_MAX_BEHAVIORS 50         // Maximum number of behaviors to store (prevent memory issues)
+#define AUTOMATION_MAX_BEHAVIOR_LENGTH 512  // Maximum length in bytes for a single behavior
+
+// Camera configuration
+#define CAMERA_MODEL_FREENOVE_ESP32S3_CAM
+// #define CAMERA_MODEL_AI_THINKER
+#define CAMERA_ENABLED true
+#define CAMERA_FRAME_SIZE FRAMESIZE_HQVGA
+#define CAMERA_QUALITY 12
+#define CAMERA_FPS 30
+
+#define SPI_SCK_PIN SCK
+#define SPI_MISO_PIN MISO
+#define SPI_MOSI_PIN MOSI
+#define SPI_ESP32_SS SS
+#define SPI_BUFFER_SIZE (size_t) 8096
 
 // Motor configuration
 #define MOTOR_ENABLED true
-#define LEFT_MOTOR_PIN1 12
-#define LEFT_MOTOR_PIN2 13
-#define RIGHT_MOTOR_PIN1 10
-#define RIGHT_MOTOR_PIN2 11
+#define MOTOR_IO_EXTENDER true
+#define LEFT_MOTOR_PIN1 1
+#define LEFT_MOTOR_PIN2 0
+#define RIGHT_MOTOR_PIN1 2
+#define RIGHT_MOTOR_PIN2 3
 
 // Servo configuration
 #define SERVO_ENABLED true
-#define HEAD_SERVO_PIN 14
-#define HAND_SERVO_PIN 12
+#define HEAD_SERVO_PIN 21
+#define HAND_SERVO_PIN 47
 #define DEFAULT_HEAD_ANGLE 90
-#define DEFAULT_HAND_ANGLE 90
+#define DEFAULT_HAND_ANGLE 0
 
 // Screen configuration
 #define SCREEN_ENABLED true
-#define SCREEN_SDA_PIN 16
-#define SCREEN_SCL_PIN 15
+#define SCREEN_SDA_PIN 3
+#define SCREEN_SCL_PIN 46
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
 // Gyroscope configuration
-#define ORIENTATION_ENABLED true
+#define ORIENTATION_ENABLED SCREEN_ENABLED
 #define ORIENTATION_SDA_PIN SCREEN_SDA_PIN
 #define ORIENTATION_SCL_PIN SCREEN_SCL_PIN
 
 #define CLIFF_DETECTOR_ENABLED true
-#define CLIFF_RIGHT_DETECTOR_PIN 6
-#define CLIFF_LEFT_DETECTOR_PIN 7
+#define CLIFF_IO_EXTENDER true
+#define CLIFF_RIGHT_DETECTOR_PIN 4
+#define CLIFF_LEFT_DETECTOR_PIN 5
 
 #define ULTRASONIC_ENABLED true
-#define ULTRASONIC_TRIGGER_PIN 4 
-#define ULTRASONIC_ECHO_PIN 5
-#define ULTRASONIC_OBSTACLE_TRESHOLD 20.0
+#define ULTRASONIC_IO_EXTENDER false
+#define ULTRASONIC_TRIGGER_PIN 1
+#define ULTRASONIC_ECHO_PIN 2
+#define ULTRASONIC_OBSTACLE_TRESHOLD 8.0
 #define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in centimeters
+
+// Microphone configuration (MAX9814)
+#define MICROPHONE_ENABLED true
+#define MICROPHONE_ANALOG true
+#define MICROPHONE_ANALOG_PIN 19
+#define MICROPHONE_GAIN_PIN -1
+#define MICROPHONE_AR_PIN -1  // Attack/Release pin (optional)
+#define MICROPHONE_SOUND_THRESHOLD 2000
+#define MICROPHONE_BASELINE_CALIBRATION_TIME 500
+
+// Speaker configuration
+#define SPEAKER_ENABLED true
+
+// PicoTTS configuration
+#define PICOTTS_ENABLED true
+#define PICOTTS_CORE 1
+#define PICOTTS_TASK_PRIORITY 10
+#define PICOTTS_QUEUE_SIZE 10
+#define PICOTTS_MAX_TEXT_LENGTH 512
+
+// I2S Speaker (MAX98357) configuration
+#define I2S_SPEAKER_BCLK_PIN GPIO_NUM_20  // Bit Clock (BCLK)
+#define I2S_SPEAKER_WCLK_PIN GPIO_NUM_41  // Word Clock/Left-Right Clock (WCLK/WS/LRC)
+#define I2S_SPEAKER_DATA_PIN GPIO_NUM_42  // Data Input (DIN) - NOT the SD pin
+#define I2S_SPEAKER_SAMPLE_RATE 16000
+#define I2S_SPEAKER_DEFAULT_VOLUME 100
+
+// SD card
+#define SD_MMC_CLK 39 
+#define SD_MMC_CMD 38
+#define SD_MMC_D0 40
 
 // WiFi configuration
 #define WIFI_ENABLED true
@@ -65,17 +113,11 @@
 
 // GPT API configuration
 #define GPT_ENABLED true
-#define GPT_API_KEY "your api"
 #define GPT_MODEL "gpt-4.1-nano-2025-04-14"
 #define GPT_MAX_TOKENS 1024
 #define GPT_TEMPERATURE 0.7
-#define GPT_DATA_LOG_PATH "/data/gpt_interactions.txt"
 #define GPT_LEARNING_ENABLED true
-
-// Health check configuration
-#define HEALTH_CHECK_ENABLED true
-#define HEALTH_CHECK_INTERVAL 10000  // milliseconds
 
 // Miscellaneous
 #define SERIAL_BAUD_RATE 115200
-#define DEBUG_ENABLED true
+#define DEBUG_ENABLED false
