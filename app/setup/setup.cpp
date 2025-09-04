@@ -21,9 +21,9 @@ void setupApp() {
   setupGPT();
   setupCommandMapper();
   setupAutomation();
-  setupSpeechRecognition();
-  setupPicoTTS();
   setupFTPServer();
+  setupPicoTTS();
+  setupSpeechRecognition();
 
   if (motors && screen)
     motors->setScreen(screen);

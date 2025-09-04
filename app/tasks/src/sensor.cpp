@@ -42,7 +42,11 @@ void sensorMonitorTask(void* parameter) {
             cliffRightDetector->update();
         }
 
-        if (temperatureSensor && temperatureSensor->isSupported()) {
+        if (touchDetector) {
+            touchDetector->update();
+        }
+
+        if (temperatureSensor) {
             temperature = temperatureSensor->readTemperature();
         }
 
@@ -51,6 +55,7 @@ void sensorMonitorTask(void* parameter) {
                 cliffRightDetector->isCliffDetected() ? "yes" : "no",
                 cliffLeftDetector->isCliffDetected() ? "yes" : "no"
                 );
+            logger->info("touched: %s", touchDetector->detected() ? "yes":"no");
             logger->info("distance: %.2fcm", distance);
             logger->info("temperature: %.1fC", temperature);
             currentUpdate = millis();

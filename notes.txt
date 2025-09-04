@@ -7,3 +7,12 @@ y=1 > miring kiri
 x=0
 x=1 putar atas
 x=-1 putar bawah
+
+
+// static const uint8_t SDA = 8;
+// static const uint8_t SCL = 9;
+
+// static const uint8_t SS = 10;
+// static const uint8_t MOSI = 11;
+// static const uint8_t MISO = 13;
+// static const uint8_t SCK = 12;

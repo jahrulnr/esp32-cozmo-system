@@ -29,6 +29,7 @@
 #include "core/Sensors/OrientationSensor.h"
 #include "core/Sensors/DistanceSensor.h"
 #include "core/Sensors/CliffDetector.h"
+#include "core/Sensors/TouchDetector.h"
 #include "core/Sensors/TemperatureSensor.h"
 #include "core/Motors/MotorControl.h"
 #include "core/Motors/ServoControl.h"
@@ -52,6 +53,7 @@ extern Sensors::OrientationSensor* orientation;
 extern Sensors::DistanceSensor* distanceSensor;
 extern Sensors::CliffDetector* cliffLeftDetector;
 extern Sensors::CliffDetector* cliffRightDetector;
+extern Sensors::TouchDetector* touchDetector;
 extern Sensors::TemperatureSensor* temperatureSensor;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
@@ -84,6 +86,7 @@ void setupServos();
 void setupOrientation();
 void setupDistanceSensor();
 void setupCliffDetector();
+void setupTouchDetector();
 void setupTemperatureSensor();
 void setupMicrophone();
 void setupSpeakers();
