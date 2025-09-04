@@ -5,7 +5,7 @@ Utils::Logger *logger;
 void setupLogger() {
   // Initialize Logger
   logger = &Utils::Logger::getInstance();
-  logger->init(true, true);
-  logger->setLogLevel(Utils::LogLevel::INFO);
+  logger->init(true, false);
+  logger->setLogLevel(Utils::LogLevel::DEBUG);
   logger->info("Logger initialized");
 }

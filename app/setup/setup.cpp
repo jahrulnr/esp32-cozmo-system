@@ -4,17 +4,17 @@ void setupApp() {
 	setupLogger();
 	setupFilemanager();
   setupNotification();
+  setupScreen();
 
   // Initialize components
-  setupCamera();
-  setupExtender();
-  setupScreen();
-  setupOrientation();
   setupWiFi();
+  setupExtender();
+  setupOrientation();
   setupMotors();
   setupServos();
   setupDistanceSensor();
   setupCliffDetector();
+  setupTouchDetector();
   setupTemperatureSensor();
   setupMicrophone();
   setupSpeakers();
@@ -24,6 +24,7 @@ void setupApp() {
   setupFTPServer();
   setupPicoTTS();
   setupSpeechRecognition();
+  setupCamera();
 
   if (motors && screen)
     motors->setScreen(screen);

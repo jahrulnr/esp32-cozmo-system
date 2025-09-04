@@ -26,6 +26,8 @@ void sensorMonitorTask(void* parameter) {
     while (true) {
         vTaskDelayUntil(&lastWakeTime, updateFrequency);
 
+        bool sendLog = millis() - currentUpdate > sendInterval;
+
         // Gyroscope and accelerometer
         if (orientation) {
             orientation->update();
@@ -34,30 +36,38 @@ void sensorMonitorTask(void* parameter) {
         // Distance sensor
         if (distanceSensor) {
             distance = distanceSensor->measureDistance();
+
+            if (sendLog)
+                logger->info("distance: %.2fcm", distance);
         }
 
         // Cliff detectors
         if (cliffLeftDetector && cliffRightDetector) {
             cliffLeftDetector->update();
             cliffRightDetector->update();
+
+            if (sendLog)
+                logger->info("cliff R: %s L: %s", 
+                    cliffRightDetector->isCliffDetected() ? "yes" : "no",
+                    cliffLeftDetector->isCliffDetected() ? "yes" : "no"
+                    );
         }
 
-        if (touchDetector) {
-            touchDetector->update();
-        }
+        // if (touchDetector) {
+        //     touchDetector->update();
+
+        //     if (sendLog)
+        //         logger->info("touched: %s", touchDetector->detected() ? "yes":"no");
+        // }
 
         if (temperatureSensor) {
             temperature = temperatureSensor->readTemperature();
+            
+            if (sendLog)
+                logger->info("temperature: %.1fC", temperature);
         }
 
-        if (millis() - currentUpdate > sendInterval) {
-            logger->info("cliff R: %s L: %s", 
-                cliffRightDetector->isCliffDetected() ? "yes" : "no",
-                cliffLeftDetector->isCliffDetected() ? "yes" : "no"
-                );
-            logger->info("touched: %s", touchDetector->detected() ? "yes":"no");
-            logger->info("distance: %.2fcm", distance);
-            logger->info("temperature: %.1fC", temperature);
+        if (sendLog) {
             currentUpdate = millis();
         }
     }

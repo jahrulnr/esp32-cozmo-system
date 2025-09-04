@@ -131,14 +131,6 @@ framesize_t Camera::getResolution() const {
     return _resolution;
 }
 
-uint32_t Camera::getStreamingInterval() const {
-    return _streamingInterval;
-}
-
-void Camera::setStreamingInterval(uint32_t interval) {
-    _streamingInterval = interval;
-}
-
 void Camera::adjustSettings(int brightness, int contrast, int saturation) {
     sensor_t * s = esp_camera_sensor_get();
     if (s) {

@@ -1,9 +1,6 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
-// Global flag to track if we're running in AP-only mode
-bool g_isApOnlyMode = false;
-
 Communication::WiFiManager *wifiManager;
 
 void setupWiFi() {
@@ -14,13 +11,6 @@ void setupWiFi() {
     
     // Get config (already loaded from file or defaults in constructor)
     Communication::WiFiManager::WiFiConfig config = wifiManager->getConfig();
-    
-    // Log the current config source - note: config was already loaded in constructor
-    if (fileManager->exists("/config/wifi.json")) {
-      logger->info("Using Wi-Fi configuration from wifi.json file");
-    } else {
-      logger->info("Using default Wi-Fi configuration from Config.h");
-    }
     
     if (screen) {
       screen->clear();
@@ -34,9 +24,6 @@ void setupWiFi() {
       logger->info("Connected to WiFi: %s", config.ssid.c_str());
       logger->info("IP: %s", wifiManager->getIP().c_str());
       
-      // Set AP-only mode flag to false since we're connected
-      g_isApOnlyMode = false;
-      
       if (screen) {
         screen->clear();
         screen->drawCenteredText(10, "WiFi Connected");
@@ -47,9 +34,6 @@ void setupWiFi() {
       }
     } else {
       logger->warning("WiFi connection failed, starting AP mode");
-      
-      // Set AP-only mode flag to true since we're in fallback mode
-      g_isApOnlyMode = true;
       
       if (screen) {
         screen->clear();
@@ -75,9 +59,4 @@ void setupWiFi() {
       }
     }
   }
-}
-
-// Helper function to determine if we're running in AP-only mode
-bool isApOnlyMode() {
-  return g_isApOnlyMode;
 }
