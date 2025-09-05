@@ -3,7 +3,7 @@
 namespace Display {
 
 Display::Display() : _u8g2(nullptr), _initialized(false), 
-    _holdFace(false), _holdTimer(0),
+    _state(STATE_FACE), _holdTimer(0),
     _micLevel(0), _width(128), _height(64),
     _mux(nullptr), _face(nullptr), _useMutex(false) {
 }
@@ -55,23 +55,29 @@ void Display::update() {
 
     if (_useMutex && _lock() == pdFAIL) return;
 
-    if (_holdFace) {
-        if (_holdTimer == 0) {
-            _holdTimer = millis() + 3000;
-        }
+    switch(_state) {
+        case STATE_TEXT:
+            if (_holdTimer == 0) {
+                _holdTimer = millis() + 3000;
+            }
 
-        _micBar->drawBar(_micLevel);
-        _u8g2->sendBuffer();
-    } else {
-        _u8g2->clearBuffer();
+            _micBar->drawBar(_micLevel);
+            _u8g2->sendBuffer();
 
-        _micBar->drawBar(_micLevel);
-        _face->Update();
-    }
+            if (millis() > _holdTimer){
+                _state = STATE_FACE;
+                _holdTimer = 0;
+            }
+            break;
+        case STATE_FACE:
+            _u8g2->clearBuffer();
 
-    if (_holdFace && millis() > _holdTimer){
-        _holdFace = false;
-        _holdTimer = 0;
+            _micBar->drawBar(_micLevel);
+            _face->Update();
+            break;
+        default:
+            _u8g2->clearBuffer();
+            _u8g2->sendBuffer();
     }
 
     if (_useMutex) _unlock();

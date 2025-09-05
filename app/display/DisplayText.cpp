@@ -19,7 +19,7 @@ void Display::drawText(int x, int y, const String& text, const uint8_t* font) {
         _u8g2->setFont(font);
     }
     
-    _holdFace = true;
+    _state = STATE_TEXT;
     _holdTimer = 0; // Reset timer to ensure it's initialized in update()
     _u8g2->drawStr(x, y, text.c_str());
 }
@@ -41,13 +41,13 @@ void Display::drawCenteredText(int y, const String& text, const uint8_t* font) {
         int x = (displayWidth - textWidth) / 2;
         
     
-        _holdFace = true;
+        _state = STATE_TEXT;
         _holdTimer = 0; // Reset timer to ensure it's initialized in update()
         _u8g2->drawStr(x, y, text.c_str());
     } else {
         // Text is too long - handle wrapping
     
-        _holdFace = true;
+        _state = STATE_TEXT;
         
         // Try smaller font for long text if using default font
         bool usingDefaultFont = !font;

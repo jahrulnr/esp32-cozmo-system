@@ -4,6 +4,7 @@
 
 // Event callback for SR system
 void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {
+    static bool automationStatus = automation->isEnabled();
     switch (event) {
         case SR_EVENT_WAKEWORD:
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
@@ -15,7 +16,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             
         case SR_EVENT_WAKEWORD_CHANNEL:
             logger->info("Wake word detected on channel: %d\n", command_id);
-            SR::sr_set_mode(SR_MODE_COMMAND);
+            SR::sr_set_mode(SR_MODE_WAKEWORD);
             break;
             
         case SR_EVENT_COMMAND:
@@ -45,10 +46,12 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     break;
                 case 3: // you can play
                     sayText("Thankyou!");
+                    automationStatus = true;
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
                     break;
                 case 4: // silent
                     sayText("Ok!");
+                    automationStatus = false;
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
                     break;
                 
@@ -63,8 +66,11 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
         case SR_EVENT_TIMEOUT:
             logger->info("⏰ Command timeout - returning to wake word mode");
             delay(5000);
-            notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
+            sayText("Call me again later!");
             SR::sr_set_mode(SR_MODE_WAKEWORD);
+
+            if (automationStatus)
+                notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
             break;
             
         default:

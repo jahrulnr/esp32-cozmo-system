@@ -11,6 +11,13 @@
 
 namespace Display {
 
+typedef enum {
+    STATE_FACE,
+    STATE_TEXT,
+    STATE_MOCHI,
+    STATE_MAX
+} display_event_t;
+
 class Display {
 public:
     Display();
@@ -81,6 +88,8 @@ public:
      */
     void update();
     void enableMutex(bool enable = true) { _useMutex = enable; }
+    
+    void setState(display_event_t state) { _state = state; }
 
     /**
      * Set the font
@@ -107,16 +116,17 @@ private:
     U8G2_SSD1306_128X64_NONAME_F_HW_I2C* _u8g2;
     bool _initialized;
     SemaphoreHandle_t _mux;
-    MicBar *_micBar;
-    int _micLevel;
+    display_event_t _state;
     int _width;
     int _height;
-    bool _holdFace;
     long _holdTimer;
     bool _useMutex;
 
     void faceInit();
     Face *_face;
+    
+    int _micLevel;
+    MicBar *_micBar;
 
     bool _lock();
     void _unlock();

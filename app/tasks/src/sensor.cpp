@@ -55,6 +55,10 @@ void sensorMonitorTask(void* parameter) {
 
         if (touchDetector) {
             touchDetector->update();
+            
+            if (touchDetector->detected() && notification) {
+                notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::TOUCH_DETECTED);
+            }
 
             if (sendLog)
                 logger->info("touched: %s", touchDetector->detected() ? "yes":"no");

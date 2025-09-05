@@ -24,15 +24,17 @@ namespace EVENT_AUTOMATION {
 
 // Display Events
 static const char* NOTIFICATION_DISPLAY = "display";
-namespace EVENT_DISPLAY {
-	static const char* WAKEWORD = "wakeword";
-	static const char* LOOK_LEFT = "look_left";
-	static const char* LOOK_RIGHT = "look_right";
-	static const char* CLOSE_EYE = "close_eye";
-	static const char* CLIFF_DETECTED = "cliff_detected";
-	static const char* OBSTACLE_DETECTED = "obstacle_detected";
-	static const char* STUCK_DETECTED = "obstacle_detected";
-}
+typedef enum  {
+	WAKEWORD,
+	LOOK_LEFT,
+	LOOK_RIGHT,
+	CLOSE_EYE,
+	CLIFF_DETECTED,
+	OBSTACLE_DETECTED,
+	STUCK_DETECTED,
+	TOUCH_DETECTED,
+	NOTHING,
+} EVENT_DISPLAY;
 
 // SR Events
 static const char* NOTIFICATION_WAKEWORD = "wakeword";
