@@ -51,6 +51,7 @@ bool TemperatureSensor::init() {
 
 float TemperatureSensor::readTemperature() {
     if (!_initialized && !init()) {
+        init();
         return NAN; // Return NaN if initialization failed
     }
 

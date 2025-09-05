@@ -7,7 +7,7 @@
  */
 void sensorMonitorTask(void* parameter) {
     logger->info("Sensor monitoring task started");
-    const int sendInterval = 1000;
+    const int sendInterval = 10000;
     long currentUpdate = millis();
 
     float distance = -1.;
