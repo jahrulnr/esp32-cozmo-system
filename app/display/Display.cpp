@@ -75,7 +75,11 @@ void Display::update() {
             _micBar->drawBar(_micLevel);
             _face->Update();
             break;
+        case STATE_MOCHI:
+            drawMochiFrame(_u8g2);
+            _state = STATE_FACE;
         default:
+            _state = STATE_FACE;
             _u8g2->clearBuffer();
             _u8g2->sendBuffer();
     }

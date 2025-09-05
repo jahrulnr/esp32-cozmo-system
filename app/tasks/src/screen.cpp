@@ -55,6 +55,9 @@ void displayTask(void *param){
 						display->update();
 						delay(3000);
 						continue;
+				} 
+				else if (lastEvent == EVENT_DISPLAY::TOUCH_DETECTED && updateDelay == 0) {
+						display->setState(Display::STATE_MOCHI);
 				}
 
 				if (updateDelay > 0 && updateDelay <= millis()) {
