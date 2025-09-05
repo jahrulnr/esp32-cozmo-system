@@ -39,6 +39,7 @@ bool I2CManager::initBus(const char* busName, int sda, int scl, uint32_t frequen
     }
 
     // Initialize I2C bus
+    bus.wire->setTimeOut(3000);
     if (!bus.wire->begin(sda, scl)) {
         Serial.printf("Failed to initialize I2C bus '%s' on pins SDA=%d, SCL=%d\n", 
                      busName, sda, scl);

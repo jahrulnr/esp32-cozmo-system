@@ -7,26 +7,27 @@ void setupApp() {
   setupDisplay();
 
   // Initialize components
-  setupWiFi();
   setupExtender();
+  setupCliffDetector();
   setupOrientation();
   setupMotors();
   setupServos();
   setupDistanceSensor();
-  setupCliffDetector();
   setupTouchDetector();
   setupTemperatureSensor();
   setupMicrophone();
   setupSpeakers();
-  setupGPT();
   setupCommandMapper();
   setupAutomation();
-  setupFTPServer();
   setupPicoTTS();
   setupSpeechRecognition();
   setupCamera();
 
   delay(10);
+
+  setupWiFi();
+  setupGPT();
+  setupFTPServer();
   setupWebServer();
 
   if (motors && display)

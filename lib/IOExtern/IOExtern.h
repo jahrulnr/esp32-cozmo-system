@@ -39,7 +39,7 @@ public:
      * @param pin Pin number (0-15)
      * @return Pin state (HIGH/LOW) or -1 if error
      */
-    int digitalRead(uint8_t pin);
+    int digitalRead(uint8_t pin, bool force = false);
     
     /**
      * @brief Check if IOExtern device is connected

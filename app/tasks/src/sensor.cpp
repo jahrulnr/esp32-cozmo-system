@@ -25,6 +25,12 @@ void sensorMonitorTask(void* parameter) {
         // Gyroscope and accelerometer
         if (orientation) {
             orientation->update();
+
+            if (sendLog)
+                logger->info("gyro X: %.2f Y: %.2f Z: %.2f | accel X: %.2f Y: %.2f Z: %.2f | mag: %.2f", 
+                    orientation->getX(), orientation->getY(), orientation->getZ(),
+                    orientation->getAccelX(), orientation->getAccelY(), orientation->getAccelZ(),
+                    orientation->getAccelMagnitude());
         }
 
         // Distance sensor
