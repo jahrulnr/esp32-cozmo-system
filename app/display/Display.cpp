@@ -5,7 +5,7 @@ namespace Display {
 Display::Display() : _u8g2(nullptr), _initialized(false), 
     _holdFace(false), _holdTimer(0),
     _micLevel(0), _width(128), _height(64),
-    _mux(xSemaphoreCreateMutex()), _face(nullptr), _useMutex(false) {
+    _mux(nullptr), _face(nullptr), _useMutex(false) {
 }
 
 Display::~Display() {
@@ -17,6 +17,7 @@ Display::~Display() {
 }
 
 bool Display::init(int sda, int scl, int width, int height) {
+    _mux = xSemaphoreCreateMutex();
     _u8g2 = new U8G2_SSD1306_128X64_NONAME_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
     Utils::I2CManager::getInstance().initBus("base", sda, scl);
     

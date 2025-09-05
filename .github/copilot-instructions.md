@@ -167,6 +167,12 @@ if (data) {
 3. Models stored in `model/` directory, flashed separately to partition
 4. Phonetic command definitions in `Constants.h` voice_commands array
 
+### Automation & AI Integration
+- **GPT behavior generation**: Automation system uses gpt-4.1-nano-2025-04-14 to generate robot behaviors
+- **Behavior format**: `[ACTION=time][ACTION2=time] *Complete vocalization*` (50 behaviors per batch)
+- **Weather integration**: BMKG API integration with caching, location-based forecasts
+- **Command validation**: Strict behavior validation prevents invalid GPT responses
+
 ### Web Framework Flow
 ```cpp
 // Route registration pattern with middleware chaining
@@ -198,6 +204,8 @@ Response executeMiddleware(const std::vector<String>& middleware, Request& reque
 - **Main loop exits** via `vTaskDelete(NULL)` - system runs on FreeRTOS tasks
 - **Task registration** in `tasks/register.h`, spawned in `setupTasks()`
 - **Watchdog configured** for 120s timeout (long for ESP-SR processing)
+- **SendTask library**: Command execution with task tracking (`Command::Send()`, task status monitoring)
+- **Task scheduling**: Uses `xTaskCreateUniversal()` and `xTaskCreatePinnedToCore()` for core affinity
 
 ### File System Layout
 - **LittleFS**: Configuration, web assets, logs (`/data/` directory contents)
@@ -212,10 +220,17 @@ Response executeMiddleware(const std::vector<String>& middleware, Request& reque
 - Avoid large stack allocations in tasks
 - Monitor heap usage: `ESP.getFreeHeap()` and `ESP.getFreePsram()`
 
+### Thread Safety & Display System
+- **Display mutex creation**: Must happen in `init()` not constructor (FreeRTOS timing issue)
+- **Two-phase display init**: Basic display works in `setup()`, thread-safety enabled after `setupTasks()`
+- **Display namespaces**: Current system uses `Display::Display` class (migrated from `Utils::Display`)
+- **Face animation**: Complex eye animation system with expressions, blinking, and looking behaviors
+
 ### Hardware Dependencies
 - **PCF8575** I2C expander required when `MOTOR_IO_EXTENDER=true`
 - **Camera models** defined by `CAMERA_MODEL_*` macros
 - **I2S pins** fixed for MAX98357 speaker, configurable in Config.h
+- **GPIO mapping**: Pin assignments in Config.h follow ESP32-S3 constraints (see pin mapping documentation)
 
 ### Framework-Specific
 - **Route order matters** - more specific routes must be registered first
@@ -230,5 +245,11 @@ Response executeMiddleware(const std::vector<String>& middleware, Request& reque
 - **Memory debugging**: Monitor via SystemController `/api/v1/system/stats`
 - **Component status**: Check global pointers and `logger->error()` messages
 - **Network debugging**: mDNS service at `devicename.local`, FTP server for file access
+- **Task monitoring**: Use `Command::Send()` for trackable task execution with status monitoring
+- **Display debugging**: Two-phase init - basic display in setup(), full thread-safety after setupTasks()
+
+## 🎯 GPIO Pin Reference (ESP32-S3)
+
+**Display & I2C**: GPIO 3 (SDA), GPIO 46 (SCL) | **Audio**: GPIO 21,47,14 (mic), GPIO 42,2,41 (speaker) | **Servos**: GPIO 19 (head), GPIO 20 (hand) | **Sensors**: GPIO 0 (ultrasonic trigger), GPIO 45 (echo) | **Motors**: Via PCF8575 I2C expander | **SD Card**: GPIO 39,38,40 (SD_MMC)
 
 When modifying this system, always verify component initialization order in `setupApp()` and ensure hardware feature flags match your target configuration.
