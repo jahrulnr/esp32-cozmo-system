@@ -197,24 +197,6 @@ public:
     void setLocation(Province province, int cityCode);
 
     /**
-     * Set the location using Jakarta city enum
-     * @param city Jakarta city enum value
-     */
-    void setJakartaLocation(JakartaCity city);
-
-    /**
-     * Set the location using Jawa Barat city enum
-     * @param city Jawa Barat city enum value
-     */
-    void setJawaBaratLocation(JawaBaratCity city);
-
-    /**
-     * Set the location using Jawa Tengah city enum
-     * @param city Jawa Tengah city enum value
-     */
-    void setJawaTengahLocation(JawaTengahCity city);
-
-    /**
      * Set cache expiry time
      * @param minutes Cache expiry time in minutes
      */
@@ -278,28 +260,8 @@ public:
      */
     static Utils::Sstring getProvinceName(Province province);
 
-    /**
-     * Get Jakarta city name from enum
-     * @param city JakartaCity enum value
-     * @return City name
-     */
-    static Utils::Sstring getJakartaCityName(JakartaCity city);
-
-    /**
-     * Get Jawa Barat city name from enum
-     * @param city JawaBaratCity enum value
-     * @return City name
-     */
-    static Utils::Sstring getJawaBaratCityName(JawaBaratCity city);
-
-    /**
-     * Get Jawa Tengah city name from enum
-     * @param city JawaTengahCity enum value
-     * @return City name
-     */
-    static Utils::Sstring getJawaTengahCityName(JawaTengahCity city);
-
 private:
+    const char* _tag;
     WeatherConfig _config;
     WeatherData _cachedData;
     unsigned long _lastCacheTime;

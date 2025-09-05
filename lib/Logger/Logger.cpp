@@ -26,6 +26,10 @@ bool Logger::init(bool serialEnabled, bool fileEnabled) {
         _fileEnabled = false;
         return false;
     }
+
+    if (!Serial) {
+        _logLevel = LogLevel::ERROR;
+    }
     
     return true;
 }

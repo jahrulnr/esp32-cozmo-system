@@ -33,6 +33,9 @@ void setupApp() {
     motors->setScreen(screen);
   if (servos && screen)
     servos->setScreen(screen);
+
+  delay(10);
+  setupWeather();
   
   logger->info("System initialization complete");
   

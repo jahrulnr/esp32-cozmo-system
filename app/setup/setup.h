@@ -35,6 +35,7 @@
 #include "core/Motors/ServoControl.h"
 #include "core/Communication/WiFiManager.h"
 #include "core/Communication/GPTAdapter.h"
+#include "core/Communication/WeatherService.h"
 #include "core/Utils/CommandMapper.h"
 #include "tasks/register.h"
 #include "callback/register.h"
@@ -60,6 +61,7 @@ extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
 extern Communication::WiFiManager* wifiManager;
 extern Communication::GPTAdapter* gptAdapter;
+extern Communication::WeatherService* weatherService;
 extern Screen::Screen* screen;
 extern Utils::FileManager* fileManager;
 extern Utils::Logger* logger;
@@ -97,6 +99,7 @@ void setupExtender();
 void setupSpeechRecognition();
 void setupPicoTTS();
 void setupFTPServer();
+void setupWeather();
 
 #if PICOTTS_ENABLED
 extern bool picotts_initialized;

@@ -9,7 +9,7 @@ SemaphoreHandle_t g_protectionScreenMutex = nullptr;
  * @return true if cliff was detected and handled
  */
 bool handleCliffDetection() {
-    if (!cliffDetected()) {
+    if (!cliffLeftDetector || !cliffRightDetector) {
         return false;  // No cliff detected
     }
     

@@ -105,6 +105,7 @@ void GPTAdapter::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const 
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Authorization", "Bearer " + _apiKey.toString());
     http.setReuse(true);
+    http.setTimeout(15000);
     
     // Prepare JSON payload
     Utils::SpiJsonDocument doc;

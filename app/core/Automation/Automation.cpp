@@ -161,7 +161,7 @@ void Automation::taskFunction(void* parameter) {
     // Convert parameter to Automation instance
     Automation* automation = static_cast<Automation*>(parameter);
     long updateTimer = millis();
-    long updateInterval = pdMS_TO_TICKS(60000);
+    long updateInterval = pdMS_TO_TICKS(60000*30);
     long servoTimer = updateTimer;
     long servoInterval = pdMS_TO_TICKS(10000);
     bool inprogress = false;

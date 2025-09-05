@@ -4,10 +4,11 @@
 
 namespace Communication {
 
-const char* WeatherService::CACHE_FILE_PATH = "/data/weather_cache.json";
+const char* WeatherService::CACHE_FILE_PATH = "/cache/weather_cache.json";
 
 WeatherService::WeatherService(Utils::FileManager* fileManager) 
-    : _lastCacheTime(0), _initialized(false), _fileManager(fileManager) {
+    : _lastCacheTime(0), _initialized(false), _fileManager(fileManager),
+    _tag("WeatherService") {
 }
 
 WeatherService::~WeatherService() {
@@ -57,18 +58,6 @@ void WeatherService::setLocation(Province province, int cityCode) {
     clearCache();
 }
 
-void WeatherService::setJakartaLocation(JakartaCity city) {
-    setLocation(Province::DKI_JAKARTA, static_cast<int>(city));
-}
-
-void WeatherService::setJawaBaratLocation(JawaBaratCity city) {
-    setLocation(Province::JAWA_BARAT, static_cast<int>(city));
-}
-
-void WeatherService::setJawaTengahLocation(JawaTengahCity city) {
-    setLocation(Province::JAWA_TENGAH, static_cast<int>(city));
-}
-
 void WeatherService::setCacheExpiry(uint32_t minutes) {
     _config.cacheExpiryMinutes = minutes;
 }
@@ -99,8 +88,8 @@ void WeatherService::fetchFromAPI(WeatherCallback callback) {
     Utils::Sstring url = buildAPIUrl();
     
     http.begin(url.toString());
-    http.addHeader("User-Agent", "ESP32-Cozmo-Weather/1.0");
     http.setReuse(true);
+    http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     http.setTimeout(10000); // 10 second timeout
     
     int httpCode = http.GET();
@@ -109,6 +98,7 @@ void WeatherService::fetchFromAPI(WeatherCallback callback) {
         Utils::Sstring response = http.getString();
         processAPIResponse(response, callback);
     } else {
+        ESP_LOGE(_tag, "Error: [%d] %s", httpCode, http.errorToString(httpCode));
         if (callback) {
             WeatherData errorData;
             callback(errorData, false);
@@ -120,13 +110,17 @@ void WeatherService::fetchFromAPI(WeatherCallback callback) {
 
 void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherCallback callback) {
     if (!callback) {
+        ESP_LOGW(_tag, "No callback provided for API response");
         return;
     }
+
+    ESP_LOGI(_tag, "Processing API response");
 
     Utils::SpiJsonDocument doc;
     DeserializationError error = deserializeJson(doc, response.c_str());
     
     if (error) {
+        ESP_LOGE(_tag, "JSON parsing failed: %s. Value: %s", error.c_str(), response.c_str());
         WeatherData errorData;
         callback(errorData, false);
         return;
@@ -138,21 +132,26 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
         // Navigate through BMKG JSON structure
         // BMKG structure: {"data": [{"areas": [{"params": [...]}]}]}
         if (doc["data"].isUnbound() || doc["data"].size() == 0) {
+            ESP_LOGE(_tag, "No data array found in response");
             callback(data, false);
             return;
         }
 
         auto dataArray = doc["data"];
         if (dataArray.size() == 0) {
+            ESP_LOGE(_tag, "Empty data array in response");
             callback(data, false);
             return;
         }
 
         auto areas = dataArray[0]["areas"];
         if (areas.isUnbound() || areas.size() == 0) {
+            ESP_LOGE(_tag, "No areas found in response");
             callback(data, false);
             return;
         }
+
+        ESP_LOGI(_tag, "Found %d areas, searching for city code %d", areas.size(), _config.cityCode);
 
         // Find the area that matches our city code
         bool foundArea = false;
@@ -162,16 +161,22 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
             if (areaId == _config.cityCode) {
                 foundArea = true;
                 data.location = area["description"].as<String>();
+                ESP_LOGI(_tag, "Found matching area: %s (ID: %d)", data.location.c_str(), areaId);
                 
                 // Parse weather parameters using enum mapping
                 auto params = area["params"];
+                ESP_LOGD(_tag, "Processing %d parameters", params.size());
+                
                 for (size_t j = 0; j < params.size(); j++) {
                     auto param = params[j];
                     Utils::Sstring paramId = param["id"].as<String>();
                     WeatherParam paramType = getParamFromString(paramId);
                     
                     auto timeRanges = param["timeRanges"];
-                    if (timeRanges.size() == 0) continue;
+                    if (timeRanges.size() == 0) {
+                        ESP_LOGW(_tag, "No time ranges for parameter %s", paramId.c_str());
+                        continue;
+                    }
                     
                     auto firstRange = timeRanges[0];
                     
@@ -179,21 +184,26 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
                         case WeatherParam::WEATHER:
                             data.description = firstRange["value"]["text"].as<String>();
                             data.condition = getConditionFromDescription(data.description);
+                            ESP_LOGD(_tag, "Weather: %s", data.description.c_str());
                             break;
                         case WeatherParam::TEMPERATURE:
                             data.temperature = firstRange["value"].as<int>();
+                            ESP_LOGD(_tag, "Temperature: %d°C", data.temperature);
                             break;
                         case WeatherParam::HUMIDITY:
                             data.humidity = firstRange["value"].as<int>();
+                            ESP_LOGD(_tag, "Humidity: %d%%", data.humidity);
                             break;
                         case WeatherParam::WIND_SPEED:
                             data.windSpeed = firstRange["value"].as<int>();
+                            ESP_LOGD(_tag, "Wind speed: %d", data.windSpeed);
                             break;
                         case WeatherParam::WIND_DIRECTION:
                             data.windDirection = firstRange["value"]["text"].as<String>();
+                            ESP_LOGD(_tag, "Wind direction: %s", data.windDirection.c_str());
                             break;
                         default:
-                            // Ignore unknown parameters
+                            ESP_LOGV(_tag, "Ignoring unknown parameter: %s", paramId.c_str());
                             break;
                     }
                 }
@@ -202,6 +212,7 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
         }
 
         if (!foundArea) {
+            ESP_LOGE(_tag, "City code %d not found in response", _config.cityCode);
             callback(data, false);
             return;
         }
@@ -210,14 +221,21 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
         data.lastUpdated = parseBMKGDateTime(dataArray[0]["issued"].as<String>());
         data.isValid = true;
         
+        ESP_LOGI(_tag, "Weather data parsed successfully for %s", data.location.c_str());
+        
         // Cache the data
         _cachedData = data;
         _lastCacheTime = getCurrentTimestamp();
-        saveCache(data);
+        if (saveCache(data)) {
+            ESP_LOGD(_tag, "Weather data cached successfully");
+        } else {
+            ESP_LOGW(_tag, "Failed to cache weather data");
+        }
         
         callback(data, true);
         
     } catch (...) {
+        ESP_LOGE(_tag, "Exception occurred while processing API response");
         WeatherData errorData;
         callback(errorData, false);
     }
@@ -424,77 +442,6 @@ Utils::Sstring WeatherService::getProvinceName(Province province) {
         case Province::PAPUA_BARAT: return "Papua Barat";
         case Province::PAPUA: return "Papua";
         default: return "Unknown Province";
-    }
-}
-
-Utils::Sstring WeatherService::getJakartaCityName(JakartaCity city) {
-    switch (city) {
-        case JakartaCity::JAKARTA_PUSAT: return "Jakarta Pusat";
-        case JakartaCity::JAKARTA_UTARA: return "Jakarta Utara";
-        case JakartaCity::JAKARTA_BARAT: return "Jakarta Barat";
-        case JakartaCity::JAKARTA_SELATAN: return "Jakarta Selatan";
-        case JakartaCity::JAKARTA_TIMUR: return "Jakarta Timur";
-        case JakartaCity::KEP_SERIBU: return "Kepulauan Seribu";
-        default: return "Unknown Jakarta City";
-    }
-}
-
-Utils::Sstring WeatherService::getJawaBaratCityName(JawaBaratCity city) {
-    switch (city) {
-        case JawaBaratCity::BOGOR: return "Bogor";
-        case JawaBaratCity::SUKABUMI: return "Sukabumi";
-        case JawaBaratCity::CIANJUR: return "Cianjur";
-        case JawaBaratCity::BANDUNG: return "Bandung";
-        case JawaBaratCity::GARUT: return "Garut";
-        case JawaBaratCity::TASIKMALAYA: return "Tasikmalaya";
-        case JawaBaratCity::CIAMIS: return "Ciamis";
-        case JawaBaratCity::KUNINGAN: return "Kuningan";
-        case JawaBaratCity::CIREBON: return "Cirebon";
-        case JawaBaratCity::MAJALENGKA: return "Majalengka";
-        case JawaBaratCity::SUMEDANG: return "Sumedang";
-        case JawaBaratCity::INDRAMAYU: return "Indramayu";
-        case JawaBaratCity::SUBANG: return "Subang";
-        case JawaBaratCity::PURWAKARTA: return "Purwakarta";
-        case JawaBaratCity::KARAWANG: return "Karawang";
-        case JawaBaratCity::BEKASI: return "Bekasi";
-        case JawaBaratCity::BANDUNG_BARAT: return "Bandung Barat";
-        case JawaBaratCity::PANGANDARAN: return "Pangandaran";
-        default: return "Unknown Jawa Barat City";
-    }
-}
-
-Utils::Sstring WeatherService::getJawaTengahCityName(JawaTengahCity city) {
-    switch (city) {
-        case JawaTengahCity::CILACAP: return "Cilacap";
-        case JawaTengahCity::BANYUMAS: return "Banyumas";
-        case JawaTengahCity::PURBALINGGA: return "Purbalingga";
-        case JawaTengahCity::BANJARNEGARA: return "Banjarnegara";
-        case JawaTengahCity::KEBUMEN: return "Kebumen";
-        case JawaTengahCity::PURWOREJO: return "Purworejo";
-        case JawaTengahCity::WONOSOBO: return "Wonosobo";
-        case JawaTengahCity::MAGELANG: return "Magelang";
-        case JawaTengahCity::BOYOLALI: return "Boyolali";
-        case JawaTengahCity::KLATEN: return "Klaten";
-        case JawaTengahCity::SUKOHARJO: return "Sukoharjo";
-        case JawaTengahCity::WONOGIRI: return "Wonogiri";
-        case JawaTengahCity::KARANGANYAR: return "Karanganyar";
-        case JawaTengahCity::SRAGEN: return "Sragen";
-        case JawaTengahCity::GROBOGAN: return "Grobogan";
-        case JawaTengahCity::BLORA: return "Blora";
-        case JawaTengahCity::REMBANG: return "Rembang";
-        case JawaTengahCity::PATI: return "Pati";
-        case JawaTengahCity::KUDUS: return "Kudus";
-        case JawaTengahCity::JEPARA: return "Jepara";
-        case JawaTengahCity::DEMAK: return "Demak";
-        case JawaTengahCity::SEMARANG: return "Semarang";
-        case JawaTengahCity::TEMANGGUNG: return "Temanggung";
-        case JawaTengahCity::KENDAL: return "Kendal";
-        case JawaTengahCity::BATANG: return "Batang";
-        case JawaTengahCity::PEKALONGAN: return "Pekalongan";
-        case JawaTengahCity::PEMALANG: return "Pemalang";
-        case JawaTengahCity::TEGAL: return "Tegal";
-        case JawaTengahCity::BREBES: return "Brebes";
-        default: return "Unknown Jawa Tengah City";
     }
 }
 
