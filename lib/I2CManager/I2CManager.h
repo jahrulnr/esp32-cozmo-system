@@ -31,7 +31,7 @@ public:
      * @param useWire Use the default Wire object instead of creating a new one (default: true)
      * @return true if initialization was successful
      */
-    bool initBus(const char* busName, int sda, int scl, uint32_t frequency = 100000, bool useWire = true);
+    bool initBus(const char* busName, int sda, int scl, uint32_t frequency = 0, bool useWire = true);
 
     /**
      * @brief Get a pointer to a TwoWire instance for a specific bus

@@ -176,11 +176,11 @@ void Automation::taskFunction(void* parameter) {
 
         if (notification->has(NOTIFICATION_AUTOMATION)) {
             const char* notif = (const char*)notification->consume(NOTIFICATION_AUTOMATION);
-            if (notif == EVENT_AUTOMATION_PAUSE){
+            if (notif == EVENT_AUTOMATION::PAUSE){
                 paused = true;
                 automation->updateManualControlTime();
             }
-            else if (notif == EVENT_AUTOMATION_RESUME){
+            else if (notif == EVENT_AUTOMATION::RESUME){
                 paused = false;
                 automation->updateManualControlTime();
                 vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL * 5));

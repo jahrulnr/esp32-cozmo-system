@@ -51,13 +51,19 @@ esptool.py --baud 2000000 write_flash 0x47D000 model/srmodels.bin
 #endif
 
 // Use Constants.h for event communication
-notification->send(NOTIFICATION_SPEAKER, &audioData);  // Not "speaker"
-notification->send(EVENT_SR_WAKEWORD, nullptr);        // Not "sr_wakeword"
+notification->send(NOTIFICATION_SPEAKER, &audioData);                           // Not "speaker"
+notification->send(NOTIFICATION_DISPLAY, &displayData);                         // Not "display"
+notification->send(NOTIFICATION_SR, (void*)EVENT_SR::WAKEWORD);                 // Not "sr_wakeword"
+notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::LOOK_LEFT);      // Not "look_left"
+notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);    // Not "pause"
 
 // Voice command mapping from Constants.h
 static const csr_cmd_t voice_commands[] = {
     {0, "look to left", "LwK To LfFT"},
     {1, "look to right", "LwK To RiT"},
+    {2, "close your eyes", "KLbS YeR iZ"},
+    {3, "you can play", "Yo KaN PLd"},
+    {4, "silent", "SiLcNT"}
     // ESP-SR phonetic representations
 };
 ```
@@ -100,7 +106,11 @@ return Response(request.getServerRequest()).status(200).json(response);
 - **Notification class**: Pub/sub for inter-component communication via `esp32-notification`
 - **FreeRTOS-style**: Uses void* pointers and string keys like native FreeRTOS APIs
 - **Thread-safe**: Mutex-protected for cross-task communication without injection
-- **Constants.h**: Defines event types (`NOTIFICATION_SPEAKER`, `EVENT_SR_WAKEWORD`)
+- **Constants.h**: Defines event types and namespaces for different subsystems
+  - **Core notifications**: `NOTIFICATION_SPEAKER`, `NOTIFICATION_DISPLAY`, `NOTIFICATION_AUTOMATION`
+  - **Speech Recognition**: `EVENT_SR` namespace (`WAKEWORD`, `COMMAND`, `TIMEOUT`, `PAUSE`, `RESUME`)
+  - **Display Control**: `EVENT_DISPLAY` namespace (`WAKEWORD`, `LOOK_LEFT`, `LOOK_RIGHT`, `CLOSE_EYE`, `CLIFF_DETECTED`, `OBSTACLE_DETECTED`)
+  - **Automation Control**: `EVENT_AUTOMATION` namespace (`PAUSE`, `RESUME`)
 - **Callback registration**: Components register in `callback/register.h`
 
 ```cpp

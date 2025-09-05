@@ -11,7 +11,7 @@ bool handleCliffDetection() {
     }
 
     if (notification)
-        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY_CLIFF_DETECTED);
+        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::CLIFF_DETECTED);
 
     if (motors) {
         motors->interuptMotor();
@@ -41,7 +41,7 @@ bool handleObstacleDetection() {
 
     bool pathFound = false;
     if (notification)
-        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY_OBSTACLE_DETECTED);
+        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY::OBSTACLE_DETECTED);
 
     if (motors) {
         Motors::MotorControl::Direction currentMove = motors->getCurrentDirection();
@@ -72,7 +72,7 @@ bool handleObstacleDetection() {
     }
 
     if (display && !pathFound && notification) {
-        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY_STUCK_DETECTED);
+        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY::STUCK_DETECTED);
     }
 
     if (logger) {

@@ -4,9 +4,10 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <U8g2lib.h>
-#include "Face/Face.h"
 #include "I2CManager.h"
-#include "Bar/Bar.h"
+#include "./components/Face/Face.h"
+#include "./components/Bar/Bar.h"
+#include "./components/Mochi/Mochi.h"
 
 namespace Display {
 
@@ -106,7 +107,6 @@ private:
     U8G2_SSD1306_128X64_NONAME_F_HW_I2C* _u8g2;
     bool _initialized;
     SemaphoreHandle_t _mux;
-    Face *_face;
     MicBar *_micBar;
     int _micLevel;
     int _width;
@@ -114,6 +114,9 @@ private:
     bool _holdFace;
     long _holdTimer;
     bool _useMutex;
+
+    void faceInit();
+    Face *_face;
 
     bool _lock();
     void _unlock();

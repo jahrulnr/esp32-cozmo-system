@@ -17,26 +17,32 @@ static const char* NOTIFICATION_COMMAND = "command";
 
 // Automation Events
 static const char* NOTIFICATION_AUTOMATION = "automation";
-static const char* EVENT_AUTOMATION_PAUSE = "pause";
-static const char* EVENT_AUTOMATION_RESUME = "resume";
+namespace EVENT_AUTOMATION {
+	static const char* PAUSE = "pause";
+	static const char* RESUME = "resume";
+}
 
 // Display Events
 static const char* NOTIFICATION_DISPLAY = "display";
-static const char* EVENT_DISPLAY_WAKEWORD = "wakeword";
-static const char* EVENT_DISPLAY_LOOK_LEFT = "look_left";
-static const char* EVENT_DISPLAY_LOOK_RIGHT = "look_right";
-static const char* EVENT_DISPLAY_CLOSE_EYE = "close_eye";
-static const char* EVENT_DISPLAY_CLIFF_DETECTED = "cliff_detected";
-static const char* EVENT_DISPLAY_OBSTACLE_DETECTED = "obstacle_detected";
-static const char* EVENT_DISPLAY_STUCK_DETECTED = "obstacle_detected";
+namespace EVENT_DISPLAY {
+	static const char* WAKEWORD = "wakeword";
+	static const char* LOOK_LEFT = "look_left";
+	static const char* LOOK_RIGHT = "look_right";
+	static const char* CLOSE_EYE = "close_eye";
+	static const char* CLIFF_DETECTED = "cliff_detected";
+	static const char* OBSTACLE_DETECTED = "obstacle_detected";
+	static const char* STUCK_DETECTED = "obstacle_detected";
+}
 
 // SR Events
 static const char* NOTIFICATION_WAKEWORD = "wakeword";
-static const char* NOTIFICATION_SPEECH_RECOGNITION = "sr";
-static const char* EVENT_SR_WAKEWORD = "sr_wakeword";
-static const char* EVENT_SR_COMMAND = "sr_command";
-static const char* EVENT_SR_TIMEOUT = "sr_timeout";
-static const char* EVENT_SR_PAUSE = "pause_sr";
-static const char* EVENT_SR_RESUME = "resume_sr";
+static const char* NOTIFICATION_SR = "sr";
+namespace EVENT_SR {
+	static const char* WAKEWORD = "sr_wakeword";
+	static const char* COMMAND = "sr_command";
+	static const char* TIMEOUT = "sr_timeout";
+	static const char* PAUSE = "pause_sr";
+	static const char* RESUME = "resume_sr";
+}
 
 #endif

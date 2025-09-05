@@ -13,35 +13,35 @@ void displayTask(void *param){
 				if (notification->has(NOTIFICATION_DISPLAY)) {
 					const char * event = (char *)notification->consume(NOTIFICATION_DISPLAY, updateFrequency);
 					logger->info("Event Screen %s triggered", event);
-					if (strcmp(event, EVENT_DISPLAY_WAKEWORD) == 0 && updateDelay == 0) {
+					if (strcmp(event, EVENT_DISPLAY::WAKEWORD) == 0 && updateDelay == 0) {
 							updateDelay = millis() + 3000;
-							lastEvent = EVENT_DISPLAY_WAKEWORD;
+							lastEvent = EVENT_DISPLAY::WAKEWORD;
 							display->getFace()->LookFront();
 							display->getFace()->Expression.GoTo_Happy();
 					}
-					else if (strcmp(event, EVENT_DISPLAY_LOOK_LEFT) == 0) {
+					else if (strcmp(event, EVENT_DISPLAY::LOOK_LEFT) == 0) {
 							updateDelay = millis() + 6000;
-							lastEvent = EVENT_DISPLAY_LOOK_LEFT;
+							lastEvent = EVENT_DISPLAY::LOOK_LEFT;
 							display->getFace()->LookLeft();
 					}
-					else if (strcmp(event, EVENT_DISPLAY_LOOK_RIGHT) == 0) {
+					else if (strcmp(event, EVENT_DISPLAY::LOOK_RIGHT) == 0) {
 							updateDelay = millis() + 6000;
-							lastEvent = EVENT_DISPLAY_LOOK_RIGHT;
+							lastEvent = EVENT_DISPLAY::LOOK_RIGHT;
 							display->getFace()->LookRight();
 					}
-					else if (strcmp(event, EVENT_DISPLAY_CLOSE_EYE) == 0) {
+					else if (strcmp(event, EVENT_DISPLAY::CLOSE_EYE) == 0) {
 							updateDelay = millis() + 6000;
-							lastEvent = EVENT_DISPLAY_CLOSE_EYE;
+							lastEvent = EVENT_DISPLAY::CLOSE_EYE;
 							display->getFace()->LookFront();
 							display->getFace()->Expression.GoTo_Sleepy();
 					}
-					else if (strcmp(event, EVENT_DISPLAY_CLIFF_DETECTED) == 0) {
+					else if (strcmp(event, EVENT_DISPLAY::CLIFF_DETECTED) == 0) {
 	            display->drawCenteredText(20, "Oops! Not a safe area.");
 					}
-					else if (strcmp(event, EVENT_DISPLAY_OBSTACLE_DETECTED) == 0) {
+					else if (strcmp(event, EVENT_DISPLAY::OBSTACLE_DETECTED) == 0) {
 	            display->drawCenteredText(20, "Oops! Finding another way!");
 					}
-					else if (strcmp(event, EVENT_DISPLAY_STUCK_DETECTED) == 0) {
+					else if (strcmp(event, EVENT_DISPLAY::STUCK_DETECTED) == 0) {
 	            display->drawCenteredText(20, "I am stuck!");
 					}
 				}
