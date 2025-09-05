@@ -26,6 +26,9 @@ static const char* EVENT_DISPLAY_WAKEWORD = "wakeword";
 static const char* EVENT_DISPLAY_LOOK_LEFT = "look_left";
 static const char* EVENT_DISPLAY_LOOK_RIGHT = "look_right";
 static const char* EVENT_DISPLAY_CLOSE_EYE = "close_eye";
+static const char* EVENT_DISPLAY_CLIFF_DETECTED = "cliff_detected";
+static const char* EVENT_DISPLAY_OBSTACLE_DETECTED = "obstacle_detected";
+static const char* EVENT_DISPLAY_STUCK_DETECTED = "obstacle_detected";
 
 // SR Events
 static const char* NOTIFICATION_WAKEWORD = "wakeword";

@@ -10,7 +10,7 @@
 #include <AsyncWebSocket.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-#include <Screen.h>
+#include <display/Display.h>
 #include <FileManager.h>
 #include <Logger.h>
 #include <I2CScanner.h>
@@ -37,6 +37,8 @@
 #include "core/Communication/GPTAdapter.h"
 #include "core/Communication/WeatherService.h"
 #include "core/Utils/CommandMapper.h"
+#include "repository/Configuration.h"
+#include "repository/AdministrativeRegion.h"
 #include "tasks/register.h"
 #include "callback/register.h"
 #include "web/Routes/routes.h"
@@ -62,7 +64,7 @@ extern Motors::ServoControl* servos;
 extern Communication::WiFiManager* wifiManager;
 extern Communication::GPTAdapter* gptAdapter;
 extern Communication::WeatherService* weatherService;
-extern Screen::Screen* screen;
+extern Display::Display* display;
 extern Utils::FileManager* fileManager;
 extern Utils::Logger* logger;
 extern Utils::CommandMapper* commandMapper;
@@ -89,7 +91,7 @@ void setupTouchDetector();
 void setupTemperatureSensor();
 void setupMicrophone();
 void setupSpeakers();
-void setupScreen();
+void setupDisplay();
 void setupWiFi();
 void setupGPT();
 void setupTasks();

@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <ESP32Servo.h>
-#include "Screen.h"
+#include "display/Display.h"
 #include "IOExtern.h"
 
 namespace Motors {
@@ -49,7 +49,7 @@ public:
      */
     void setHand(int angle);
 
-    void setScreen(Screen::Screen *screen);
+    void setDisplay(Display::Display *display);
 
     /**
      * Get the current head angle
@@ -73,7 +73,7 @@ private:
     bool _useIoExtender;
     Utils::IOExtern* _ioExtender;
 
-    Screen::Screen *_screen;
+    Display::Display *_display;
     void moveLook(ServoType type, int angle);
 
     // Helper methods for software PWM implementation

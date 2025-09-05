@@ -83,7 +83,7 @@ class EyeDrawer {
         EyeDrawer::FillRectangularTriangle(_u8g2, BRc_x+config->Radius_Bottom, BRc_y+config->Radius_Bottom, BLc_x-config->Radius_Bottom, BLc_y+config->Radius_Bottom, 1);
       }
 
-      // Draw corners (which extend "outwards" towards corner of screen from supplied coordinate values)
+      // Draw corners (which extend "outwards" towards corner of display from supplied coordinate values)
       if(config->Radius_Top > 0) {
         EyeDrawer::FillEllipseCorner(_u8g2, T_L, TLc_x, TLc_y, config->Radius_Top, config->Radius_Top, 1);
         EyeDrawer::FillEllipseCorner(_u8g2, T_R, TRc_x, TRc_y, config->Radius_Top, config->Radius_Top, 1);

@@ -1,11 +1,12 @@
 #include "../register.h"
 
-void screenTask(void *param){
+void displayTask(void *param){
 		TickType_t lastWakeTime = xTaskGetTickCount();
 		TickType_t updateFrequency = pdMS_TO_TICKS(50);
 
 		size_t updateDelay = 0;
 		const char* lastEvent;
+		display->enableMutex();
 		while(1) {
 				vTaskDelayUntil(&lastWakeTime, updateFrequency);
 
@@ -15,41 +16,51 @@ void screenTask(void *param){
 					if (strcmp(event, EVENT_DISPLAY_WAKEWORD) == 0 && updateDelay == 0) {
 							updateDelay = millis() + 3000;
 							lastEvent = EVENT_DISPLAY_WAKEWORD;
-							screen->getFace()->LookFront();
-							screen->getFace()->Expression.GoTo_Happy();
+							display->getFace()->LookFront();
+							display->getFace()->Expression.GoTo_Happy();
 					}
 					else if (strcmp(event, EVENT_DISPLAY_LOOK_LEFT) == 0) {
 							updateDelay = millis() + 6000;
 							lastEvent = EVENT_DISPLAY_LOOK_LEFT;
-							screen->getFace()->LookLeft();
+							display->getFace()->LookLeft();
 					}
 					else if (strcmp(event, EVENT_DISPLAY_LOOK_RIGHT) == 0) {
 							updateDelay = millis() + 6000;
 							lastEvent = EVENT_DISPLAY_LOOK_RIGHT;
-							screen->getFace()->LookRight();
+							display->getFace()->LookRight();
 					}
 					else if (strcmp(event, EVENT_DISPLAY_CLOSE_EYE) == 0) {
 							updateDelay = millis() + 6000;
 							lastEvent = EVENT_DISPLAY_CLOSE_EYE;
-							screen->getFace()->LookFront();
-							screen->getFace()->Expression.GoTo_Sleepy();
+							display->getFace()->LookFront();
+							display->getFace()->Expression.GoTo_Sleepy();
+					}
+					else if (strcmp(event, EVENT_DISPLAY_CLIFF_DETECTED) == 0) {
+	            display->drawCenteredText(20, "Oops! Not a safe area.");
+					}
+					else if (strcmp(event, EVENT_DISPLAY_OBSTACLE_DETECTED) == 0) {
+	            display->drawCenteredText(20, "Oops! Finding another way!");
+					}
+					else if (strcmp(event, EVENT_DISPLAY_STUCK_DETECTED) == 0) {
+	            display->drawCenteredText(20, "I am stuck!");
 					}
 				}
 
 				if (updateDelay > 0 && updateDelay <= millis()) {
 					updateDelay = 0;
 					lastEvent = "";
-					screen->getFace()->LookFront();
-					screen->getFace()->Expression.GoTo_Normal();
+					display->getFace()->LookFront();
+					display->getFace()->Expression.GoTo_Normal();
 				}
 				
 		#if MICROPHONE_ENABLED
 			#if MICROPHONE_ANALOG
-				screen->setMicLevel(amicrophone->readLevel());
+				display->setMicLevel(amicrophone->readLevel());
 			#elif MICROPHONE_I2S
-				screen->setMicLevel(microphone->readLevel());
+				display->setMicLevel(microphone->readLevel());
 			#endif
 		#endif
-				screen->mutexUpdate();
+			
+			display->update();
 		}
 }

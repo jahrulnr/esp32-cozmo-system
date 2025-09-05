@@ -315,16 +315,8 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
             sayText(voiceMessage.c_str());
             delay(2000);
         }
-        
-        // Display the message on the screen if available
-        // The screen class already handles internal mutex locking in its mutexX methods
-        if (::screen && !voiceMessage.isEmpty()) {
-            _commandMapper->executeCommandString(behavior.toString());
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        } else {
-            // Just execute the commands without showing the message
-            _commandMapper->executeCommandString(behavior.toString());
-        }
+         
+        _commandMapper->executeCommandString(behavior.toString());
         
         if (_logger) {
             _logger->debug("Executed automation behavior commands");

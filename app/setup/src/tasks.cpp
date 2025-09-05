@@ -18,10 +18,10 @@ void setupTasks() {
         );
     #endif
 
-    if (screen) {
+    if (display) {
         xTaskCreateUniversal(
-            screenTask, 
-            "screenTaskHandler", 
+            displayTask, 
+            "displayTaskHandler", 
             4096, 
             NULL, 
             5, 

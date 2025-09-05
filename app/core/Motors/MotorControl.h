@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "Screen.h"
+#include "display/Display.h"
 #include "IOExtern.h"
 
 namespace Motors {
@@ -66,7 +66,7 @@ public:
      */
     Direction getCurrentDirection() const;
 
-    void setScreen(Screen::Screen *screen);
+    void setDisplay(Display::Display *display);
     void interuptMotor();
 
 private:
@@ -77,7 +77,7 @@ private:
     bool _initialized;
     bool _useIoExtender;
     Utils::IOExtern* _ioExtender;
-    Screen::Screen *_screen;
+    Display::Display *_display;
     bool _enable;
     
     void moveLook(Direction direction);

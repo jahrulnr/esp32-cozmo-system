@@ -1,14 +1,14 @@
-#include "Screen.h"
+#include "display/Display.h"
 
-namespace Screen {
+namespace Display {
 
-Screen::Screen() : _u8g2(nullptr), _initialized(false), 
+Display::Display() : _u8g2(nullptr), _initialized(false), 
     _holdFace(false), _holdTimer(0),
     _micLevel(0), _width(128), _height(64),
-    _mux(xSemaphoreCreateMutex()), _face(nullptr) {
+    _mux(xSemaphoreCreateMutex()), _face(nullptr), _useMutex(false) {
 }
 
-Screen::~Screen() {
+Display::~Display() {
     if (_u8g2) {
         delete _u8g2;
     }
@@ -16,7 +16,7 @@ Screen::~Screen() {
     vSemaphoreDelete(_mux);
 }
 
-bool Screen::init(int sda, int scl, int width, int height) {
+bool Display::init(int sda, int scl, int width, int height) {
     _u8g2 = new U8G2_SSD1306_128X64_NONAME_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
     Utils::I2CManager::getInstance().initBus("base", sda, scl);
     
@@ -73,7 +73,7 @@ bool Screen::init(int sda, int scl, int width, int height) {
     return true;
 }
 
-void Screen::clear() {
+void Display::clear() {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
@@ -82,14 +82,7 @@ void Screen::clear() {
     _u8g2->sendBuffer();
 }
 
-void Screen::mutexClear(){
-    if (_lock()) {
-        clear();
-        _unlock();
-    }
-}
-
-void Screen::drawText(int x, int y, const String& text, const uint8_t* font) {
+void Display::drawText(int x, int y, const String& text, const uint8_t* font) {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
@@ -103,7 +96,7 @@ void Screen::drawText(int x, int y, const String& text, const uint8_t* font) {
     _u8g2->drawStr(x, y, text.c_str());
 }
 
-void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
+void Display::drawCenteredText(int y, const String& text, const uint8_t* font) {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
@@ -111,13 +104,13 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
     const uint8_t* currentFont = font;
     bool usingCustomFont = (font != nullptr);
     
-    int screenWidth = getWidth();
+    int displayWidth = getWidth();
     int textWidth = _u8g2->getStrWidth(text.c_str());
     
-    // Check if text fits on screen
-    if (textWidth <= screenWidth) {
+    // Check if text fits on display
+    if (textWidth <= displayWidth) {
         // Simple case: text fits, center it
-        int x = (screenWidth - textWidth) / 2;
+        int x = (displayWidth - textWidth) / 2;
         
     
         _holdFace = true;
@@ -130,7 +123,7 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
         
         // Try smaller font for long text if using default font
         bool usingDefaultFont = !font;
-        if (usingDefaultFont && textWidth > screenWidth * 1.5) {
+        if (usingDefaultFont && textWidth > displayWidth * 1.5) {
             // Switch to smaller font
             _u8g2->setFont(u8g2_font_4x6_tf);
         }
@@ -141,7 +134,7 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
         // Simple word wrap algorithm
         String remainingText = text;
         int currentY = y;
-        int maxLines = 4;  // Prevent too many lines from going off screen
+        int maxLines = 4;  // Prevent too many lines from going off display
         int lineCount = 0;
         
         while (remainingText.length() > 0 && lineCount < maxLines) {
@@ -149,7 +142,7 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
             String currentLine = remainingText;
             
             // Find how many characters can fit on one line
-            while (_u8g2->getStrWidth(currentLine.c_str()) > screenWidth && charsToFit > 1) {
+            while (_u8g2->getStrWidth(currentLine.c_str()) > displayWidth && charsToFit > 1) {
                 charsToFit--;
                 currentLine = remainingText.substring(0, charsToFit);
             }
@@ -165,7 +158,7 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
             
             // Draw this line centered
             int lineWidth = _u8g2->getStrWidth(currentLine.c_str());
-            int x = (screenWidth - lineWidth) / 2;
+            int x = (displayWidth - lineWidth) / 2;
             _u8g2->drawStr(x, currentY, currentLine.c_str());
             
             // Move to next line
@@ -180,11 +173,11 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
         
         // If we truncated text, add ellipsis to the last line
         if (remainingText.length() > 0 && lineCount >= maxLines) {
-            _u8g2->drawStr((screenWidth - _u8g2->getStrWidth("...")) / 2, currentY, "...");
+            _u8g2->drawStr((displayWidth - _u8g2->getStrWidth("...")) / 2, currentY, "...");
         }
         
         // Restore original font if we changed it
-        if (usingDefaultFont && textWidth > screenWidth * 1.5) {
+        if (usingDefaultFont && textWidth > displayWidth * 1.5) {
             _u8g2->setFont(u8g2_font_6x10_tf);  // Default font
         } else if (usingCustomFont) {
             _u8g2->setFont(currentFont);
@@ -192,7 +185,7 @@ void Screen::drawCenteredText(int y, const String& text, const uint8_t* font) {
     }
 }
 
-void Screen::drawLine(int x1, int y1, int x2, int y2) {
+void Display::drawLine(int x1, int y1, int x2, int y2) {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
@@ -200,7 +193,7 @@ void Screen::drawLine(int x1, int y1, int x2, int y2) {
     _u8g2->drawLine(x1, y1, x2, y2);
 }
 
-void Screen::drawRect(int x, int y, int width, int height, bool fill) {
+void Display::drawRect(int x, int y, int width, int height, bool fill) {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
@@ -212,7 +205,7 @@ void Screen::drawRect(int x, int y, int width, int height, bool fill) {
     }
 }
 
-void Screen::drawCircle(int x, int y, int radius, bool fill) {
+void Display::drawCircle(int x, int y, int radius, bool fill) {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
@@ -224,10 +217,12 @@ void Screen::drawCircle(int x, int y, int radius, bool fill) {
     }
 }
 
-void Screen::update() {
+void Display::update() {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
+
+    if (_useMutex && _lock() == pdFAIL) return;
 
     if (_holdFace) {
         if (_holdTimer == 0) {
@@ -237,48 +232,26 @@ void Screen::update() {
         _micBar->drawBar(_micLevel);
         _u8g2->sendBuffer();
     } else {
-        updateFace();
+        _u8g2->clearBuffer();
+
+        _micBar->drawBar(_micLevel);
+        _face->Update();
     }
 
     if (_holdFace && millis() > _holdTimer){
         _holdFace = false;
         _holdTimer = 0;
     }
+
+    if (_useMutex) _unlock();
 }
 
 // level range 0-4096
-void Screen::setMicLevel(int level) {
+void Display::setMicLevel(int level) {
     _micLevel = level;
 }
 
-void Screen::mutexUpdate() {
-    if (_lock()) {
-        update();
-        _unlock();
-    }
-}
-
-void Screen::updateFace() {
-    if (_initialized == false || _u8g2 == nullptr) {
-        return;
-    }
-
-    if (!_holdFace) {
-        _u8g2->clearBuffer();
-
-        _micBar->drawBar(_micLevel);
-        _face->Update();
-    }
-}
-
-void Screen::mutexUpdateFace() {
-    if (_lock()) {
-        updateFace();
-        _unlock();
-    }
-}
-
-void Screen::setFont(const uint8_t* font) {
+void Display::setFont(const uint8_t* font) {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
@@ -286,7 +259,7 @@ void Screen::setFont(const uint8_t* font) {
     _u8g2->setFont(font);
 }
 
-int Screen::getWidth() const {
+int Display::getWidth() const {
     if (_initialized == false || _u8g2 == nullptr) {
         return 0;
     }
@@ -294,7 +267,7 @@ int Screen::getWidth() const {
     return _u8g2->getWidth();
 }
 
-int Screen::getHeight() const {
+int Display::getHeight() const {
     if (_initialized == false || _u8g2 == nullptr) {
         return 0;
     }
@@ -302,18 +275,18 @@ int Screen::getHeight() const {
     return _u8g2->getHeight();
 }
 
-Face *Screen::getFace() {
+Face *Display::getFace() {
     return _face;
 }
 
-void Screen::autoFace(bool exp) {
+void Display::autoFace(bool exp) {
   _face->RandomBehavior = 
   _face->RandomBlink = 
   _face->RandomLook = 
     exp;
 }
 
-bool Screen::_lock() {
+bool Display::_lock() {
     if (_initialized == false || _u8g2 == nullptr) {
         return false;
     }
@@ -321,8 +294,8 @@ bool Screen::_lock() {
     return xSemaphoreTake(_mux, pdMS_TO_TICKS(3000));
 }
 
-void Screen::_unlock() {
+void Display::_unlock() {
     xSemaphoreGive(_mux);
 }
 
-} // namespace Utils
+} // namespace Display
