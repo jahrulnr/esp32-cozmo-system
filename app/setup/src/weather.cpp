@@ -6,8 +6,7 @@ void setupWeather(){
 	if (weatherService) return;
 
 	Communication::WeatherService::WeatherConfig cfg;
-	cfg.province = Communication::WeatherService::Province::DKI_JAKARTA;
-	cfg.cityCode = static_cast<int>(Communication::WeatherService::JakartaCity::JAKARTA_BARAT);
+	cfg.adm4Code = "31.71.03.1001"; // Kemayoran, Jakarta Pusat
 	cfg.cacheExpiryMinutes = 60;
 
 	weatherService = new Communication::WeatherService(fileManager);

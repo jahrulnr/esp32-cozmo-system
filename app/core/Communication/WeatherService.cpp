@@ -50,9 +50,15 @@ void WeatherService::getCurrentWeather(WeatherCallback callback, bool forceRefre
     fetchFromAPI(callback);
 }
 
-void WeatherService::setLocation(Province province, int cityCode) {
-    _config.province = province;
-    _config.cityCode = cityCode;
+void WeatherService::setLocation(const Utils::Sstring& adm4Code) {
+    _config.adm4Code = adm4Code;
+    
+    // Clear cache when location changes
+    clearCache();
+}
+
+void WeatherService::setLocation(const AdministrativeRegion& region) {
+    _config.adm4Code = region.getAdm4();
     
     // Clear cache when location changes
     clearCache();
@@ -129,8 +135,25 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
     WeatherData data;
     
     try {
-        // Navigate through BMKG JSON structure
-        // BMKG structure: {"data": [{"areas": [{"params": [...]}]}]}
+        // Navigate through new BMKG API structure
+        // New BMKG structure: {"lokasi": {...}, "data": [{...}]}
+        if (doc["lokasi"].isUnbound()) {
+            ESP_LOGE(_tag, "No lokasi found in response");
+            callback(data, false);
+            return;
+        }
+
+        auto lokasi = doc["lokasi"];
+        data.location = String(lokasi["provinsi"].as<String>()) + ", " + 
+                       String(lokasi["kotkab"].as<String>()) + ", " + 
+                       String(lokasi["kecamatan"].as<String>()) + ", " + 
+                       String(lokasi["desa"].as<String>());
+        data.longitude = lokasi["lon"].as<float>();
+        data.latitude = lokasi["lat"].as<float>();
+        data.timezone = lokasi["timezone"].as<String>();
+        
+        ESP_LOGI(_tag, "Location: %s (Lat: %.6f, Lon: %.6f)", data.location.c_str(), data.latitude, data.longitude);
+
         if (doc["data"].isUnbound() || doc["data"].size() == 0) {
             ESP_LOGE(_tag, "No data array found in response");
             callback(data, false);
@@ -144,81 +167,41 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
             return;
         }
 
-        auto areas = dataArray[0]["areas"];
-        if (areas.isUnbound() || areas.size() == 0) {
-            ESP_LOGE(_tag, "No areas found in response");
+        // Get the first location data
+        auto locationData = dataArray[0];
+        if (locationData["cuaca"].isUnbound() || locationData["cuaca"].size() == 0) {
+            ESP_LOGE(_tag, "No cuaca (weather) data found");
             callback(data, false);
             return;
         }
 
-        ESP_LOGI(_tag, "Found %d areas, searching for city code %d", areas.size(), _config.cityCode);
-
-        // Find the area that matches our city code
-        bool foundArea = false;
-        for (size_t i = 0; i < areas.size(); i++) {
-            auto area = areas[i];
-            int areaId = area["id"].as<int>();
-            if (areaId == _config.cityCode) {
-                foundArea = true;
-                data.location = area["description"].as<String>();
-                ESP_LOGI(_tag, "Found matching area: %s (ID: %d)", data.location.c_str(), areaId);
-                
-                // Parse weather parameters using enum mapping
-                auto params = area["params"];
-                ESP_LOGD(_tag, "Processing %d parameters", params.size());
-                
-                for (size_t j = 0; j < params.size(); j++) {
-                    auto param = params[j];
-                    Utils::Sstring paramId = param["id"].as<String>();
-                    WeatherParam paramType = getParamFromString(paramId);
-                    
-                    auto timeRanges = param["timeRanges"];
-                    if (timeRanges.size() == 0) {
-                        ESP_LOGW(_tag, "No time ranges for parameter %s", paramId.c_str());
-                        continue;
-                    }
-                    
-                    auto firstRange = timeRanges[0];
-                    
-                    switch (paramType) {
-                        case WeatherParam::WEATHER:
-                            data.description = firstRange["value"]["text"].as<String>();
-                            data.condition = getConditionFromDescription(data.description);
-                            ESP_LOGD(_tag, "Weather: %s", data.description.c_str());
-                            break;
-                        case WeatherParam::TEMPERATURE:
-                            data.temperature = firstRange["value"].as<int>();
-                            ESP_LOGD(_tag, "Temperature: %d°C", data.temperature);
-                            break;
-                        case WeatherParam::HUMIDITY:
-                            data.humidity = firstRange["value"].as<int>();
-                            ESP_LOGD(_tag, "Humidity: %d%%", data.humidity);
-                            break;
-                        case WeatherParam::WIND_SPEED:
-                            data.windSpeed = firstRange["value"].as<int>();
-                            ESP_LOGD(_tag, "Wind speed: %d", data.windSpeed);
-                            break;
-                        case WeatherParam::WIND_DIRECTION:
-                            data.windDirection = firstRange["value"]["text"].as<String>();
-                            ESP_LOGD(_tag, "Wind direction: %s", data.windDirection.c_str());
-                            break;
-                        default:
-                            ESP_LOGV(_tag, "Ignoring unknown parameter: %s", paramId.c_str());
-                            break;
-                    }
-                }
-                break;
-            }
-        }
-
-        if (!foundArea) {
-            ESP_LOGE(_tag, "City code %d not found in response", _config.cityCode);
+        // Get current weather (first entry in the first time period)
+        auto cuacaArray = locationData["cuaca"];
+        if (cuacaArray.size() == 0 || cuacaArray[0].size() == 0) {
+            ESP_LOGE(_tag, "No current weather data found");
             callback(data, false);
             return;
         }
 
-        // Set timestamp and validity
-        data.lastUpdated = parseBMKGDateTime(dataArray[0]["issued"].as<String>());
+        auto currentWeather = cuacaArray[0][0]; // First time period, first entry
+        
+        // Parse weather data from new API format
+        data.temperature = currentWeather["t"].as<int>();
+        data.humidity = currentWeather["hu"].as<int>();
+        data.windSpeed = (int)(currentWeather["ws"].as<float>() * 3.6); // Convert m/s to km/h
+        data.windDirection = currentWeather["wd"].as<String>();
+        data.description = currentWeather["weather_desc"].as<String>();
+        data.imageUrl = currentWeather["image"].as<String>();
+        data.lastUpdated = currentWeather["local_datetime"].as<String>();
+        
+        // Convert weather code to condition
+        int weatherCode = currentWeather["weather"].as<int>();
+        data.condition = getConditionFromCode(weatherCode);
+        
+        ESP_LOGI(_tag, "Weather: %s (Code: %d)", data.description.c_str(), weatherCode);
+        ESP_LOGI(_tag, "Temperature: %d°C, Humidity: %d%%, Wind: %d km/h %s", 
+                 data.temperature, data.humidity, data.windSpeed, data.windDirection.c_str());
+
         data.isValid = true;
         
         ESP_LOGI(_tag, "Weather data parsed successfully for %s", data.location.c_str());
@@ -266,6 +249,10 @@ bool WeatherService::loadCache() {
     _cachedData.windSpeed = doc["windSpeed"].as<int>();
     _cachedData.windDirection = doc["windDirection"].as<String>();
     _cachedData.lastUpdated = doc["lastUpdated"].as<String>();
+    _cachedData.imageUrl = doc["imageUrl"].as<String>();
+    _cachedData.longitude = doc["longitude"].as<float>();
+    _cachedData.latitude = doc["latitude"].as<float>();
+    _cachedData.timezone = doc["timezone"].as<String>();
     _cachedData.isValid = doc["isValid"].as<bool>();
     _lastCacheTime = doc["cacheTime"].as<unsigned long>();
 
@@ -287,6 +274,10 @@ bool WeatherService::saveCache(const WeatherData& data) {
     doc["windSpeed"] = data.windSpeed;
     doc["windDirection"] = data.windDirection;
     doc["lastUpdated"] = data.lastUpdated;
+    doc["imageUrl"] = data.imageUrl;
+    doc["longitude"] = data.longitude;
+    doc["latitude"] = data.latitude;
+    doc["timezone"] = data.timezone;
     doc["isValid"] = data.isValid;
     doc["cacheTime"] = getCurrentTimestamp();
 
@@ -297,10 +288,9 @@ bool WeatherService::saveCache(const WeatherData& data) {
 }
 
 Utils::Sstring WeatherService::buildAPIUrl() const {
-    // BMKG API endpoint format
-    Utils::Sstring url = "https://data.bmkg.go.id/DataMKG/MEWS/DigitalForecast/DigitalForecast-";
-    url += String(static_cast<int>(_config.province));
-    url += ".xml";
+    // New BMKG API endpoint format
+    Utils::Sstring url = "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=";
+    url += _config.adm4Code;
     
     return url;
 }
@@ -341,13 +331,13 @@ WeatherService::WeatherCondition WeatherService::getConditionFromDescription(con
     String desc = description.toString();
     desc.toLowerCase();
     
-    if (desc.indexOf("cerah") >= 0 || desc.indexOf("clear") >= 0) {
+    if (desc.indexOf("cerah") >= 0 || desc.indexOf("clear") >= 0 || desc.indexOf("sunny") >= 0) {
         return WeatherCondition::CLEAR;
     }
-    if (desc.indexOf("berawan sebagian") >= 0 || desc.indexOf("partly cloudy") >= 0) {
+    if (desc.indexOf("cerah berawan") >= 0 || desc.indexOf("partly cloudy") >= 0) {
         return WeatherCondition::PARTLY_CLOUDY;
     }
-    if (desc.indexOf("berawan") >= 0 || desc.indexOf("cloudy") >= 0) {
+    if (desc.indexOf("berawan") >= 0 || desc.indexOf("cloudy") >= 0 || desc.indexOf("mostly cloudy") >= 0) {
         return WeatherCondition::CLOUDY;
     }
     if (desc.indexOf("mendung") >= 0 || desc.indexOf("overcast") >= 0) {
@@ -373,6 +363,51 @@ WeatherService::WeatherCondition WeatherService::getConditionFromDescription(con
     }
     
     return WeatherCondition::UNKNOWN;
+}
+
+WeatherService::WeatherCondition WeatherService::getConditionFromCode(int weatherCode) {
+    // BMKG weather codes:
+    // 0 = Cerah (Clear/Sunny)
+    // 1 = Cerah Berawan (Partly Cloudy)
+    // 2 = Cerah Berawan (Partly Cloudy)
+    // 3 = Berawan (Cloudy/Mostly Cloudy)
+    // 4 = Berawan Tebal (Overcast)
+    // And other codes for rain, thunderstorm, etc.
+    
+    switch (weatherCode) {
+        case 0:
+            return WeatherCondition::CLEAR;
+        case 1:
+        case 2:
+            return WeatherCondition::PARTLY_CLOUDY;
+        case 3:
+            return WeatherCondition::CLOUDY;
+        case 4:
+            return WeatherCondition::OVERCAST;
+        case 60:
+        case 61:
+            return WeatherCondition::LIGHT_RAIN;
+        case 63:
+            return WeatherCondition::MODERATE_RAIN;
+        case 65:
+            return WeatherCondition::HEAVY_RAIN;
+        case 95:
+        case 97:
+            return WeatherCondition::THUNDERSTORM;
+        case 45:
+        case 48:
+            return WeatherCondition::FOG;
+        default:
+            return WeatherCondition::UNKNOWN;
+    }
+}
+
+AdministrativeRegion* WeatherService::getCurrentRegion() const {
+    if (_config.adm4Code.isEmpty()) {
+        return nullptr;
+    }
+    
+    return AdministrativeRegion::findByAdm4(_config.adm4Code.c_str());
 }
 
 Utils::Sstring WeatherService::paramToString(WeatherParam param) {

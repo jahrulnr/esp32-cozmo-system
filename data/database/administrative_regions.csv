@@ -1,0 +1,50 @@
+# you can add more from: https://cuaca.bmkg.go.id/api/df/v1/adm/search?keyword=bagan%20jaya
+adm1,adm2,adm3,adm4,provinsi,kotkab,kecamatan,desa
+31,31.71,31.71.01,31.71.01.1001,DKI Jakarta,Kota Adm. Jakarta Pusat,Gambir,Gambir
+31,31.71,31.71.01,31.71.01.1002,DKI Jakarta,Kota Adm. Jakarta Pusat,Gambir,Cideng
+31,31.71,31.71.01,31.71.01.1003,DKI Jakarta,Kota Adm. Jakarta Pusat,Gambir,Petojo Utara
+31,31.71,31.71.01,31.71.01.1004,DKI Jakarta,Kota Adm. Jakarta Pusat,Gambir,Petojo Selatan
+31,31.71,31.71.01,31.71.01.1005,DKI Jakarta,Kota Adm. Jakarta Pusat,Gambir,Kebon Kelapa
+31,31.71,31.71.01,31.71.01.1006,DKI Jakarta,Kota Adm. Jakarta Pusat,Gambir,Duri Pulo
+31,31.71,31.71.02,31.71.02.1001,DKI Jakarta,Kota Adm. Jakarta Pusat,Sawah Besar,Pasar Baru
+31,31.71,31.71.02,31.71.02.1002,DKI Jakarta,Kota Adm. Jakarta Pusat,Sawah Besar,Karang Anyar
+31,31.71,31.71.02,31.71.02.1003,DKI Jakarta,Kota Adm. Jakarta Pusat,Sawah Besar,Kartini
+31,31.71,31.71.02,31.71.02.1004,DKI Jakarta,Kota Adm. Jakarta Pusat,Sawah Besar,Gunung Sahari Utara
+31,31.71,31.71.02,31.71.02.1005,DKI Jakarta,Kota Adm. Jakarta Pusat,Sawah Besar,Mangga Dua Selatan
+31,31.71,31.71.03,31.71.03.1001,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Kemayoran
+31,31.71,31.71.03,31.71.03.1002,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Kebon Kosong
+31,31.71,31.71.03,31.71.03.1003,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Harapan Mulya
+31,31.71,31.71.03,31.71.03.1004,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Cempaka Baru
+31,31.71,31.71.03,31.71.03.1005,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Sumur Batu
+31,31.71,31.71.03,31.71.03.1006,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Serdang
+31,31.71,31.71.03,31.71.03.1007,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Utan Panjang
+31,31.71,31.71.03,31.71.03.1008,DKI Jakarta,Kota Adm. Jakarta Pusat,Kemayoran,Gunung Sahari Selatan
+31,31.72,31.72.01,31.72.01.1001,DKI Jakarta,Kota Adm. Jakarta Utara,Penjaringan,Penjaringan
+31,31.72,31.72.01,31.72.01.1002,DKI Jakarta,Kota Adm. Jakarta Utara,Penjaringan,Pluit
+31,31.72,31.72.01,31.72.01.1003,DKI Jakarta,Kota Adm. Jakarta Utara,Penjaringan,Pademangan Timur
+31,31.72,31.72.01,31.72.01.1004,DKI Jakarta,Kota Adm. Jakarta Utara,Penjaringan,Pademangan Barat
+31,31.72,31.72.01,31.72.01.1005,DKI Jakarta,Kota Adm. Jakarta Utara,Penjaringan,Kamal Muara
+31,31.73,31.73.01,31.73.01.1001,DKI Jakarta,Kota Adm. Jakarta Barat,Kembangan,Kembangan Utara
+31,31.73,31.73.01,31.73.01.1002,DKI Jakarta,Kota Adm. Jakarta Barat,Kembangan,Kembangan Selatan
+31,31.73,31.73.01,31.73.01.1003,DKI Jakarta,Kota Adm. Jakarta Barat,Kembangan,Meruya Utara
+31,31.73,31.73.01,31.73.01.1004,DKI Jakarta,Kota Adm. Jakarta Barat,Kembangan,Meruya Selatan
+31,31.73,31.73.01,31.73.01.1005,DKI Jakarta,Kota Adm. Jakarta Barat,Kembangan,Srengseng
+31,31.74,31.74.01,31.74.01.1001,DKI Jakarta,Kota Adm. Jakarta Selatan,Jagakarsa,Jagakarsa
+31,31.74,31.74.01,31.74.01.1002,DKI Jakarta,Kota Adm. Jakarta Selatan,Jagakarsa,Tanjung Barat
+31,31.74,31.74.01,31.74.01.1003,DKI Jakarta,Kota Adm. Jakarta Selatan,Jagakarsa,Lenteng Agung
+31,31.74,31.74.01,31.74.01.1004,DKI Jakarta,Kota Adm. Jakarta Selatan,Jagakarsa,Ciganjur
+31,31.74,31.74.01,31.74.01.1005,DKI Jakarta,Kota Adm. Jakarta Selatan,Jagakarsa,Srengseng Sawah
+31,31.74,31.74.01,31.74.01.1006,DKI Jakarta,Kota Adm. Jakarta Selatan,Jagakarsa,Cipedak
+31,31.75,31.75.01,31.75.01.1001,DKI Jakarta,Kota Adm. Jakarta Timur,Matraman,Matraman
+31,31.75,31.75.01,31.75.01.1002,DKI Jakarta,Kota Adm. Jakarta Timur,Matraman,Palmeriam
+31,31.75,31.75.01,31.75.01.1003,DKI Jakarta,Kota Adm. Jakarta Timur,Matraman,Kebon Manggis
+31,31.75,31.75.01,31.75.01.1004,DKI Jakarta,Kota Adm. Jakarta Timur,Matraman,Pegangsaan
+31,31.75,31.75.01,31.75.01.1005,DKI Jakarta,Kota Adm. Jakarta Timur,Matraman,Cikini
+31,31.75,31.75.01,31.75.01.1006,DKI Jakarta,Kota Adm. Jakarta Timur,Matraman,Utan Kayu Utara
+32,32.01,32.01.01,32.01.01.1001,Jawa Barat,Kab. Bogor,Nanggung,Nanggung
+32,32.01,32.01.01,32.01.01.1002,Jawa Barat,Kab. Bogor,Nanggung,Parakanmuncang
+32,32.01,32.01.01,32.01.01.1003,Jawa Barat,Kab. Bogor,Nanggung,Pangkaljaya
+32,32.01,32.01.01,32.01.01.1004,Jawa Barat,Kab. Bogor,Nanggung,Bantarkaret
+32,32.01,32.01.01,32.01.01.1005,Jawa Barat,Kab. Bogor,Nanggung,Curugbitung
+32,32.01,32.01.01,32.01.01.1006,Jawa Barat,Kab. Bogor,Nanggung,Malasari
+32,32.01,32.01.01,32.01.01.1007,Jawa Barat,Kab. Bogor,Nanggung,Cigudeg
