@@ -1,11 +1,11 @@
 #pragma once
 
-#define GPT_API_KEY ""
+#define PICO_DEBUG
 #define FTP_USER "root"
 #define FTP_PASS "root"
 
 #define PROTECT_COZMO true
-#define AUTOMATION_ENABLED false
+#define AUTOMATION_ENABLED true
 #define AUTOMATION_INACTIVITY_TIMEOUT 10000  // 10 seconds inactivity before resuming automation
 #define AUTOMATION_CHECK_INTERVAL 2000      // Check for automation resumption every 1 second
 #define AUTOMATION_MAX_BEHAVIORS 50         // Maximum number of behaviors to store (prevent memory issues)
@@ -14,29 +14,23 @@
 // Camera configuration
 #define CAMERA_MODEL_FREENOVE_ESP32S3_CAM
 // #define CAMERA_MODEL_AI_THINKER
-#define CAMERA_ENABLED true
-#define CAMERA_FRAME_SIZE FRAMESIZE_HQVGA
+#define CAMERA_ENABLED false
+#define CAMERA_FRAME_SIZE FRAMESIZE_128X128
+#define CAMERA_PIXEL_FORMAT PIXFORMAT_RGB565
 #define CAMERA_QUALITY 12
-#define CAMERA_FPS 30
-
-#define SPI_SCK_PIN SCK
-#define SPI_MISO_PIN MISO
-#define SPI_MOSI_PIN MOSI
-#define SPI_ESP32_SS SS
-#define SPI_BUFFER_SIZE (size_t) 8096
 
 // Motor configuration
 #define MOTOR_ENABLED true
 #define MOTOR_IO_EXTENDER true
-#define LEFT_MOTOR_PIN1 1
-#define LEFT_MOTOR_PIN2 0
 #define RIGHT_MOTOR_PIN1 2
-#define RIGHT_MOTOR_PIN2 3
+#define RIGHT_MOTOR_PIN2 1
+#define LEFT_MOTOR_PIN1 3
+#define LEFT_MOTOR_PIN2 4
 
 // Servo configuration
 #define SERVO_ENABLED true
-#define HEAD_SERVO_PIN 21
-#define HAND_SERVO_PIN 47
+#define HEAD_SERVO_PIN 19
+#define HAND_SERVO_PIN 20
 #define DEFAULT_HEAD_ANGLE 90
 #define DEFAULT_HAND_ANGLE 0
 
@@ -54,24 +48,28 @@
 
 #define CLIFF_DETECTOR_ENABLED true
 #define CLIFF_IO_EXTENDER true
-#define CLIFF_RIGHT_DETECTOR_PIN 4
-#define CLIFF_LEFT_DETECTOR_PIN 5
+#define CLIFF_RIGHT_DETECTOR_PIN 5
+#define CLIFF_LEFT_DETECTOR_PIN 6
 
 #define ULTRASONIC_ENABLED true
-#define ULTRASONIC_IO_EXTENDER false
-#define ULTRASONIC_TRIGGER_PIN 1
-#define ULTRASONIC_ECHO_PIN 2
+#define ULTRASONIC_TRIGGER_PIN 0
+#define ULTRASONIC_ECHO_PIN 45
 #define ULTRASONIC_OBSTACLE_TRESHOLD 8.0
 #define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in centimeters
 
 // Microphone configuration (MAX9814)
 #define MICROPHONE_ENABLED true
-#define MICROPHONE_ANALOG true
-#define MICROPHONE_ANALOG_PIN 19
+#define MICROPHONE_ANALOG false
+#define MICROPHONE_ANALOG_PIN 0
 #define MICROPHONE_GAIN_PIN -1
 #define MICROPHONE_AR_PIN -1  // Attack/Release pin (optional)
 #define MICROPHONE_SOUND_THRESHOLD 2000
 #define MICROPHONE_BASELINE_CALIBRATION_TIME 500
+// i2s
+#define MICROPHONE_I2S true
+#define MICROPHONE_WS  GPIO_NUM_21
+#define MICROPHONE_SCK GPIO_NUM_47
+#define MICROPHONE_DIN GPIO_NUM_14
 
 // Speaker configuration
 #define SPEAKER_ENABLED true
@@ -79,14 +77,14 @@
 // PicoTTS configuration
 #define PICOTTS_ENABLED true
 #define PICOTTS_CORE 1
-#define PICOTTS_TASK_PRIORITY 10
-#define PICOTTS_QUEUE_SIZE 10
+#define PICOTTS_TASK_PRIORITY 15
+#define PICOTTS_QUEUE_SIZE 1
 #define PICOTTS_MAX_TEXT_LENGTH 512
 
 // I2S Speaker (MAX98357) configuration
-#define I2S_SPEAKER_BCLK_PIN GPIO_NUM_20  // Bit Clock (BCLK)
-#define I2S_SPEAKER_WCLK_PIN GPIO_NUM_41  // Word Clock/Left-Right Clock (WCLK/WS/LRC)
-#define I2S_SPEAKER_DATA_PIN GPIO_NUM_42  // Data Input (DIN) - NOT the SD pin
+#define I2S_SPEAKER_BCLK_PIN GPIO_NUM_42  // Bit Clock (BCLK)
+#define I2S_SPEAKER_WCLK_PIN GPIO_NUM_2  // Word Clock/Left-Right Clock (WCLK/WS/LRC)
+#define I2S_SPEAKER_DATA_PIN GPIO_NUM_41  // Data Input (DIN) - NOT the SD pin
 #define I2S_SPEAKER_SAMPLE_RATE 16000
 #define I2S_SPEAKER_DEFAULT_VOLUME 100
 
@@ -113,11 +111,10 @@
 
 // GPT API configuration
 #define GPT_ENABLED true
+#define GPT_API_KEY "your api"
 #define GPT_MODEL "gpt-4.1-nano-2025-04-14"
 #define GPT_MAX_TOKENS 1024
 #define GPT_TEMPERATURE 0.7
-#define GPT_LEARNING_ENABLED true
 
 // Miscellaneous
 #define SERIAL_BAUD_RATE 115200
-#define DEBUG_ENABLED false
