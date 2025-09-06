@@ -73,7 +73,7 @@ void setupTasks() {
         "SRControl",
         4096,                     // Small stack size - just handles notifications
         NULL,
-        6,                        // Higher priority for responsiveness
+        5,                        // Higher priority for responsiveness
         NULL,
         0                         // Core 0 - same as ESP-SR
     );

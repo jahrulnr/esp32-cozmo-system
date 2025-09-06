@@ -399,7 +399,7 @@ esp_err_t sr_start(
   }
 
   //Start tasks
-  ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 15, &g_sr_data->feed_task, 0);
+  ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, configMAX_PRIORITIES - 5, &g_sr_data->feed_task, 0);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio feed task");
     ::sr_stop();

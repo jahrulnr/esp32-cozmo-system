@@ -5,10 +5,11 @@
 // fill callback for ESP-SR system
 esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read, uint32_t timeout_ms) {
     float mic_volume_multiplier = 1.f;
-    if (arg) {
-        float* volumeArg = (float*)arg;
-        mic_volume_multiplier = *volumeArg;
-    }
+    // if (arg) {
+    //     float* volumeArg = (float*)arg;
+        // mic_volume_multiplier = *volumeArg;
+        // logger->info("volume %2f", *volumeArg);
+    // }
     
     #if MICROPHONE_I2S
     if (!microphone)
