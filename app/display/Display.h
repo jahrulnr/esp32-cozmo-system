@@ -10,6 +10,7 @@
 #include "./components/Mochi/Mochi.h"
 #include "./components/Weather/Weather.h"
 #include "./components/Cube3D/Cube3D.h"
+#include "./components/SpaceGame/SpaceGame.h"
 
 namespace Display {
 
@@ -19,6 +20,7 @@ typedef enum {
     STATE_MOCHI,
     STATE_WEATHER,
     STATE_ORIENTATION,
+    STATE_SPACE_GAME,
     STATE_MAX
 } display_event_t;
 
@@ -100,6 +102,12 @@ public:
     void updateOrientation(Sensors::OrientationSensor* orientation);
 
     /**
+     * Get the SpaceGame component
+     * @return Pointer to the SpaceGame instance
+     */
+    SpaceGame* getSpaceGame();
+
+    /**
      * Update the display (call this after drawing operations)
      */
     void update();
@@ -145,6 +153,7 @@ private:
     MicBar *_micBar;
     Weather *_weather;
     Cube3D *_cube3D;
+    SpaceGame *_spaceGame;
 
     bool _lock();
     void _unlock();

@@ -14,7 +14,7 @@ void sensorMonitorTask(void* parameter) {
     float temperature = NAN;
     
     TickType_t lastWakeTime = xTaskGetTickCount();
-    TickType_t updateFrequency = pdMS_TO_TICKS(100);
+    TickType_t updateFrequency = pdMS_TO_TICKS(50);
 
     // Monitor sensors forever
     while (true) {
@@ -25,7 +25,6 @@ void sensorMonitorTask(void* parameter) {
         // Gyroscope and accelerometer
         if (orientation) {
             orientation->update();
-            display->updateOrientation(orientation);
 
             if (sendLog)
                 logger->info("gyro X: %.2f Y: %.2f Z: %.2f | accel X: %.2f Y: %.2f Z: %.2f | mag: %.2f", 
@@ -56,10 +55,6 @@ void sensorMonitorTask(void* parameter) {
 
         if (touchDetector) {
             touchDetector->update();
-            
-            if (touchDetector->detected() && notification) {
-                notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::TOUCH_DETECTED);
-            }
 
             if (sendLog)
                 logger->info("touched: %s", touchDetector->detected() ? "yes":"no");

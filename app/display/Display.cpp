@@ -5,7 +5,7 @@ namespace Display {
 Display::Display() : _u8g2(nullptr), _initialized(false), 
     _state(STATE_FACE), _holdTimer(0),
     _micLevel(0), _width(128), _height(64),
-    _mux(nullptr), _face(nullptr), _weather(nullptr), _cube3D(nullptr), _useMutex(false) {
+    _mux(nullptr), _face(nullptr), _weather(nullptr), _cube3D(nullptr), _spaceGame(nullptr), _useMutex(false) {
 }
 
 Display::~Display() {
@@ -19,6 +19,10 @@ Display::~Display() {
 
     if (_cube3D) {
         delete _cube3D;
+    }
+
+    if (_spaceGame) {
+        delete _spaceGame;
     }
 
     vSemaphoreDelete(_mux);
@@ -39,6 +43,14 @@ bool Display::init(int sda, int scl, int width, int height) {
     _micBar = new MicBar(_u8g2);
     _weather = new Weather(_u8g2, width, height);
     _cube3D = new Cube3D(_u8g2, width, height);
+    
+    // Initialize SpaceGame - it will get sensor data via notification system
+    _spaceGame = new SpaceGame(_u8g2, nullptr, width, height);
+    if (_spaceGame) {
+        _spaceGame->init();
+        _spaceGame->setAutoFire(true); // Enable auto-fire for demo
+    }
+    
     _width = width;
     _height = height;
 
@@ -64,6 +76,10 @@ void Display::update() {
     }
 
     if (_useMutex && _lock() == pdFAIL) return;
+
+    if (_state != STATE_SPACE_GAME && _spaceGame->isGameActive()) {
+        _spaceGame->pauseGame();
+    }
 
     switch(_state) {
         case STATE_TEXT:
@@ -95,6 +111,15 @@ void Display::update() {
         case STATE_ORIENTATION:
             _cube3D->draw();
             break;
+        case STATE_SPACE_GAME:
+            if (_spaceGame) {
+                if (!_spaceGame->isGameActive()) {
+                    _spaceGame->startGame();
+                }
+                
+                _spaceGame->draw();
+            }
+            break;
         default:
             _state = STATE_FACE;
             _u8g2->clearBuffer();
@@ -119,6 +144,15 @@ void Display::updateOrientation(Sensors::OrientationSensor* orientation) {
     if (_cube3D && orientation) {
         _cube3D->updateRotation(orientation);
     }
+    
+    // Also update SpaceGame with gyro input if it's the active game
+    if (_spaceGame && orientation && _state == STATE_SPACE_GAME) {
+        _spaceGame->updateGyroInput(orientation);
+    }
+}
+
+SpaceGame* Display::getSpaceGame() {
+    return _spaceGame;
 }
 
 int Display::getWidth() const {
