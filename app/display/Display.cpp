@@ -5,12 +5,20 @@ namespace Display {
 Display::Display() : _u8g2(nullptr), _initialized(false), 
     _state(STATE_FACE), _holdTimer(0),
     _micLevel(0), _width(128), _height(64),
-    _mux(nullptr), _face(nullptr), _useMutex(false) {
+    _mux(nullptr), _face(nullptr), _weather(nullptr), _cube3D(nullptr), _useMutex(false) {
 }
 
 Display::~Display() {
     if (_u8g2) {
         delete _u8g2;
+    }
+
+    if (_weather) {
+        delete _weather;
+    }
+
+    if (_cube3D) {
+        delete _cube3D;
     }
 
     vSemaphoreDelete(_mux);
@@ -29,6 +37,8 @@ bool Display::init(int sda, int scl, int width, int height) {
     _u8g2->setFontDirection(0);
 
     _micBar = new MicBar(_u8g2);
+    _weather = new Weather(_u8g2, width, height);
+    _cube3D = new Cube3D(_u8g2, width, height);
     _width = width;
     _height = height;
 
@@ -78,6 +88,13 @@ void Display::update() {
         case STATE_MOCHI:
             drawMochiFrame(_u8g2);
             _state = STATE_FACE;
+            break;
+        case STATE_WEATHER:
+            _weather->draw();
+            break;
+        case STATE_ORIENTATION:
+            _cube3D->draw();
+            break;
         default:
             _state = STATE_FACE;
             _u8g2->clearBuffer();
@@ -90,6 +107,18 @@ void Display::update() {
 // level range 0-4096
 void Display::setMicLevel(int level) {
     _micLevel = level;
+}
+
+void Display::updateWeatherData(const Communication::WeatherService::WeatherData& weatherData) {
+    if (_weather) {
+        _weather->updateWeatherData(weatherData);
+    }
+}
+
+void Display::updateOrientation(Sensors::OrientationSensor* orientation) {
+    if (_cube3D && orientation) {
+        _cube3D->updateRotation(orientation);
+    }
 }
 
 int Display::getWidth() const {

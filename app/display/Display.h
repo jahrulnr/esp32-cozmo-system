@@ -8,6 +8,8 @@
 #include "./components/Face/Face.h"
 #include "./components/Bar/Bar.h"
 #include "./components/Mochi/Mochi.h"
+#include "./components/Weather/Weather.h"
+#include "./components/Cube3D/Cube3D.h"
 
 namespace Display {
 
@@ -15,6 +17,8 @@ typedef enum {
     STATE_FACE,
     STATE_TEXT,
     STATE_MOCHI,
+    STATE_WEATHER,
+    STATE_ORIENTATION,
     STATE_MAX
 } display_event_t;
 
@@ -84,6 +88,18 @@ public:
     void setMicLevel(int level = 0);
 
     /**
+     * Update weather data for display
+     * @param weatherData The weather data to display
+     */
+    void updateWeatherData(const Communication::WeatherService::WeatherData& weatherData);
+
+    /**
+     * Update orientation display with sensor data
+     * @param orientation The orientation sensor instance
+     */
+    void updateOrientation(Sensors::OrientationSensor* orientation);
+
+    /**
      * Update the display (call this after drawing operations)
      */
     void update();
@@ -127,6 +143,8 @@ private:
     
     int _micLevel;
     MicBar *_micBar;
+    Weather *_weather;
+    Cube3D *_cube3D;
 
     bool _lock();
     void _unlock();

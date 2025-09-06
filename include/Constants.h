@@ -3,13 +3,17 @@
 
 #include "csr.h"
 
+// for generate phonetic, run `python3 tools/multinet_g2p.py --text="new command"`
 // Define voice commands (phonetic representations)
 static const csr_cmd_t voice_commands[] = {
 	{0, "look to left", "LwK To LfFT"},
 	{1, "look to right", "LwK To RiT"},
 	{2, "close your eyes", "KLbS YeR iZ"},
 	{3, "you can play", "Yo KaN PLd"},
-	{4, "silent", "SiLcNT"}
+	{4, "silent", "SiLcNT"},
+	{5, "show weather status", "sb Wfjk STaTcS"},
+	{6, "restart system", "RmSTnRT SgSTcM"},
+	{7, "show orientation", "sb eRmfNTdscN"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -33,6 +37,8 @@ typedef enum  {
 	OBSTACLE_DETECTED,
 	STUCK_DETECTED,
 	TOUCH_DETECTED,
+	WEATHER_STATUS,
+	ORIENTATION_DISPLAY,
 	NOTHING,
 } EVENT_DISPLAY;
 

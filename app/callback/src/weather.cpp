@@ -14,6 +14,11 @@ void weatherCallback(const Communication::WeatherService::WeatherData &data, boo
 		ESP_LOGI(TAG, "Wind Direction: %s", data.windDirection.c_str());
 		ESP_LOGI(TAG, "Last Updated: %s", data.lastUpdated.c_str());
 		ESP_LOGI(TAG, "Valid: %s", data.isValid ? "true" : "false");
+
+		// Update display with weather data
+		if (display) {
+			display->updateWeatherData(data);
+		}
 	} else {
 		ESP_LOGE(TAG, "Failed to retrieve weather data");
 	}
