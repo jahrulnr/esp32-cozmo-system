@@ -88,6 +88,20 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     servos->setHead(180);
                     automationStatus = false;
                     break;
+                case 9: // start recording
+                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    if (audioRecorder && !audioRecorder->isRecordingActive()) {
+                        sayText("Starting recording for 10 seconds!");
+                        delay(500);
+                        if (audioRecorder->startRecording()) {
+                            logger->info("Recording started via voice command");
+                        } else {
+                            sayText("Recording failed to start!");
+                        }
+                    } else {
+                        sayText("Recording already in progress!");
+                    }
+                    break;
                 default: 
                     logger->info("Unknown command ID: %d", command_id);
                     servos->setHead(DEFAULT_HEAD_ANGLE);

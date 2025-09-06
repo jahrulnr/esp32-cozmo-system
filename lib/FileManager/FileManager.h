@@ -139,6 +139,39 @@ public:
     File openFileForReading(const String& path, StorageType storageType = STORAGE_LITTLEFS);
 
     /**
+     * Open file for binary write operations
+     * @param path The file path
+     * @param storageType Storage type (optional, uses default if not specified)
+     * @return File handle for binary writing operations
+     */
+    File openFileForWriting(const String& path, StorageType storageType = STORAGE_LITTLEFS);
+
+    /**
+     * Open file for read-write operations (allows updating existing files)
+     * @param path The file path
+     * @param storageType Storage type (optional, uses default if not specified)
+     * @return File handle for read-write operations
+     */
+    File openFileForReadWrite(const String& path, StorageType storageType = STORAGE_LITTLEFS);
+
+    /**
+     * Open file for append operations
+     * @param path The file path
+     * @param storageType Storage type (optional, uses default if not specified)
+     * @return File handle for append operations
+     */
+    File openFileForAppend(const String& path, StorageType storageType = STORAGE_LITTLEFS);
+
+    /**
+     * Write binary data to file
+     * @param file Open file handle
+     * @param buffer Buffer containing binary data
+     * @param size Number of bytes to write
+     * @return Number of bytes actually written
+     */
+    size_t writeBinary(File& file, const uint8_t* buffer, size_t size);
+
+    /**
      * Read a chunk of data from file stream
      * @param file Open file handle
      * @param buffer Buffer to store read data

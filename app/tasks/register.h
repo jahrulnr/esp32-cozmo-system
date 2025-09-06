@@ -14,6 +14,7 @@ void gptChatTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void ftpTask(void* param);
 void weatherServiceTask(void* param);
+void srControlTask(void* param);
 
 // Function prototypes
 void protectCozmo();

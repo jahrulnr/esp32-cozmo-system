@@ -3,7 +3,7 @@
 
 void setupSpeechRecognition() {
 		esp_err_t ret = SR::sr_start(
-				sr_fill_callback,                                  // data fill callback
+				mic_fill_callback,                                 // data fill callback
 				NULL,																							 // data fill callback argument
 #if MICROPHONE_I2S
 				SR_CHANNELS_STEREO,
@@ -12,7 +12,7 @@ void setupSpeechRecognition() {
 #endif
 				SR_MODE_WAKEWORD,                                  // Start in wake word mode
 				voice_commands,                                    // Commands array
-				sizeof(voice_commands) / sizeof(csr_cmd_t),         // Number of commands
+				sizeof(voice_commands) / sizeof(csr_cmd_t),        // Number of commands
 				sr_event_callback,                                 // Event callback
 				NULL                                               // Event callback argument
 		);

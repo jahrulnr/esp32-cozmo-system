@@ -12,9 +12,10 @@ static const csr_cmd_t voice_commands[] = {
 	{3, "you can play", "Yo KaN PLd"},
 	{4, "silent", "SiLcNT"},
 	{5, "show weather status", "sb Wfjk STaTcS"},
-	{6, "restart system", "RmSTnRT SgSTcM"},
+	{6, "reboot", "RgBoT"},
 	{7, "show orientation", "sb eRmfNTdscN"},
-	{8, "play a game", "PLd c GdM"}
+	{8, "play a game", "PLd c GdM"},
+	{9, "record audio", "RfKkD nDmb"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -42,6 +43,8 @@ typedef enum  {
 	WEATHER_STATUS,
 	ORIENTATION_DISPLAY,
 	SPACE_GAME,
+	RECORDING_STARTED,
+	RECORDING_STOPPED,
 	NOTHING,
 } EVENT_DISPLAY;
 
@@ -54,6 +57,21 @@ namespace EVENT_SR {
 	static const char* TIMEOUT = "sr_timeout";
 	static const char* PAUSE = "pause_sr";
 	static const char* RESUME = "resume_sr";
+}
+
+// PicoTTS Events
+static const char* NOTIFICATION_TTS = "tts";
+namespace EVENT_TTS {
+	static const char* PAUSE = "pause_tts";
+	static const char* RESUME = "resume_tts";
+}
+
+// Audio Recording Events
+static const char* NOTIFICATION_AUDIO = "audio";
+namespace EVENT_AUDIO {
+	static const char* START_RECORDING = "start_recording";
+	static const char* STOP_RECORDING = "stop_recording";
+	static const char* RECORDING_COMPLETE = "recording_complete";
 }
 
 #endif

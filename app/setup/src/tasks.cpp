@@ -66,6 +66,19 @@ void setupTasks() {
         0
     );
 
+    #if MICROPHONE_ENABLED
+    // Create SR control task for handling ESP-SR pause/resume events
+    xTaskCreateUniversal(
+        srControlTask,
+        "SRControl",
+        4096,                     // Small stack size - just handles notifications
+        NULL,
+        6,                        // Higher priority for responsiveness
+        NULL,
+        0                         // Core 0 - same as ESP-SR
+    );
+    #endif
+
     delay(1000);
     logger->info("Tasks initialized");
 }

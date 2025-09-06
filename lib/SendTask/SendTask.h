@@ -24,7 +24,7 @@ namespace Command {
 		TaskHandle_t handle;
 	};
 	
-	String Send(cmd command, int priority = configMAX_PRIORITIES - 1, const String& description = "");
+	String Send(cmd command, int priority = configMAX_PRIORITIES - 1, const String& description = "", uint32_t stackSize = 8192);
 	TaskStatus GetTaskStatus(const String& taskId);
 	TaskInfo GetTaskInfo(const String& taskId);
 	std::vector<TaskInfo> GetAllTasks();

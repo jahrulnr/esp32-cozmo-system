@@ -43,7 +43,7 @@ namespace Command {
 		}
 	}
 
-	String Send(cmd command, int priority, const String& description) {
+	String Send(cmd command, int priority, const String& description, uint32_t stackSize) {
 		ensureMutexInitialized();
 		
 		String taskId = generateTaskId();
@@ -74,7 +74,7 @@ namespace Command {
 		
 		// Create FreeRTOS task
 		TaskHandle_t taskHandle;
-		BaseType_t result = xTaskCreate([](void* param) {
+		BaseType_t result = xTaskCreatePinnedToCore([](void* param) {
 			TaskParams* taskParams = static_cast<TaskParams*>(param);
 			String currentTaskId = taskParams->taskId;
 			
@@ -96,10 +96,11 @@ namespace Command {
 			vTaskDelete(NULL);
 		}, 
 		"CommandTask",
-		1024 * 4, 
+		stackSize, 
 		params, 
 		priority, 
-		&taskHandle);
+		&taskHandle,
+		1);
 		
 		// Update task handle in registry
 		if (result == pdPASS && xSemaphoreTake(registryMutex, portMAX_DELAY) == pdTRUE) {

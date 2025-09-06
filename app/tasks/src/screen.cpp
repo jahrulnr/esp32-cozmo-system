@@ -60,19 +60,14 @@ void displayTask(void *param){
 				else if (lastEvent == EVENT_DISPLAY::CLIFF_DETECTED && updateDelay == 0) {
 						display->drawCenteredText(20, "Oops! Not a safe area.");
 						updateDelay = millis() + 3000;
-						continue;
 				}
 				else if (lastEvent == EVENT_DISPLAY::OBSTACLE_DETECTED && updateDelay == 0) {
 						display->drawCenteredText(20, "Oops! Finding another way!");
-						display->update();
 						updateDelay = millis() + 3000;
-						continue;
 				}
 				else if (lastEvent == EVENT_DISPLAY::STUCK_DETECTED && updateDelay == 0) {
 						display->drawCenteredText(20, "I am stuck!");
-						display->update();
 						updateDelay = millis() + 3000;
-						continue;
 				} 
 				else if (lastEvent == EVENT_DISPLAY::TOUCH_DETECTED && updateDelay == 0) {
 						display->setState(Display::STATE_MOCHI);
@@ -86,6 +81,20 @@ void displayTask(void *param){
 				}
 				else if (lastEvent == EVENT_DISPLAY::SPACE_GAME && updateDelay == 0) {
 						display->setState(Display::STATE_SPACE_GAME);
+				}
+				else if (lastEvent == EVENT_DISPLAY::RECORDING_STARTED && updateDelay == 0) {
+						display->setState(Display::STATE_TEXT);
+						display->clearBuffer();
+						display->drawCenteredText(20, "Recording...");
+						display->drawCenteredText(40, "10 seconds");
+						updateDelay = millis() + 2000;
+				}
+				else if (lastEvent == EVENT_DISPLAY::RECORDING_STOPPED && updateDelay == 0) {
+						display->setState(Display::STATE_TEXT);
+						display->clearBuffer();
+						display->drawCenteredText(20, "Recording");
+						display->drawCenteredText(40, "Complete!");
+						updateDelay = millis() + 2000; // Show for 2 seconds then return to face
 				}
 				
 		#if MICROPHONE_ENABLED

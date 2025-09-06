@@ -365,6 +365,58 @@ File FileManager::openFileForReading(const String& path, StorageType storageType
     return fs.open(path, "r");
 }
 
+File FileManager::openFileForWriting(const String& path, StorageType storageType) {
+    if (!_initialized) {
+        return File();
+    }
+    
+    // Check if SD_MMC is requested but not available
+    if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
+    }
+    
+    fs::FS& fs = getFileSystem(storageType);
+    return fs.open(path, "w");
+}
+
+File FileManager::openFileForReadWrite(const String& path, StorageType storageType) {
+    if (!_initialized) {
+        return File();
+    }
+    
+    // Check if SD_MMC is requested but not available
+    if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
+    }
+    
+    fs::FS& fs = getFileSystem(storageType);
+    return fs.open(path, "rb");
+}
+
+File FileManager::openFileForAppend(const String& path, StorageType storageType) {
+    if (!_initialized) {
+        return File();
+    }
+    
+    // Check if SD_MMC is requested but not available
+    if (storageType == STORAGE_SD_MMC && !_sdmmcInitialized) {
+        Serial.println("SD_MMC not available, falling back to LittleFS");
+        storageType = STORAGE_LITTLEFS;
+    }
+    
+    fs::FS& fs = getFileSystem(storageType);
+    return fs.open(path, "a");
+}
+
+size_t FileManager::writeBinary(File& file, const uint8_t* buffer, size_t size) {
+    if (!file || !buffer || size == 0) {
+        return 0;
+    }
+    return file.write(buffer, size);
+}
+
 size_t FileManager::readStream(File& file, uint8_t* buffer, size_t size) {
     if (!file || !buffer || size == 0) {
         return 0;

@@ -5,7 +5,7 @@
 float mic_volume_multiplier = 1.0f;
 
 // Analog fill callback for ESP-SR system
-esp_err_t sr_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read, uint32_t timeout_ms) {
+esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read, uint32_t timeout_ms) {
     #if MICROPHONE_I2S
     if (!microphone)
         return ESP_ERR_INVALID_STATE;

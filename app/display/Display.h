@@ -41,6 +41,7 @@ public:
      * Clear the display
      */
     void clear();
+    void clearBuffer();
 
     /**
      * Draw text at a specific position

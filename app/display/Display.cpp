@@ -70,6 +70,14 @@ void Display::clear() {
     _u8g2->sendBuffer();
 }
 
+void Display::clearBuffer() {
+    if (_initialized == false || _u8g2 == nullptr) {
+        return;
+    }
+    
+    _u8g2->clearBuffer();
+}
+
 void Display::update() {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
