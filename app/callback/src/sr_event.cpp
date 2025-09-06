@@ -62,25 +62,23 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
                     break;
                 case 5: // show weather status
-                    sayText("Here is weather status!");
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WEATHER_STATUS);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
+                    sayText("Here is weather status!");
                     delay(100);
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::CLOSE_EYE);
                     servos->setHead(180);
                     automationStatus = false;
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WEATHER_STATUS);
                     break;
                 case 6: // restart system
                     ESP.restart();
                     break;
                 case 7: // show orientation
-                    sayText("Here is orientation display!");
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::ORIENTATION_DISPLAY);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
+                    sayText("Here is orientation display!");
                     delay(100);
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::CLOSE_EYE);
                     servos->setHead(180);
                     automationStatus = false;
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::ORIENTATION_DISPLAY);
                     break;
                 default: 
                     logger->info("Unknown command ID: %d", command_id);
