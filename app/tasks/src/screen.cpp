@@ -16,6 +16,7 @@ void displayTask(void *param){
 					display->setState(Display::STATE_FACE);
 					display->getFace()->LookFront();
 					display->getFace()->Expression.GoTo_Normal();
+					display->autoFace(true);
 				}
 
 				if (notification->has(NOTIFICATION_DISPLAY)){
@@ -32,6 +33,12 @@ void displayTask(void *param){
 						updateDelay = millis() + 3000;
 						display->getFace()->LookFront();
 						display->getFace()->Expression.GoTo_Happy();
+						display->autoFace(false);
+				}
+				else if (lastEvent == EVENT_DISPLAY::LOOK_LEFT && updateDelay == 0) {
+						display->setState(Display::STATE_FACE);
+						display->getFace()->Expression.GoTo_Happy();
+						display->autoFace(false);
 				}
 				else if (lastEvent == EVENT_DISPLAY::LOOK_LEFT && updateDelay == 0) {
 						display->setState(Display::STATE_FACE);
@@ -77,6 +84,9 @@ void displayTask(void *param){
 				else if (lastEvent == EVENT_DISPLAY::ORIENTATION_DISPLAY && updateDelay == 0) {
 						display->setState(Display::STATE_ORIENTATION);
 				}
+				else if (lastEvent == EVENT_DISPLAY::SPACE_GAME && updateDelay == 0) {
+						display->setState(Display::STATE_SPACE_GAME);
+				}
 				
 		#if MICROPHONE_ENABLED
 			#if MICROPHONE_ANALOG
@@ -88,8 +98,7 @@ void displayTask(void *param){
 
 		// Update orientation data if orientation sensor is available and display is in orientation mode
 		#if ORIENTATION_ENABLED
-			if (orientation && display && lastEvent == EVENT_DISPLAY::ORIENTATION_DISPLAY) {
-				orientation->update();
+			if (orientation && display) {
 				display->updateOrientation(orientation);
 			}
 		#endif

@@ -80,6 +80,14 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     servos->setHead(180);
                     automationStatus = false;
                     break;
+                case 8: // play space game
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::SPACE_GAME);
+                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    sayText("Starting space game!");
+                    delay(100);
+                    servos->setHead(180);
+                    automationStatus = false;
+                    break;
                 default: 
                     logger->info("Unknown command ID: %d", command_id);
                     servos->setHead(DEFAULT_HEAD_ANGLE);

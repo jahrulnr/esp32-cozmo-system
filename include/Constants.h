@@ -13,7 +13,8 @@ static const csr_cmd_t voice_commands[] = {
 	{4, "silent", "SiLcNT"},
 	{5, "show weather status", "sb Wfjk STaTcS"},
 	{6, "restart system", "RmSTnRT SgSTcM"},
-	{7, "show orientation", "sb eRmfNTdscN"}
+	{7, "show orientation", "sb eRmfNTdscN"},
+	{8, "play a game", "PLd c GdM"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -30,6 +31,7 @@ namespace EVENT_AUTOMATION {
 static const char* NOTIFICATION_DISPLAY = "display";
 typedef enum  {
 	WAKEWORD,
+	HAPPY,
 	LOOK_LEFT,
 	LOOK_RIGHT,
 	CLOSE_EYE,
@@ -39,6 +41,7 @@ typedef enum  {
 	TOUCH_DETECTED,
 	WEATHER_STATUS,
 	ORIENTATION_DISPLAY,
+	SPACE_GAME,
 	NOTHING,
 } EVENT_DISPLAY;
 

@@ -26,7 +26,7 @@ void setupTasks() {
             NULL, 
             5, 
             NULL,
-            0
+            1
         );
     }
     
@@ -38,7 +38,7 @@ void setupTasks() {
         NULL,                      // Parameters
         5,                         // Priority
         &sensorMonitorTaskHandle,  // Task handle
-        0
+        1
     );
     
     // Create automation task
