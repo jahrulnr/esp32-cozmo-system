@@ -26,9 +26,9 @@ void setup() {
 
   LittleFS.begin(false);
   setupApp();
-  setupTasks();
 }
 
 void loop() {
+  setupTasks();
   vTaskDelete(NULL);
 }

@@ -407,7 +407,7 @@ esp_err_t sr_start(
   }
   
   vTaskDelay(10);
-  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 16 * 1024, NULL, 15, &g_sr_data->detect_task, 0);
+  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, 0);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio detect task");
     ::sr_stop();

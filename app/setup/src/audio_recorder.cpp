@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "setup/setup.h"
-#include "core/Audio/AudioRecorder.h"
 
 // Global variable for audio recorder
 AudioRecorder* audioRecorder = nullptr;

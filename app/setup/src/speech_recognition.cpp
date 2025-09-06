@@ -2,9 +2,10 @@
 #include "tasks/register.h"
 
 void setupSpeechRecognition() {
+		float volume = 1.f;
 		esp_err_t ret = SR::sr_start(
 				mic_fill_callback,                                 // data fill callback
-				NULL,																							 // data fill callback argument
+				&volume,																							 // data fill callback argument
 #if MICROPHONE_I2S
 				SR_CHANNELS_STEREO,
 #else
