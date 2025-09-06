@@ -17,7 +17,9 @@ private:
     int _height;
     
     // Display positioning constants
-    static const int ICON_SIZE = 16;
+    static const int ICON_SIZE = 16;  // Compact size to fit display
+    static const int SCROLL_SPEED = 2;
+    static const int SCROLL_DELAY = 20;
 
 public:
     Weather(U8G2_SSD1306_128X64_NONAME_F_HW_I2C* display, int width = 128, int height = 64);
@@ -47,7 +49,7 @@ public:
 
 private:
     /**
-     * Draw weather icon based on condition
+     * Draw weather icon based on condition using better icon font
      * @param x X position
      * @param y Y position
      * @param condition Weather condition
@@ -60,11 +62,28 @@ private:
     void drawAllWeatherInfo();
 
     /**
-     * Get weather icon character for font
+     * Get weather icon glyph code for open-iconic font
      * @param condition Weather condition
-     * @return Icon character
+     * @return Icon glyph code
      */
-    char getWeatherIconChar(Communication::WeatherService::WeatherCondition condition);
+    uint16_t getWeatherIconGlyph(Communication::WeatherService::WeatherCondition condition);
+
+    /**
+     * Draw scrolling text for long strings
+     * @param y Y position for text
+     * @param text Text to scroll
+     * @param maxWidth Maximum width available
+     */
+    void drawScrollingText(int y, const String& text, int maxWidth);
+
+    /**
+     * Draw a portion of scrolling text at given offset
+     * @param offset Pixel offset for scrolling
+     * @param text Text to draw
+     * @param y Y position
+     * @param maxWidth Maximum width
+     */
+    void drawScrollString(int16_t offset, const String& text, int y, int maxWidth);
 
     /**
      * Draw centered text with proper sizing

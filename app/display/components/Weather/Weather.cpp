@@ -4,6 +4,10 @@ namespace Display {
 
 Weather::Weather(U8G2_SSD1306_128X64_NONAME_F_HW_I2C* display, int width, int height) 
     : _display(display), _hasData(false), _lastUpdate(0), _width(width), _height(height) {
+    // Enable UTF8 support for better text rendering (degree symbol, etc.)
+    if (_display) {
+        _display->enableUTF8Print();
+    }
 }
 
 Weather::~Weather() {
@@ -36,93 +40,99 @@ void Weather::clearData() {
 }
 
 void Weather::drawAllWeatherInfo() {
-    // Calculate available space
-    int iconWidth = ICON_SIZE + 5; // Icon + margin
-    int rightSideX = iconWidth;
-    int rightSideWidth = _width - rightSideX - 5; // Leave 5px right margin
+    // Calculate compact layout for 128x64 display
+    int iconX = 2;
+    int iconY = 16;
+    int tempX = iconX + ICON_SIZE + 4;
+    int tempY = 14;
     
-    // Draw weather icon at top left
-    drawWeatherIcon(2, 2, _currentWeather.condition);
+    // Draw weather icon (small, top-left)
+    drawWeatherIcon(iconX, iconY, _currentWeather.condition);
     
-    // Draw temperature prominently at top right
-    _display->setFont(u8g2_font_ncenB10_tr);
-    String tempStr = String(_currentWeather.temperature) + "C";
-    int tempWidth = getTextWidth(tempStr);
-    if (tempWidth > rightSideWidth) {
+    // Draw temperature next to icon
+    _display->setFont(u8g2_font_ncenB12_tr);
+    String tempStr = String(_currentWeather.temperature) + "°C";
+    
+    // Check if temperature fits, use smaller font if needed
+    int tempWidth = _display->getStrWidth(tempStr.c_str());
+    if (tempX + tempWidth > _width - 2) {
         _display->setFont(u8g2_font_6x10_tf);
-        tempWidth = getTextWidth(tempStr);
+        tempWidth = _display->getStrWidth(tempStr.c_str());
     }
-    _display->drawStr(_width - tempWidth - 2, 12, tempStr.c_str());
+    _display->drawStr(tempX, tempY, tempStr.c_str());
     
-    // Draw humidity below temperature
+    // Draw humidity on the right side, top row
     _display->setFont(u8g2_font_6x10_tf);
-    String humidityStr = String(_currentWeather.humidity) + "%H";
-    int humidityWidth = getTextWidth(humidityStr);
-    _display->drawStr(_width - humidityWidth - 2, 23, humidityStr.c_str());
+    String humidityStr = String(_currentWeather.humidity) + "%";
+    int humidityWidth = _display->getStrWidth(humidityStr.c_str());
+    _display->drawStr(_width - humidityWidth - 2, 10, humidityStr.c_str());
     
-    // Calculate space for text content
-    int contentStartY = 28;
-    int lineHeight = 10;
-    int contentWidth = _width - 4; // 2px margins on each side
-    
-    // Draw weather description
+    // Draw description on second line
+    int descY = 26;
+    String description = truncateText(_currentWeather.description.toString(), _width - 4);
     _display->setFont(u8g2_font_6x10_tf);
-    String description = truncateText(_currentWeather.description.toString(), contentWidth);
-    drawCenteredText(contentStartY, description);
+    _display->drawStr(2, descY, description.c_str());
     
-    // Draw location
+    // Draw location on third line
+    int locationY = 38;
     String location = _currentWeather.location.toString();
-    // Try to show just city name if location is too long
-    if (getTextWidth(location) > contentWidth) {
+    // Simplify location if too long
+    if (_display->getStrWidth(location.c_str()) > _width - 4) {
         int commaPos = location.indexOf(',');
         if (commaPos > 0) {
             location = location.substring(0, commaPos);
         }
-        location = truncateText(location, contentWidth);
+        location = truncateText(location, _width - 4);
     }
-    drawCenteredText(contentStartY + lineHeight, location);
+    _display->drawStr(2, locationY, location.c_str());
     
-    // Draw wind info at bottom
-    String windStr = String(_currentWeather.windSpeed) + "km/h";
-    if (!_currentWeather.windDirection.isEmpty()) {
-        String fullWindStr = windStr + " " + _currentWeather.windDirection.toString();
-        if (getTextWidth(fullWindStr) <= contentWidth) {
-            windStr = fullWindStr;
+    // Draw wind info on bottom line if space available
+    if (_currentWeather.windSpeed > 0 && _height >= 50) {
+        int windY = 50;
+        String windStr = "Wind: " + String(_currentWeather.windSpeed) + "km/h";
+        if (!_currentWeather.windDirection.isEmpty()) {
+            String fullWind = windStr + " " + _currentWeather.windDirection.toString();
+            if (_display->getStrWidth(fullWind.c_str()) <= _width - 4) {
+                windStr = fullWind;
+            }
         }
+        windStr = truncateText(windStr, _width - 4);
+        _display->setFont(u8g2_font_5x7_tf);
+        _display->drawStr(2, windY, windStr.c_str());
     }
-    windStr = truncateText(windStr, contentWidth);
-    drawCenteredText(contentStartY + lineHeight * 2, windStr);
 }
 
 void Weather::drawWeatherIcon(int x, int y, Communication::WeatherService::WeatherCondition condition) {
+    // Use smaller, simpler icons that fit the compact layout
     _display->setFont(u8g2_font_unifont_t_symbols);
     
-    char iconChar = getWeatherIconChar(condition);
-    if (iconChar != 0) {
-        _display->drawGlyph(x, y + ICON_SIZE, iconChar);
+    uint16_t glyph = getWeatherIconGlyph(condition);
+    if (glyph != 0) {
+        _display->drawGlyph(x, y, glyph);
     }
 }
 
-char Weather::getWeatherIconChar(Communication::WeatherService::WeatherCondition condition) {
+uint16_t Weather::getWeatherIconGlyph(Communication::WeatherService::WeatherCondition condition) {
+    // Use Unicode weather symbols that fit better in compact space
     switch (condition) {
         case Communication::WeatherService::WeatherCondition::CLEAR:
-            return 0x2600; // Sun symbol
+            return 0x2600; // Sun symbol ☀
         case Communication::WeatherService::WeatherCondition::PARTLY_CLOUDY:
-            return 0x26C5; // Partly cloudy symbol
+            return 0x26C5; // Partly cloudy ⛅
         case Communication::WeatherService::WeatherCondition::CLOUDY:
         case Communication::WeatherService::WeatherCondition::OVERCAST:
-            return 0x2601; // Cloud symbol
+            return 0x2601; // Cloud ☁
         case Communication::WeatherService::WeatherCondition::LIGHT_RAIN:
         case Communication::WeatherService::WeatherCondition::MODERATE_RAIN:
         case Communication::WeatherService::WeatherCondition::HEAVY_RAIN:
-            return 0x2614; // Rain symbol
+            return 0x2614; // Rain ☔
         case Communication::WeatherService::WeatherCondition::THUNDERSTORM:
-            return 0x26C8; // Thunder cloud symbol
+            return 0x26C8; // Thunder cloud ⛈
         case Communication::WeatherService::WeatherCondition::FOG:
         case Communication::WeatherService::WeatherCondition::MIST:
-            return 0x2601; // Cloud symbol (fog)
+            return 0x1F32B; // Fog 🌫 (or fallback to cloud)
         default:
-            return 0x2753; // Question mark for unknown
+            return 0x2753; // Question mark ❓
     }
 }
 
@@ -178,6 +188,55 @@ String Weather::truncateText(const String& text, int maxWidth, const uint8_t* fo
     }
     
     return result.substring(0, bestFit) + ellipsis;
+}
+
+void Weather::drawScrollingText(int y, const String& text, int maxWidth) {
+    // Simplified: just draw text that fits, truncate if needed
+    _display->setFont(u8g2_font_6x10_tf);
+    String displayText = truncateText(text, maxWidth);
+    _display->drawStr(2, y, displayText.c_str());
+}
+
+void Weather::drawScrollString(int16_t offset, const String& text, int y, int maxWidth) {
+    // Clear the scrolling area
+    _display->setDrawColor(0);
+    _display->drawBox(0, y - 13, maxWidth, 13);
+    _display->setDrawColor(1);
+    
+    _display->setFont(u8g2_font_8x13_mf);
+    
+    const char* s = text.c_str();
+    size_t len = strlen(s);
+    static char buf[64]; // Buffer for visible text portion
+    size_t char_offset = 0;
+    int dx = 0;
+    size_t visible = 0;
+    
+    if (offset < 0) {
+        char_offset = (-offset) / 8;
+        dx = offset + char_offset * 8;
+        if (char_offset >= (size_t)(maxWidth / 8)) {
+            return;
+        }
+        visible = maxWidth / 8 - char_offset + 1;
+        if (visible > len) visible = len;
+        strncpy(buf, s, visible);
+        buf[visible] = '\0';
+        _display->drawStr(char_offset * 8 - dx, y, buf);
+    } else {
+        char_offset = offset / 8;
+        if (char_offset >= len) {
+            return; // Nothing visible
+        }
+        dx = offset - char_offset * 8;
+        visible = len - char_offset;
+        if (visible > (size_t)(maxWidth / 8 + 1)) {
+            visible = maxWidth / 8 + 1;
+        }
+        strncpy(buf, s + char_offset, visible);
+        buf[visible] = '\0';
+        _display->drawStr(-dx, y, buf);
+    }
 }
 
 int Weather::getTextWidth(const String& text, const uint8_t* font) {
