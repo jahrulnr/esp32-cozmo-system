@@ -8,7 +8,7 @@ void setupServos() {
     logger->info("Setting up servos...");
     servos = new Motors::ServoControl();
     if (servos->init(HEAD_SERVO_PIN, HAND_SERVO_PIN)) {
-      servos->setScreen(screen);
+      servos->setDisplay(display);
       delay(500);
       servos->setHead(DEFAULT_HEAD_ANGLE);
       delay(50);

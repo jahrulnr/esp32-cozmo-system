@@ -37,8 +37,6 @@
 #define MOCHI_FRAME_H
 #include <Arduino.h>
 
-namespace Mochi {
-
 // the code below was generated using the image2cpp website from images from Photopea/Rive
 // scroll all the way down for the actual code
 
@@ -6168,7 +6166,5 @@ static const unsigned char* epd_bitmap_allArray[90] = {
 	epd_bitmap_89
 };
 
-extern int frame; // which image to display on the display
-
-}
+extern int mochiFrame; // which image to display on the display
 #endif

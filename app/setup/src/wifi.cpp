@@ -12,11 +12,11 @@ void setupWiFi() {
     // Get config (already loaded from file or defaults in constructor)
     Communication::WiFiManager::WiFiConfig config = wifiManager->getConfig();
     
-    if (screen) {
-      screen->clear();
-      screen->drawCenteredText(20, "Connecting to");
-      screen->drawCenteredText(40, config.ssid.c_str());
-      screen->update();
+    if (display) {
+      display->clear();
+      display->drawCenteredText(20, "Connecting to");
+      display->drawCenteredText(40, config.ssid.c_str());
+      display->update();
     }
     
     // Try to connect to WiFi using saved configuration
@@ -24,34 +24,34 @@ void setupWiFi() {
       logger->info("Connected to WiFi: %s", config.ssid.c_str());
       logger->info("IP: %s", wifiManager->getIP().c_str());
       
-      if (screen) {
-        screen->clear();
-        screen->drawCenteredText(10, "WiFi Connected");
-        screen->drawCenteredText(30, config.ssid.c_str());
-        screen->drawCenteredText(50, wifiManager->getIP().c_str());
-        screen->update();
+      if (display) {
+        display->clear();
+        display->drawCenteredText(10, "WiFi Connected");
+        display->drawCenteredText(30, config.ssid.c_str());
+        display->drawCenteredText(50, wifiManager->getIP().c_str());
+        display->update();
         delay(2000);
       }
     } else {
       logger->warning("WiFi connection failed, starting AP mode");
       
-      if (screen) {
-        screen->clear();
-        screen->drawCenteredText(20, "Starting AP");
-        screen->drawCenteredText(40, config.apSsid.c_str());
-        screen->update();
+      if (display) {
+        display->clear();
+        display->drawCenteredText(20, "Starting AP");
+        display->drawCenteredText(40, config.apSsid.c_str());
+        display->update();
       }
       
       if (wifiManager->startAP(config.apSsid, config.apPassword)) {
         logger->info("AP started: %s", config.apSsid.c_str());
         logger->info("IP: %s", wifiManager->getIP().c_str());
         
-        if (screen) {
-          screen->clear();
-          screen->drawCenteredText(10, "AP Mode Active");
-          screen->drawCenteredText(30, config.apSsid.c_str());
-          screen->drawCenteredText(50, wifiManager->getIP().c_str());
-          screen->update();
+        if (display) {
+          display->clear();
+          display->drawCenteredText(10, "AP Mode Active");
+          display->drawCenteredText(30, config.apSsid.c_str());
+          display->drawCenteredText(50, wifiManager->getIP().c_str());
+          display->update();
           delay(2000);
         }
       } else {

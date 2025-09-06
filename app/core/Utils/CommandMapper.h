@@ -9,7 +9,7 @@
 #include "core/Motors/ServoControl.h"
 #include "core/Sensors/OrientationSensor.h"
 #include "core/Sensors/DistanceSensor.h"
-#include "Screen.h"
+#include "display/Display.h"
 #include "Logger.h"
 
 namespace Utils {
@@ -17,7 +17,7 @@ namespace Utils {
 class CommandMapper {
 public:
     // Constructor with all required subsystems
-    CommandMapper(Utils::Logger *logger, Screen::Screen* screen, Motors::MotorControl* motors, Motors::ServoControl* servos);
+    CommandMapper(Utils::Logger *logger, Display::Display* display, Motors::MotorControl* motors, Motors::ServoControl* servos);
 
     // Execute a command string (format: [COMMAND] or [COMMAND=PARAM])
     bool executeCommand(const Utils::Sstring& commandStr);
@@ -32,7 +32,7 @@ public:
     Utils::Sstring extractText(const Utils::Sstring& gptResponse);
 
 private:
-    Screen::Screen* _screen;
+    Display::Display* _display;
     Motors::MotorControl* _motors;
     Motors::ServoControl* _servos;
     Utils::Logger* _logger;

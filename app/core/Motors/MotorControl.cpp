@@ -7,7 +7,7 @@ MotorControl::MotorControl() : _leftMotorPin1(-1), _leftMotorPin2(-1),
                                _rightMotorPin1(-1), _rightMotorPin2(-1),
                                _currentDirection(STOP), _initialized(false),
                                _useIoExtender(false), _ioExtender(nullptr),
-                               _screen(nullptr), _interrupt(false), _enable(true) {
+                               _display(nullptr), _interrupt(false), _enable(true) {
 }
 
 MotorControl::~MotorControl() {
@@ -64,26 +64,26 @@ bool MotorControl::initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPi
 void MotorControl::disable() { _enable = false; }
 void MotorControl::enable() { _enable = true; }
 
-void MotorControl::setScreen(Screen::Screen *screen) {
-    _screen = screen;
+void MotorControl::setDisplay(Display::Display *display) {
+    _display = display;
 }
 
 void MotorControl::moveLook(MotorControl::Direction direction) {
-    if (_screen && _screen->getFace()) {
+    if (_display && _display->getFace()) {
         switch (direction) {
             case FORWARD:
             case BACKWARD:
             case STOP:
             default:
-                _screen->getFace()->LookFront();
+                _display->getFace()->LookFront();
                 break;
                 
             case LEFT:
-                _screen->getFace()->LookLeft();
+                _display->getFace()->LookLeft();
                 break;
                 
             case RIGHT:
-                _screen->getFace()->LookRight();
+                _display->getFace()->LookRight();
                 break;
         }
     }

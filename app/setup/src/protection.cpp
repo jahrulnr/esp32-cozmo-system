@@ -1,26 +1,17 @@
 #include "setup/setup.h"
 #include "tasks/register.h"
 
-// Global semaphore for protection screen messages
-SemaphoreHandle_t g_protectionScreenMutex = nullptr;
-
 /**
  * Handles cliff detection and evasive maneuvers
  * @return true if cliff was detected and handled
  */
 bool handleCliffDetection() {
-    if (!cliffDetected()) {
+    if (!cliffLeftDetector || !cliffRightDetector) {
         return false;  // No cliff detected
     }
-    
-    xTaskCreate([](void *param){
-        if (screen) {
-            screen->mutexClear();
-            screen->drawCenteredText(20, "Oops! Not a safe area.");
-            screen->mutexUpdate();
-        }
-        vTaskDelete(NULL);
-    }, "cliffDetection", 4096, NULL, 19, NULL);
+
+    if (notification)
+        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::CLIFF_DETECTED);
 
     if (motors) {
         motors->interuptMotor();
@@ -49,14 +40,8 @@ bool handleObstacleDetection() {
     }
 
     bool pathFound = false;
-    xTaskCreate([](void *param){
-        if (screen) {
-            screen->mutexClear();
-            screen->drawCenteredText(20, "Oops! Finding another way!");
-            screen->mutexUpdate();
-        }
-        vTaskDelete(NULL);
-    }, "obstacleDetection", 4096, NULL, 19, NULL);
+    if (notification)
+        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY::OBSTACLE_DETECTED);
 
     if (motors) {
         Motors::MotorControl::Direction currentMove = motors->getCurrentDirection();
@@ -86,10 +71,8 @@ bool handleObstacleDetection() {
         if(!pathFound) motors->interuptMotor();
     }
 
-    if (screen && !pathFound) {
-        screen->mutexClear();
-        screen->drawCenteredText(20, "I'm stuck!");
-        screen->mutexUpdate();
+    if (display && !pathFound && notification) {
+        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY::STUCK_DETECTED);
     }
 
     if (logger) {

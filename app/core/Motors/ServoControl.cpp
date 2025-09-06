@@ -82,12 +82,12 @@ bool ServoControl::initWithExtender(Utils::IOExtern* ioExtender, int headServoPi
     return true;
 }
 
-void ServoControl::setScreen(Screen::Screen *screen) {
-    _screen = screen;
+void ServoControl::setDisplay(Display::Display *display) {
+    _display = display;
 }
 
 void ServoControl::moveLook(ServoType type, int angle) {
-    if (!_screen || !_screen->getFace()) return;
+    if (!_display || !_display->getFace()) return;
     
     int lastPosition = 0;
     switch (type) {
@@ -100,8 +100,8 @@ void ServoControl::moveLook(ServoType type, int angle) {
     }
 
     if (angle > lastPosition) 
-        _screen->getFace()->LookTop();
-    else _screen->getFace()->LookFront();
+        _display->getFace()->LookTop();
+    else _display->getFace()->LookFront();
 }
 
 void ServoControl::setHead(int angle) {

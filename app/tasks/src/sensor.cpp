@@ -7,17 +7,11 @@
  */
 void sensorMonitorTask(void* parameter) {
     logger->info("Sensor monitoring task started");
-    const int sendInterval = 1000;
+    const int sendInterval = 10000;
     long currentUpdate = millis();
-    SemaphoreHandle_t sensor_handle = xSemaphoreCreateMutex();
 
     float distance = -1.;
     float temperature = NAN;
-
-    String orientationTask = "orientationTask";
-    String distanceSensorTask = "distanceSensorTask";
-    String cliffLeftDetectorTask = "cliffLeftDetectorTask";
-    String temperatureSensorTask = "temperatureSensorTask";
     
     TickType_t lastWakeTime = xTaskGetTickCount();
     TickType_t updateFrequency = pdMS_TO_TICKS(100);
@@ -31,6 +25,13 @@ void sensorMonitorTask(void* parameter) {
         // Gyroscope and accelerometer
         if (orientation) {
             orientation->update();
+            display->updateOrientation(orientation);
+
+            if (sendLog)
+                logger->info("gyro X: %.2f Y: %.2f Z: %.2f | accel X: %.2f Y: %.2f Z: %.2f | mag: %.2f", 
+                    orientation->getX(), orientation->getY(), orientation->getZ(),
+                    orientation->getAccelX(), orientation->getAccelY(), orientation->getAccelZ(),
+                    orientation->getAccelMagnitude());
         }
 
         // Distance sensor
@@ -55,6 +56,10 @@ void sensorMonitorTask(void* parameter) {
 
         if (touchDetector) {
             touchDetector->update();
+            
+            if (touchDetector->detected() && notification) {
+                notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::TOUCH_DETECTED);
+            }
 
             if (sendLog)
                 logger->info("touched: %s", touchDetector->detected() ? "yes":"no");

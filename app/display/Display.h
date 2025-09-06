@@ -1,22 +1,34 @@
-#ifndef SCREEN_H
-#define SCREEN_H
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
 #include <Arduino.h>
 #include <Wire.h>
 #include <U8g2lib.h>
-#include "Face/Face.h"
 #include "I2CManager.h"
-#include "Bar/Bar.h"
+#include "./components/Face/Face.h"
+#include "./components/Bar/Bar.h"
+#include "./components/Mochi/Mochi.h"
+#include "./components/Weather/Weather.h"
+#include "./components/Cube3D/Cube3D.h"
 
-namespace Screen {
+namespace Display {
 
-class Screen {
+typedef enum {
+    STATE_FACE,
+    STATE_TEXT,
+    STATE_MOCHI,
+    STATE_WEATHER,
+    STATE_ORIENTATION,
+    STATE_MAX
+} display_event_t;
+
+class Display {
 public:
-    Screen();
-    ~Screen();
+    Display();
+    ~Display();
 
     /**
-     * Initialize screen
+     * Initialize display
      * @param sda The SDA pin for I2C communication
      * @param scl The SCL pin for I2C communication
      * @return true if initialization was successful, false otherwise
@@ -24,10 +36,9 @@ public:
     bool init(int sda = SDA, int scl = SCL, int width = 128, int height = 64);
 
     /**
-     * Clear the screen
+     * Clear the display
      */
     void clear();
-    void mutexClear();
 
     /**
      * Draw text at a specific position
@@ -77,10 +88,24 @@ public:
     void setMicLevel(int level = 0);
 
     /**
+     * Update weather data for display
+     * @param weatherData The weather data to display
+     */
+    void updateWeatherData(const Communication::WeatherService::WeatherData& weatherData);
+
+    /**
+     * Update orientation display with sensor data
+     * @param orientation The orientation sensor instance
+     */
+    void updateOrientation(Sensors::OrientationSensor* orientation);
+
+    /**
      * Update the display (call this after drawing operations)
      */
     void update();
-    void mutexUpdate();
+    void enableMutex(bool enable = true) { _useMutex = enable; }
+    
+    void setState(display_event_t state) { _state = state; }
 
     /**
      * Set the font
@@ -102,25 +127,29 @@ public:
 
     Face* getFace();
     void autoFace(bool exp = true);
-    void updateFace();
-    void mutexUpdateFace();
 
 private:
     U8G2_SSD1306_128X64_NONAME_F_HW_I2C* _u8g2;
     bool _initialized;
     SemaphoreHandle_t _mux;
-    Face *_face;
-    MicBar *_micBar;
-    int _micLevel;
+    display_event_t _state;
     int _width;
     int _height;
-    bool _holdFace;
     long _holdTimer;
+    bool _useMutex;
+
+    void faceInit();
+    Face *_face;
+    
+    int _micLevel;
+    MicBar *_micBar;
+    Weather *_weather;
+    Cube3D *_cube3D;
 
     bool _lock();
     void _unlock();
 };
 
-} // namespace Utils
+} // namespace Display
 
 #endif

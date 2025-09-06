@@ -4,9 +4,9 @@
 Utils::CommandMapper *commandMapper;
 
 void setupCommandMapper() {
-    if (screen && motors && servos) {
+    if (display && motors && servos) {
         logger->info("Setting up CommandMapper...");
-        commandMapper = new Utils::CommandMapper(logger, screen, motors, servos);
+        commandMapper = new Utils::CommandMapper(logger, display, motors, servos);
         logger->info("CommandMapper initialized");
     } else {
         logger->error("Failed to initialize CommandMapper: missing required subsystems");

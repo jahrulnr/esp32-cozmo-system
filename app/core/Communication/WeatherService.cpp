@@ -4,10 +4,11 @@
 
 namespace Communication {
 
-const char* WeatherService::CACHE_FILE_PATH = "/data/weather_cache.json";
+const char* WeatherService::CACHE_FILE_PATH = "/cache/weather_cache.json";
 
 WeatherService::WeatherService(Utils::FileManager* fileManager) 
-    : _lastCacheTime(0), _initialized(false), _fileManager(fileManager) {
+    : _lastCacheTime(0), _initialized(false), _fileManager(fileManager),
+    _tag("WeatherService") {
 }
 
 WeatherService::~WeatherService() {
@@ -49,24 +50,18 @@ void WeatherService::getCurrentWeather(WeatherCallback callback, bool forceRefre
     fetchFromAPI(callback);
 }
 
-void WeatherService::setLocation(Province province, int cityCode) {
-    _config.province = province;
-    _config.cityCode = cityCode;
+void WeatherService::setLocation(const Utils::Sstring& adm4Code) {
+    _config.adm4Code = adm4Code;
     
     // Clear cache when location changes
     clearCache();
 }
 
-void WeatherService::setJakartaLocation(JakartaCity city) {
-    setLocation(Province::DKI_JAKARTA, static_cast<int>(city));
-}
-
-void WeatherService::setJawaBaratLocation(JawaBaratCity city) {
-    setLocation(Province::JAWA_BARAT, static_cast<int>(city));
-}
-
-void WeatherService::setJawaTengahLocation(JawaTengahCity city) {
-    setLocation(Province::JAWA_TENGAH, static_cast<int>(city));
+void WeatherService::setLocation(const AdministrativeRegion& region) {
+    _config.adm4Code = region.getAdm4();
+    
+    // Clear cache when location changes
+    clearCache();
 }
 
 void WeatherService::setCacheExpiry(uint32_t minutes) {
@@ -99,8 +94,8 @@ void WeatherService::fetchFromAPI(WeatherCallback callback) {
     Utils::Sstring url = buildAPIUrl();
     
     http.begin(url.toString());
-    http.addHeader("User-Agent", "ESP32-Cozmo-Weather/1.0");
     http.setReuse(true);
+    http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     http.setTimeout(10000); // 10 second timeout
     
     int httpCode = http.GET();
@@ -109,6 +104,7 @@ void WeatherService::fetchFromAPI(WeatherCallback callback) {
         Utils::Sstring response = http.getString();
         processAPIResponse(response, callback);
     } else {
+        ESP_LOGE(_tag, "Error: [%d] %s", httpCode, http.errorToString(httpCode));
         if (callback) {
             WeatherData errorData;
             callback(errorData, false);
@@ -120,13 +116,17 @@ void WeatherService::fetchFromAPI(WeatherCallback callback) {
 
 void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherCallback callback) {
     if (!callback) {
+        ESP_LOGW(_tag, "No callback provided for API response");
         return;
     }
+
+    ESP_LOGI(_tag, "Processing API response");
 
     Utils::SpiJsonDocument doc;
     DeserializationError error = deserializeJson(doc, response.c_str());
     
     if (error) {
+        ESP_LOGE(_tag, "JSON parsing failed: %s. Value: %s", error.c_str(), response.c_str());
         WeatherData errorData;
         callback(errorData, false);
         return;
@@ -135,89 +135,90 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
     WeatherData data;
     
     try {
-        // Navigate through BMKG JSON structure
-        // BMKG structure: {"data": [{"areas": [{"params": [...]}]}]}
+        // Navigate through new BMKG API structure
+        // New BMKG structure: {"lokasi": {...}, "data": [{...}]}
+        if (doc["lokasi"].isUnbound()) {
+            ESP_LOGE(_tag, "No lokasi found in response");
+            callback(data, false);
+            return;
+        }
+
+        auto lokasi = doc["lokasi"];
+        data.location = String(lokasi["provinsi"].as<String>()) + ", " + 
+                       String(lokasi["kotkab"].as<String>()) + ", " + 
+                       String(lokasi["kecamatan"].as<String>()) + ", " + 
+                       String(lokasi["desa"].as<String>());
+        data.longitude = lokasi["lon"].as<float>();
+        data.latitude = lokasi["lat"].as<float>();
+        data.timezone = lokasi["timezone"].as<String>();
+        
+        ESP_LOGI(_tag, "Location: %s (Lat: %.6f, Lon: %.6f)", data.location.c_str(), data.latitude, data.longitude);
+
         if (doc["data"].isUnbound() || doc["data"].size() == 0) {
+            ESP_LOGE(_tag, "No data array found in response");
             callback(data, false);
             return;
         }
 
         auto dataArray = doc["data"];
         if (dataArray.size() == 0) {
+            ESP_LOGE(_tag, "Empty data array in response");
             callback(data, false);
             return;
         }
 
-        auto areas = dataArray[0]["areas"];
-        if (areas.isUnbound() || areas.size() == 0) {
+        // Get the first location data
+        auto locationData = dataArray[0];
+        if (locationData["cuaca"].isUnbound() || locationData["cuaca"].size() == 0) {
+            ESP_LOGE(_tag, "No cuaca (weather) data found");
             callback(data, false);
             return;
         }
 
-        // Find the area that matches our city code
-        bool foundArea = false;
-        for (size_t i = 0; i < areas.size(); i++) {
-            auto area = areas[i];
-            int areaId = area["id"].as<int>();
-            if (areaId == _config.cityCode) {
-                foundArea = true;
-                data.location = area["description"].as<String>();
-                
-                // Parse weather parameters using enum mapping
-                auto params = area["params"];
-                for (size_t j = 0; j < params.size(); j++) {
-                    auto param = params[j];
-                    Utils::Sstring paramId = param["id"].as<String>();
-                    WeatherParam paramType = getParamFromString(paramId);
-                    
-                    auto timeRanges = param["timeRanges"];
-                    if (timeRanges.size() == 0) continue;
-                    
-                    auto firstRange = timeRanges[0];
-                    
-                    switch (paramType) {
-                        case WeatherParam::WEATHER:
-                            data.description = firstRange["value"]["text"].as<String>();
-                            data.condition = getConditionFromDescription(data.description);
-                            break;
-                        case WeatherParam::TEMPERATURE:
-                            data.temperature = firstRange["value"].as<int>();
-                            break;
-                        case WeatherParam::HUMIDITY:
-                            data.humidity = firstRange["value"].as<int>();
-                            break;
-                        case WeatherParam::WIND_SPEED:
-                            data.windSpeed = firstRange["value"].as<int>();
-                            break;
-                        case WeatherParam::WIND_DIRECTION:
-                            data.windDirection = firstRange["value"]["text"].as<String>();
-                            break;
-                        default:
-                            // Ignore unknown parameters
-                            break;
-                    }
-                }
-                break;
-            }
-        }
-
-        if (!foundArea) {
+        // Get current weather (first entry in the first time period)
+        auto cuacaArray = locationData["cuaca"];
+        if (cuacaArray.size() == 0 || cuacaArray[0].size() == 0) {
+            ESP_LOGE(_tag, "No current weather data found");
             callback(data, false);
             return;
         }
 
-        // Set timestamp and validity
-        data.lastUpdated = parseBMKGDateTime(dataArray[0]["issued"].as<String>());
+        auto currentWeather = cuacaArray[0][0]; // First time period, first entry
+        
+        // Parse weather data from new API format
+        data.temperature = currentWeather["t"].as<int>();
+        data.humidity = currentWeather["hu"].as<int>();
+        data.windSpeed = (int)(currentWeather["ws"].as<float>() * 3.6); // Convert m/s to km/h
+        data.windDirection = currentWeather["wd"].as<String>();
+        data.description = currentWeather["weather_desc"].as<String>();
+        data.imageUrl = currentWeather["image"].as<String>();
+        data.lastUpdated = currentWeather["local_datetime"].as<String>();
+        
+        // Convert weather code to condition
+        int weatherCode = currentWeather["weather"].as<int>();
+        data.condition = getConditionFromCode(weatherCode);
+        
+        ESP_LOGI(_tag, "Weather: %s (Code: %d)", data.description.c_str(), weatherCode);
+        ESP_LOGI(_tag, "Temperature: %d°C, Humidity: %d%%, Wind: %d km/h %s", 
+                 data.temperature, data.humidity, data.windSpeed, data.windDirection.c_str());
+
         data.isValid = true;
+        
+        ESP_LOGI(_tag, "Weather data parsed successfully for %s", data.location.c_str());
         
         // Cache the data
         _cachedData = data;
         _lastCacheTime = getCurrentTimestamp();
-        saveCache(data);
+        if (saveCache(data)) {
+            ESP_LOGD(_tag, "Weather data cached successfully");
+        } else {
+            ESP_LOGW(_tag, "Failed to cache weather data");
+        }
         
         callback(data, true);
         
     } catch (...) {
+        ESP_LOGE(_tag, "Exception occurred while processing API response");
         WeatherData errorData;
         callback(errorData, false);
     }
@@ -248,6 +249,10 @@ bool WeatherService::loadCache() {
     _cachedData.windSpeed = doc["windSpeed"].as<int>();
     _cachedData.windDirection = doc["windDirection"].as<String>();
     _cachedData.lastUpdated = doc["lastUpdated"].as<String>();
+    _cachedData.imageUrl = doc["imageUrl"].as<String>();
+    _cachedData.longitude = doc["longitude"].as<float>();
+    _cachedData.latitude = doc["latitude"].as<float>();
+    _cachedData.timezone = doc["timezone"].as<String>();
     _cachedData.isValid = doc["isValid"].as<bool>();
     _lastCacheTime = doc["cacheTime"].as<unsigned long>();
 
@@ -269,6 +274,10 @@ bool WeatherService::saveCache(const WeatherData& data) {
     doc["windSpeed"] = data.windSpeed;
     doc["windDirection"] = data.windDirection;
     doc["lastUpdated"] = data.lastUpdated;
+    doc["imageUrl"] = data.imageUrl;
+    doc["longitude"] = data.longitude;
+    doc["latitude"] = data.latitude;
+    doc["timezone"] = data.timezone;
     doc["isValid"] = data.isValid;
     doc["cacheTime"] = getCurrentTimestamp();
 
@@ -279,10 +288,9 @@ bool WeatherService::saveCache(const WeatherData& data) {
 }
 
 Utils::Sstring WeatherService::buildAPIUrl() const {
-    // BMKG API endpoint format
-    Utils::Sstring url = "https://data.bmkg.go.id/DataMKG/MEWS/DigitalForecast/DigitalForecast-";
-    url += String(static_cast<int>(_config.province));
-    url += ".xml";
+    // New BMKG API endpoint format
+    Utils::Sstring url = "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=";
+    url += _config.adm4Code;
     
     return url;
 }
@@ -323,13 +331,13 @@ WeatherService::WeatherCondition WeatherService::getConditionFromDescription(con
     String desc = description.toString();
     desc.toLowerCase();
     
-    if (desc.indexOf("cerah") >= 0 || desc.indexOf("clear") >= 0) {
+    if (desc.indexOf("cerah") >= 0 || desc.indexOf("clear") >= 0 || desc.indexOf("sunny") >= 0) {
         return WeatherCondition::CLEAR;
     }
-    if (desc.indexOf("berawan sebagian") >= 0 || desc.indexOf("partly cloudy") >= 0) {
+    if (desc.indexOf("cerah berawan") >= 0 || desc.indexOf("partly cloudy") >= 0) {
         return WeatherCondition::PARTLY_CLOUDY;
     }
-    if (desc.indexOf("berawan") >= 0 || desc.indexOf("cloudy") >= 0) {
+    if (desc.indexOf("berawan") >= 0 || desc.indexOf("cloudy") >= 0 || desc.indexOf("mostly cloudy") >= 0) {
         return WeatherCondition::CLOUDY;
     }
     if (desc.indexOf("mendung") >= 0 || desc.indexOf("overcast") >= 0) {
@@ -355,6 +363,51 @@ WeatherService::WeatherCondition WeatherService::getConditionFromDescription(con
     }
     
     return WeatherCondition::UNKNOWN;
+}
+
+WeatherService::WeatherCondition WeatherService::getConditionFromCode(int weatherCode) {
+    // BMKG weather codes:
+    // 0 = Cerah (Clear/Sunny)
+    // 1 = Cerah Berawan (Partly Cloudy)
+    // 2 = Cerah Berawan (Partly Cloudy)
+    // 3 = Berawan (Cloudy/Mostly Cloudy)
+    // 4 = Berawan Tebal (Overcast)
+    // And other codes for rain, thunderstorm, etc.
+    
+    switch (weatherCode) {
+        case 0:
+            return WeatherCondition::CLEAR;
+        case 1:
+        case 2:
+            return WeatherCondition::PARTLY_CLOUDY;
+        case 3:
+            return WeatherCondition::CLOUDY;
+        case 4:
+            return WeatherCondition::OVERCAST;
+        case 60:
+        case 61:
+            return WeatherCondition::LIGHT_RAIN;
+        case 63:
+            return WeatherCondition::MODERATE_RAIN;
+        case 65:
+            return WeatherCondition::HEAVY_RAIN;
+        case 95:
+        case 97:
+            return WeatherCondition::THUNDERSTORM;
+        case 45:
+        case 48:
+            return WeatherCondition::FOG;
+        default:
+            return WeatherCondition::UNKNOWN;
+    }
+}
+
+AdministrativeRegion* WeatherService::getCurrentRegion() const {
+    if (_config.adm4Code.isEmpty()) {
+        return nullptr;
+    }
+    
+    return AdministrativeRegion::findByAdm4(_config.adm4Code.c_str());
 }
 
 Utils::Sstring WeatherService::paramToString(WeatherParam param) {
@@ -424,77 +477,6 @@ Utils::Sstring WeatherService::getProvinceName(Province province) {
         case Province::PAPUA_BARAT: return "Papua Barat";
         case Province::PAPUA: return "Papua";
         default: return "Unknown Province";
-    }
-}
-
-Utils::Sstring WeatherService::getJakartaCityName(JakartaCity city) {
-    switch (city) {
-        case JakartaCity::JAKARTA_PUSAT: return "Jakarta Pusat";
-        case JakartaCity::JAKARTA_UTARA: return "Jakarta Utara";
-        case JakartaCity::JAKARTA_BARAT: return "Jakarta Barat";
-        case JakartaCity::JAKARTA_SELATAN: return "Jakarta Selatan";
-        case JakartaCity::JAKARTA_TIMUR: return "Jakarta Timur";
-        case JakartaCity::KEP_SERIBU: return "Kepulauan Seribu";
-        default: return "Unknown Jakarta City";
-    }
-}
-
-Utils::Sstring WeatherService::getJawaBaratCityName(JawaBaratCity city) {
-    switch (city) {
-        case JawaBaratCity::BOGOR: return "Bogor";
-        case JawaBaratCity::SUKABUMI: return "Sukabumi";
-        case JawaBaratCity::CIANJUR: return "Cianjur";
-        case JawaBaratCity::BANDUNG: return "Bandung";
-        case JawaBaratCity::GARUT: return "Garut";
-        case JawaBaratCity::TASIKMALAYA: return "Tasikmalaya";
-        case JawaBaratCity::CIAMIS: return "Ciamis";
-        case JawaBaratCity::KUNINGAN: return "Kuningan";
-        case JawaBaratCity::CIREBON: return "Cirebon";
-        case JawaBaratCity::MAJALENGKA: return "Majalengka";
-        case JawaBaratCity::SUMEDANG: return "Sumedang";
-        case JawaBaratCity::INDRAMAYU: return "Indramayu";
-        case JawaBaratCity::SUBANG: return "Subang";
-        case JawaBaratCity::PURWAKARTA: return "Purwakarta";
-        case JawaBaratCity::KARAWANG: return "Karawang";
-        case JawaBaratCity::BEKASI: return "Bekasi";
-        case JawaBaratCity::BANDUNG_BARAT: return "Bandung Barat";
-        case JawaBaratCity::PANGANDARAN: return "Pangandaran";
-        default: return "Unknown Jawa Barat City";
-    }
-}
-
-Utils::Sstring WeatherService::getJawaTengahCityName(JawaTengahCity city) {
-    switch (city) {
-        case JawaTengahCity::CILACAP: return "Cilacap";
-        case JawaTengahCity::BANYUMAS: return "Banyumas";
-        case JawaTengahCity::PURBALINGGA: return "Purbalingga";
-        case JawaTengahCity::BANJARNEGARA: return "Banjarnegara";
-        case JawaTengahCity::KEBUMEN: return "Kebumen";
-        case JawaTengahCity::PURWOREJO: return "Purworejo";
-        case JawaTengahCity::WONOSOBO: return "Wonosobo";
-        case JawaTengahCity::MAGELANG: return "Magelang";
-        case JawaTengahCity::BOYOLALI: return "Boyolali";
-        case JawaTengahCity::KLATEN: return "Klaten";
-        case JawaTengahCity::SUKOHARJO: return "Sukoharjo";
-        case JawaTengahCity::WONOGIRI: return "Wonogiri";
-        case JawaTengahCity::KARANGANYAR: return "Karanganyar";
-        case JawaTengahCity::SRAGEN: return "Sragen";
-        case JawaTengahCity::GROBOGAN: return "Grobogan";
-        case JawaTengahCity::BLORA: return "Blora";
-        case JawaTengahCity::REMBANG: return "Rembang";
-        case JawaTengahCity::PATI: return "Pati";
-        case JawaTengahCity::KUDUS: return "Kudus";
-        case JawaTengahCity::JEPARA: return "Jepara";
-        case JawaTengahCity::DEMAK: return "Demak";
-        case JawaTengahCity::SEMARANG: return "Semarang";
-        case JawaTengahCity::TEMANGGUNG: return "Temanggung";
-        case JawaTengahCity::KENDAL: return "Kendal";
-        case JawaTengahCity::BATANG: return "Batang";
-        case JawaTengahCity::PEKALONGAN: return "Pekalongan";
-        case JawaTengahCity::PEMALANG: return "Pemalang";
-        case JawaTengahCity::TEGAL: return "Tegal";
-        case JawaTengahCity::BREBES: return "Brebes";
-        default: return "Unknown Jawa Tengah City";
     }
 }
 

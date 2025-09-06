@@ -39,6 +39,7 @@ bool I2CManager::initBus(const char* busName, int sda, int scl, uint32_t frequen
     }
 
     // Initialize I2C bus
+    bus.wire->setTimeOut(3000);
     if (!bus.wire->begin(sda, scl)) {
         Serial.printf("Failed to initialize I2C bus '%s' on pins SDA=%d, SCL=%d\n", 
                      busName, sda, scl);
@@ -50,9 +51,12 @@ bool I2CManager::initBus(const char* busName, int sda, int scl, uint32_t frequen
     }
 
     // Set bus frequency
-    bus.wire->setClock(frequency);
+    if (frequency > 0)
+        bus.wire->setClock(frequency); 
+    else 
+        frequency = bus.wire->getClock();
     Serial.printf("Initialized I2C bus '%s' on pins SDA=%d, SCL=%d at %dkHz\n", 
-                 busName, sda, scl, frequency / 1000);
+                 busName, sda, scl, bus.wire->getClock() / 1000);
 
     // Add to map
     _buses[busName] = bus;

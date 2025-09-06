@@ -6,14 +6,14 @@
 extern TaskHandle_t speechRecognitionTaskHandle;
 extern TaskHandle_t sensorMonitorTaskHandle;
 extern TaskHandle_t gptTaskHandle;
+extern TaskHandle_t weatherServiceTaskHandle;
 
 void protectCozmoTask(void * param);
-void screenTask(void* param);
+void displayTask(void* param);
 void gptChatTask(void* parameter);
 void sensorMonitorTask(void* parameter);
 void ftpTask(void* param);
+void weatherServiceTask(void* param);
 
 // Function prototypes
 void protectCozmo();
-bool cliffDetected();
-void sendGPT(const Utils::Sstring &prompt, Communication::GPTAdapter::ResponseCallback callback);

@@ -4,13 +4,14 @@
 
 namespace Sensors {
 
-// adjustable based on position implementation
-const int BUFFER_X1 = 2; // original is 0
-const int BUFFER_Y1 = 0; // original is 2
-const int BUFFER_Z1 = 4;
-const int BUFFER_X2 = 3; // original is 1
-const int BUFFER_Y2 = 1; // original is 3
-const int BUFFER_Z2 = 5;
+// Standard MPU6050 buffer layout for both accel and gyro data
+// Data comes as: X_HIGH, X_LOW, Y_HIGH, Y_LOW, Z_HIGH, Z_LOW
+const int BUFFER_X1 = 0; // X high byte
+const int BUFFER_X2 = 1; // X low byte
+const int BUFFER_Y1 = 2; // Y high byte  
+const int BUFFER_Y2 = 3; // Y low byte
+const int BUFFER_Z1 = 4; // Z high byte
+const int BUFFER_Z2 = 5; // Z low byte
 
 OrientationSensor::OrientationSensor() : TAG("OrientationSensor"),
     _x(0), _y(0), _z(0), 
@@ -101,14 +102,20 @@ void OrientationSensor::update() {
                                                      MPU6050_REG_ACCEL_XOUT_H, 
                                                      accelBuffer, sizeof(accelBuffer))) {
         // Convert raw values to g using current scaling factor
-        _accelX = ((int16_t)((accelBuffer[BUFFER_X1] << 8) | accelBuffer[BUFFER_X2])) / _accelScale;
-        _accelY = ((int16_t)((accelBuffer[BUFFER_Y1] << 8) | accelBuffer[BUFFER_Y2])) / _accelScale;
-        _accelZ = ((int16_t)((accelBuffer[BUFFER_Z1] << 8) | accelBuffer[BUFFER_Z2])) / _accelScale;
+        float rawAccelX = ((int16_t)((accelBuffer[BUFFER_X1] << 8) | accelBuffer[BUFFER_X2])) / _accelScale;
+        float rawAccelY = ((int16_t)((accelBuffer[BUFFER_Y1] << 8) | accelBuffer[BUFFER_Y2])) / _accelScale;
+        float rawAccelZ = ((int16_t)((accelBuffer[BUFFER_Z1] << 8) | accelBuffer[BUFFER_Z2])) / _accelScale;
         
         // Apply calibration offsets
-        _accelX -= _accelOffsetX;
-        _accelY -= _accelOffsetY;
-        _accelZ -= _accelOffsetZ;
+        _accelX = rawAccelX - _accelOffsetX;
+        _accelY = rawAccelY - _accelOffsetY;
+        _accelZ = rawAccelZ - _accelOffsetZ;
+        
+        // Validate accelerometer data (should be close to 1g total magnitude)
+        float accelMag = getAccelMagnitude();
+        if (accelMag < 0.5f || accelMag > 2.0f) {
+            ESP_LOGW(TAG, "Unusual accelerometer magnitude: %.2f g", accelMag);
+        }
     } else {
         ESP_LOGE(TAG, "Failed to read accelerometer data");
     }
@@ -119,14 +126,14 @@ void OrientationSensor::update() {
                                                      MPU6050_REG_GYRO_XOUT_H, 
                                                      gyroBuffer, sizeof(gyroBuffer))) {
         // Convert raw values to degrees per second using current scaling factor
-        _x = ((int16_t)((gyroBuffer[BUFFER_X1] << 8) | gyroBuffer[BUFFER_X2])) / _gyroScale;
-        _y = ((int16_t)((gyroBuffer[BUFFER_Y1] << 8) | gyroBuffer[BUFFER_Y2])) / _gyroScale;
-        _z = ((int16_t)((gyroBuffer[BUFFER_Z1] << 8) | gyroBuffer[BUFFER_Z2])) / _gyroScale;
+        float rawGyroX = ((int16_t)((gyroBuffer[BUFFER_X1] << 8) | gyroBuffer[BUFFER_X2])) / _gyroScale;
+        float rawGyroY = ((int16_t)((gyroBuffer[BUFFER_Y1] << 8) | gyroBuffer[BUFFER_Y2])) / _gyroScale;
+        float rawGyroZ = ((int16_t)((gyroBuffer[BUFFER_Z1] << 8) | gyroBuffer[BUFFER_Z2])) / _gyroScale;
         
         // Apply calibration offsets
-        _x -= _offsetX;
-        _y -= _offsetY;
-        _z -= _offsetZ;
+        _x = rawGyroX - _offsetX;
+        _y = rawGyroY - _offsetY;
+        _z = rawGyroZ - _offsetZ;
     } else {
         ESP_LOGE(TAG, "Failed to read gyroscope data");
     }
@@ -216,10 +223,12 @@ bool OrientationSensor::calibrate() {
     _offsetY = sumGyroY / samples;
     _offsetZ = sumGyroZ / samples;
     
-    // For accelerometer, we only want to zero X and Y, but leave Z with gravity of ~1g
+    // For accelerometer, we only want to zero X and Y, but leave Z with gravity 
+    // During calibration, we assume device is level (Z should read ~1g)
     _accelOffsetX = sumAccelX / samples;
     _accelOffsetY = sumAccelY / samples;
-    _accelOffsetZ = sumAccelZ / samples;
+    // For Z-axis, subtract expected gravity (1g) to get the bias
+    _accelOffsetZ = (sumAccelZ / samples) - 1.0f;
     
     ESP_LOGI(TAG, "Calibration complete.");
     ESP_LOGI(TAG, "Gyro offsets: X=%.4f, Y=%.4f, Z=%.4f", _offsetX, _offsetY, _offsetZ);

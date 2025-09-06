@@ -9,8 +9,8 @@ void setupOrientation() {
     orientation = new Sensors::OrientationSensor();
     if (orientation->init(ORIENTATION_SDA_PIN, ORIENTATION_SCL_PIN)) {
       orientation->calibrate();
-      orientation->setGyroRange(Sensors::GYRO_RANGE_2000_DEG);
-      orientation->setAccelRange(Sensors::ACCEL_RANGE_16G);
+      orientation->setGyroRange(Sensors::GYRO_RANGE_250_DEG);
+      orientation->setAccelRange(Sensors::ACCEL_RANGE_2G);
       logger->info("Gyroscope initialized successfully");
     } else {
       logger->error("Gyroscope initialization failed");

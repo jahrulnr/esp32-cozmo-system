@@ -1,55 +1,99 @@
 #include "../register.h"
 
-void screenTask(void *param){
+void displayTask(void *param){
 		TickType_t lastWakeTime = xTaskGetTickCount();
 		TickType_t updateFrequency = pdMS_TO_TICKS(50);
 
 		size_t updateDelay = 0;
-		const char* lastEvent;
+		EVENT_DISPLAY lastEvent = EVENT_DISPLAY::NOTHING;
+		display->enableMutex();
 		while(1) {
 				vTaskDelayUntil(&lastWakeTime, updateFrequency);
 
-				if (notification->has(NOTIFICATION_DISPLAY)) {
-					const char * event = (char *)notification->consume(NOTIFICATION_DISPLAY, updateFrequency);
-					logger->info("Event Screen %s triggered", event);
-					if (strcmp(event, EVENT_DISPLAY_WAKEWORD) == 0 && updateDelay == 0) {
-							updateDelay = millis() + 3000;
-							lastEvent = EVENT_DISPLAY_WAKEWORD;
-							screen->getFace()->LookFront();
-							screen->getFace()->Expression.GoTo_Happy();
-					}
-					else if (strcmp(event, EVENT_DISPLAY_LOOK_LEFT) == 0) {
-							updateDelay = millis() + 6000;
-							lastEvent = EVENT_DISPLAY_LOOK_LEFT;
-							screen->getFace()->LookLeft();
-					}
-					else if (strcmp(event, EVENT_DISPLAY_LOOK_RIGHT) == 0) {
-							updateDelay = millis() + 6000;
-							lastEvent = EVENT_DISPLAY_LOOK_RIGHT;
-							screen->getFace()->LookRight();
-					}
-					else if (strcmp(event, EVENT_DISPLAY_CLOSE_EYE) == 0) {
-							updateDelay = millis() + 6000;
-							lastEvent = EVENT_DISPLAY_CLOSE_EYE;
-							screen->getFace()->LookFront();
-							screen->getFace()->Expression.GoTo_Sleepy();
-					}
-				}
-
 				if (updateDelay > 0 && updateDelay <= millis()) {
 					updateDelay = 0;
-					lastEvent = "";
-					screen->getFace()->LookFront();
-					screen->getFace()->Expression.GoTo_Normal();
+					lastEvent = EVENT_DISPLAY::NOTHING;
+					display->setState(Display::STATE_FACE);
+					display->getFace()->LookFront();
+					display->getFace()->Expression.GoTo_Normal();
+				}
+
+				if (notification->has(NOTIFICATION_DISPLAY)){
+					void* eventPtr = notification->consume(NOTIFICATION_DISPLAY, updateFrequency);
+					EVENT_DISPLAY event = (EVENT_DISPLAY)(intptr_t)eventPtr;
+					if (event >= 0 && event <= EVENT_DISPLAY::NOTHING) {
+						lastEvent = event;
+					}
+					logger->info("Event Screen %d triggered", lastEvent);
+				}
+
+				if (lastEvent == EVENT_DISPLAY::WAKEWORD && updateDelay == 0) {
+						display->setState(Display::STATE_FACE);
+						updateDelay = millis() + 3000;
+						display->getFace()->LookFront();
+						display->getFace()->Expression.GoTo_Happy();
+				}
+				else if (lastEvent == EVENT_DISPLAY::LOOK_LEFT && updateDelay == 0) {
+						display->setState(Display::STATE_FACE);
+						updateDelay = millis() + 6000;
+						display->getFace()->LookLeft();
+				}
+				else if (lastEvent == EVENT_DISPLAY::LOOK_RIGHT && updateDelay == 0) {
+						display->setState(Display::STATE_FACE);
+						updateDelay = millis() + 6000;
+						display->getFace()->LookRight();
+				}
+				else if (lastEvent == EVENT_DISPLAY::CLOSE_EYE && updateDelay == 0) {
+						display->setState(Display::STATE_FACE);
+						updateDelay = millis() + 6000;
+						lastEvent = EVENT_DISPLAY::CLOSE_EYE;
+						display->getFace()->LookFront();
+						display->getFace()->Expression.GoTo_Sleepy();
+				}
+				else if (lastEvent == EVENT_DISPLAY::CLIFF_DETECTED && updateDelay == 0) {
+						display->drawCenteredText(20, "Oops! Not a safe area.");
+						updateDelay = millis() + 3000;
+						continue;
+				}
+				else if (lastEvent == EVENT_DISPLAY::OBSTACLE_DETECTED && updateDelay == 0) {
+						display->drawCenteredText(20, "Oops! Finding another way!");
+						display->update();
+						updateDelay = millis() + 3000;
+						continue;
+				}
+				else if (lastEvent == EVENT_DISPLAY::STUCK_DETECTED && updateDelay == 0) {
+						display->drawCenteredText(20, "I am stuck!");
+						display->update();
+						updateDelay = millis() + 3000;
+						continue;
+				} 
+				else if (lastEvent == EVENT_DISPLAY::TOUCH_DETECTED && updateDelay == 0) {
+						display->setState(Display::STATE_MOCHI);
+						updateDelay = 1; // for trigger default screen
+				}
+				else if (lastEvent == EVENT_DISPLAY::WEATHER_STATUS && updateDelay == 0) {
+						display->setState(Display::STATE_WEATHER);
+				}
+				else if (lastEvent == EVENT_DISPLAY::ORIENTATION_DISPLAY && updateDelay == 0) {
+						display->setState(Display::STATE_ORIENTATION);
 				}
 				
 		#if MICROPHONE_ENABLED
 			#if MICROPHONE_ANALOG
-				screen->setMicLevel(amicrophone->readLevel());
+				display->setMicLevel(amicrophone->readLevel());
 			#elif MICROPHONE_I2S
-				screen->setMicLevel(microphone->readLevel());
+				display->setMicLevel(microphone->readLevel());
 			#endif
 		#endif
-				screen->mutexUpdate();
+
+		// Update orientation data if orientation sensor is available and display is in orientation mode
+		#if ORIENTATION_ENABLED
+			if (orientation && display && lastEvent == EVENT_DISPLAY::ORIENTATION_DISPLAY) {
+				orientation->update();
+				display->updateOrientation(orientation);
+			}
+		#endif
+			
+			display->update();
 		}
 }

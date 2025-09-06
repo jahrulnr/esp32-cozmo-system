@@ -3,13 +3,17 @@
 
 #include "csr.h"
 
+// for generate phonetic, run `python3 tools/multinet_g2p.py --text="new command"`
 // Define voice commands (phonetic representations)
 static const csr_cmd_t voice_commands[] = {
 	{0, "look to left", "LwK To LfFT"},
 	{1, "look to right", "LwK To RiT"},
 	{2, "close your eyes", "KLbS YeR iZ"},
 	{3, "you can play", "Yo KaN PLd"},
-	{4, "silent", "SiLcNT"}
+	{4, "silent", "SiLcNT"},
+	{5, "show weather status", "sb Wfjk STaTcS"},
+	{6, "restart system", "RmSTnRT SgSTcM"},
+	{7, "show orientation", "sb eRmfNTdscN"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -17,23 +21,36 @@ static const char* NOTIFICATION_COMMAND = "command";
 
 // Automation Events
 static const char* NOTIFICATION_AUTOMATION = "automation";
-static const char* EVENT_AUTOMATION_PAUSE = "pause";
-static const char* EVENT_AUTOMATION_RESUME = "resume";
+namespace EVENT_AUTOMATION {
+	static const char* PAUSE = "pause";
+	static const char* RESUME = "resume";
+}
 
 // Display Events
 static const char* NOTIFICATION_DISPLAY = "display";
-static const char* EVENT_DISPLAY_WAKEWORD = "wakeword";
-static const char* EVENT_DISPLAY_LOOK_LEFT = "look_left";
-static const char* EVENT_DISPLAY_LOOK_RIGHT = "look_right";
-static const char* EVENT_DISPLAY_CLOSE_EYE = "close_eye";
+typedef enum  {
+	WAKEWORD,
+	LOOK_LEFT,
+	LOOK_RIGHT,
+	CLOSE_EYE,
+	CLIFF_DETECTED,
+	OBSTACLE_DETECTED,
+	STUCK_DETECTED,
+	TOUCH_DETECTED,
+	WEATHER_STATUS,
+	ORIENTATION_DISPLAY,
+	NOTHING,
+} EVENT_DISPLAY;
 
 // SR Events
 static const char* NOTIFICATION_WAKEWORD = "wakeword";
-static const char* NOTIFICATION_SPEECH_RECOGNITION = "sr";
-static const char* EVENT_SR_WAKEWORD = "sr_wakeword";
-static const char* EVENT_SR_COMMAND = "sr_command";
-static const char* EVENT_SR_TIMEOUT = "sr_timeout";
-static const char* EVENT_SR_PAUSE = "pause_sr";
-static const char* EVENT_SR_RESUME = "resume_sr";
+static const char* NOTIFICATION_SR = "sr";
+namespace EVENT_SR {
+	static const char* WAKEWORD = "sr_wakeword";
+	static const char* COMMAND = "sr_command";
+	static const char* TIMEOUT = "sr_timeout";
+	static const char* PAUSE = "pause_sr";
+	static const char* RESUME = "resume_sr";
+}
 
 #endif

@@ -182,10 +182,10 @@ void gptChatTask(void * param) {
 		// 	// Call the callback with the processed response
 		// 	data->callback(processedResponse);
 
-		// 	if (screen){
-		// 		screen->mutexClear();
-		// 		screen->drawCenteredText(20, processedResponse);
-		// 		screen->mutexUpdate();
+		// 	if (display){
+		// 		display->mutexClear();
+		// 		display->drawCenteredText(20, processedResponse);
+		// 		display->mutexUpdate();
 		// 	}
 		// });
 	}

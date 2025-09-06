@@ -4,8 +4,8 @@
 
 namespace Utils {
 
-CommandMapper::CommandMapper(Utils::Logger *logger, Screen::Screen* screen, Motors::MotorControl* motors, Motors::ServoControl* servos)
-    : _screen(screen), _motors(motors), _servos(servos) {
+CommandMapper::CommandMapper(Utils::Logger *logger, Display::Display* display, Motors::MotorControl* motors, Motors::ServoControl* servos)
+    : _display(display), _motors(motors), _servos(servos) {
 		_logger = logger;
     initCommandHandlers();
 }
@@ -13,144 +13,144 @@ CommandMapper::CommandMapper(Utils::Logger *logger, Screen::Screen* screen, Moto
 void CommandMapper::initCommandHandlers() {
     // Face expression commands
     _commandHandlers["FACE_NORMAL"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Normal();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Normal();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_ANGRY"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Angry();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Angry();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_GLEE"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Glee();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Glee();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_HAPPY"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Happy();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Happy();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_SAD"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Sad();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Sad();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_WORRIED"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Worried();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Worried();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_FOCUSED"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Focused();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Focused();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_ANNOYED"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Annoyed();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Annoyed();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_SURPRISED"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Surprised();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Surprised();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_SKEPTIC"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Skeptic();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Skeptic();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_FRUSTRATED"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Frustrated();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Frustrated();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_UNIMPRESSED"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Unimpressed();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Unimpressed();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_SLEEPY"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Sleepy();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Sleepy();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_SUSPICIOUS"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Suspicious();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Suspicious();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_SQUINT"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Squint();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Squint();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_FURIOUS"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Furious();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Furious();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_SCARED"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Scared();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Scared();
             return true;
         }
         return false;
     };
     
     _commandHandlers["FACE_AWE"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->Expression.GoTo_Awe();
+        if (_display && _display->getFace()) {
+            _display->getFace()->Expression.GoTo_Awe();
             return true;
         }
         return false;
@@ -158,48 +158,48 @@ void CommandMapper::initCommandHandlers() {
     
     // Look direction commands
     _commandHandlers["LOOK_LEFT"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->LookLeft();
+        if (_display && _display->getFace()) {
+            _display->getFace()->LookLeft();
             return true;
         }
         return false;
     };
     
     _commandHandlers["LOOK_RIGHT"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->LookRight();
+        if (_display && _display->getFace()) {
+            _display->getFace()->LookRight();
             return true;
         }
         return false;
     };
     
     _commandHandlers["LOOK_FRONT"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->LookFront();
+        if (_display && _display->getFace()) {
+            _display->getFace()->LookFront();
             return true;
         }
         return false;
     };
     
     _commandHandlers["LOOK_TOP"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->LookTop();
+        if (_display && _display->getFace()) {
+            _display->getFace()->LookTop();
             return true;
         }
         return false;
     };
     
     _commandHandlers["LOOK_BOTTOM"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->LookBottom();
+        if (_display && _display->getFace()) {
+            _display->getFace()->LookBottom();
             return true;
         }
         return false;
     };
     
     _commandHandlers["BLINK"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->DoBlink();
+        if (_display && _display->getFace()) {
+            _display->getFace()->DoBlink();
             return true;
         }
         return false;
@@ -363,16 +363,16 @@ void CommandMapper::initCommandHandlers() {
     };
     
     _commandHandlers["LOOK_AROUND"] = [this](const Utils::Sstring& param) -> bool {
-        if (_screen && _screen->getFace()) {
-            _screen->getFace()->LookLeft();
+        if (_display && _display->getFace()) {
+            _display->getFace()->LookLeft();
             vTaskDelay(pdMS_TO_TICKS(500));
-            _screen->getFace()->LookRight();
+            _display->getFace()->LookRight();
             vTaskDelay(pdMS_TO_TICKS(500));
-            _screen->getFace()->LookTop();
+            _display->getFace()->LookTop();
             vTaskDelay(pdMS_TO_TICKS(500));
-            _screen->getFace()->LookBottom();
+            _display->getFace()->LookBottom();
             vTaskDelay(pdMS_TO_TICKS(500));
-            _screen->getFace()->LookFront();
+            _display->getFace()->LookFront();
             _logger->debug("Looked around");
             return true;
         }

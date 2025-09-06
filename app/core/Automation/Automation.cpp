@@ -161,7 +161,7 @@ void Automation::taskFunction(void* parameter) {
     // Convert parameter to Automation instance
     Automation* automation = static_cast<Automation*>(parameter);
     long updateTimer = millis();
-    long updateInterval = pdMS_TO_TICKS(60000);
+    long updateInterval = pdMS_TO_TICKS(60000*30);
     long servoTimer = updateTimer;
     long servoInterval = pdMS_TO_TICKS(10000);
     bool inprogress = false;
@@ -176,11 +176,11 @@ void Automation::taskFunction(void* parameter) {
 
         if (notification->has(NOTIFICATION_AUTOMATION)) {
             const char* notif = (const char*)notification->consume(NOTIFICATION_AUTOMATION);
-            if (notif == EVENT_AUTOMATION_PAUSE){
+            if (notif == EVENT_AUTOMATION::PAUSE){
                 paused = true;
                 automation->updateManualControlTime();
             }
-            else if (notif == EVENT_AUTOMATION_RESUME){
+            else if (notif == EVENT_AUTOMATION::RESUME){
                 paused = false;
                 automation->updateManualControlTime();
                 vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(AUTOMATION_CHECK_INTERVAL * 5));
@@ -315,16 +315,8 @@ void Automation::executeBehavior(const Utils::Sstring& behavior) {
             sayText(voiceMessage.c_str());
             delay(2000);
         }
-        
-        // Display the message on the screen if available
-        // The screen class already handles internal mutex locking in its mutexX methods
-        if (::screen && !voiceMessage.isEmpty()) {
-            _commandMapper->executeCommandString(behavior.toString());
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        } else {
-            // Just execute the commands without showing the message
-            _commandMapper->executeCommandString(behavior.toString());
-        }
+         
+        _commandMapper->executeCommandString(behavior.toString());
         
         if (_logger) {
             _logger->debug("Executed automation behavior commands");

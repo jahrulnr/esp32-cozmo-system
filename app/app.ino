@@ -9,7 +9,7 @@
 
 void setup() {
   setCpuFrequencyMhz(240);
-  heap_caps_malloc_extmem_enable(32);
+  heap_caps_malloc_extmem_enable(128);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);

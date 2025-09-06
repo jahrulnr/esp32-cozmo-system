@@ -7,10 +7,13 @@
 class Configuration : public Model {
 public:
     // Constructor
-    Configuration() : Model("configurations") {}
+    Configuration() : Model("configurations") {
+        initTable();
+    }
     
     // Create a new configuration instance
     Configuration(const String& key, const String& value) : Model("configurations") {
+        initTable();
         setKey(key);
         setValue(value);
     }
@@ -22,23 +25,6 @@ public:
     // Setters
     void setKey(const String& key) { set("key", key); }
     void setValue(const String& value) { set("value", value); }
-    
-    // Static methods to work with configurations
-    
-    // Initialize configurations table
-    static bool initTable() {
-        // Get the database from Model
-        CsvDatabase* db = Model::getDatabase();
-        if (!db) return false;
-        
-        // Create table if it doesn't exist
-        if (!db->tableExists("configurations")) {
-            std::vector<String> columns = {"key", "value"};
-            return db->createTable("configurations", columns);
-        }
-        
-        return true;
-    }
     
     // Get a configuration value by key
     static String get(const String& key, const String& defaultValue = "") {
@@ -96,6 +82,21 @@ public:
         }
         
         return nullptr;
+    }
+private:
+    // Initialize configurations table
+    static bool initTable() {
+        // Get the database from Model
+        CsvDatabase* db = Model::getDatabase();
+        if (!db) return false;
+        
+        // Create table if it doesn't exist
+        if (!db->tableExists("configurations")) {
+            std::vector<String> columns = {"key", "value"};
+            return db->createTable("configurations", columns);
+        }
+        
+        return true;
     }
 };
 

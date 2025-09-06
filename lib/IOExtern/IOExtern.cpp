@@ -44,7 +44,7 @@ bool IOExtern::digitalWrite(uint8_t pin, uint8_t state) {
     return io->digitalWrite(pin, state);
 }
 
-int IOExtern::digitalRead(uint8_t pin) {
+int IOExtern::digitalRead(uint8_t pin, bool force) {
     if (pin > 15) {
         Logger::getInstance().error("IOExtern: Invalid pin number: %d (valid range is 0-15)", pin);
         return -1;
@@ -58,7 +58,7 @@ int IOExtern::digitalRead(uint8_t pin) {
     pinMode[pin] = false;
     io->pinMode(pin, INPUT);
     
-    return io->digitalRead(pin);
+    return io->digitalRead(pin, force);
 }
 
 bool IOExtern::isConnected() {

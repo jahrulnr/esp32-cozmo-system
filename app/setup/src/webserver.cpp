@@ -31,9 +31,6 @@ void setupWebServer() {
 	database = new CsvDatabase(LittleFS);
 	Model::setDatabase(database);
 
-	// Initialize database tables
-	Configuration::initTable();
-
 	webRouter = app->getRouter();
 	registerWebRoutes(webRouter);
 	registerApiRoutes(webRouter);

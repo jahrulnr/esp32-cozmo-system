@@ -5,6 +5,7 @@
 #include <functional>
 #include "Sstring.h"
 #include "FileManager.h"
+#include "repository/AdministrativeRegion.h"
 
 namespace Communication {
 
@@ -150,17 +151,21 @@ public:
         int windSpeed;                  // in km/h
         Utils::Sstring windDirection;
         Utils::Sstring lastUpdated;
+        Utils::Sstring imageUrl;        // Weather icon URL
+        float longitude;                // Location longitude
+        float latitude;                 // Location latitude
+        Utils::Sstring timezone;        // Location timezone
         bool isValid;
         
-        WeatherData() : condition(WeatherCondition::UNKNOWN), temperature(0), humidity(0), windSpeed(0), isValid(false) {}
+        WeatherData() : condition(WeatherCondition::UNKNOWN), temperature(0), humidity(0), 
+                       windSpeed(0), longitude(0.0), latitude(0.0), isValid(false) {}
     };
 
     struct WeatherConfig {
-        Province province;              // Province enum
-        int cityCode;                  // City code (can use enum values)
-        uint32_t cacheExpiryMinutes;   // Cache expiry time in minutes
+        Utils::Sstring adm4Code;        // Administrative level 4 code (village/kelurahan)
+        uint32_t cacheExpiryMinutes;    // Cache expiry time in minutes
         
-        WeatherConfig() : province(Province::DKI_JAKARTA), cityCode(static_cast<int>(JakartaCity::JAKARTA_SELATAN)), cacheExpiryMinutes(60) {}
+        WeatherConfig() : adm4Code("31.71.03.1001"), cacheExpiryMinutes(60) {}
     };
 
     // Callback type for weather responses
@@ -190,29 +195,16 @@ public:
     void getCurrentWeather(WeatherCallback callback, bool forceRefresh = false);
 
     /**
-     * Set the location by province and city codes
-     * @param province Province enum value
-     * @param cityCode City code (can use city enum values)
+     * Set the location by administrative region code
+     * @param adm4Code Administrative level 4 code (village/kelurahan)
      */
-    void setLocation(Province province, int cityCode);
+    void setLocation(const Utils::Sstring& adm4Code);
 
     /**
-     * Set the location using Jakarta city enum
-     * @param city Jakarta city enum value
+     * Set the location by administrative region
+     * @param region Administrative region object
      */
-    void setJakartaLocation(JakartaCity city);
-
-    /**
-     * Set the location using Jawa Barat city enum
-     * @param city Jawa Barat city enum value
-     */
-    void setJawaBaratLocation(JawaBaratCity city);
-
-    /**
-     * Set the location using Jawa Tengah city enum
-     * @param city Jawa Tengah city enum value
-     */
-    void setJawaTengahLocation(JawaTengahCity city);
+    void setLocation(const AdministrativeRegion& region);
 
     /**
      * Set cache expiry time
@@ -251,11 +243,24 @@ public:
     static WeatherParam getParamFromString(const Utils::Sstring& paramId);
 
     /**
-     * Convert weather description to categorized condition
+     * Get administrative region for current location
+     * @return Pointer to AdministrativeRegion object (caller owns memory)
+     */
+    AdministrativeRegion* getCurrentRegion() const;
+
+    /**
+     * Convert weather description to categorized condition (updated for new API)
      * @param description Weather description string
      * @return WeatherCondition enum value
      */
     static WeatherCondition getConditionFromDescription(const Utils::Sstring& description);
+
+    /**
+     * Convert weather code to categorized condition
+     * @param weatherCode BMKG weather code (0-4)
+     * @return WeatherCondition enum value
+     */
+    static WeatherCondition getConditionFromCode(int weatherCode);
 
     /**
      * Get string representation of weather parameter
@@ -278,28 +283,8 @@ public:
      */
     static Utils::Sstring getProvinceName(Province province);
 
-    /**
-     * Get Jakarta city name from enum
-     * @param city JakartaCity enum value
-     * @return City name
-     */
-    static Utils::Sstring getJakartaCityName(JakartaCity city);
-
-    /**
-     * Get Jawa Barat city name from enum
-     * @param city JawaBaratCity enum value
-     * @return City name
-     */
-    static Utils::Sstring getJawaBaratCityName(JawaBaratCity city);
-
-    /**
-     * Get Jawa Tengah city name from enum
-     * @param city JawaTengahCity enum value
-     * @return City name
-     */
-    static Utils::Sstring getJawaTengahCityName(JawaTengahCity city);
-
 private:
+    const char* _tag;
     WeatherConfig _config;
     WeatherData _cachedData;
     unsigned long _lastCacheTime;

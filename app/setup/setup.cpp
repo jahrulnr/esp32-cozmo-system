@@ -4,42 +4,46 @@ void setupApp() {
 	setupLogger();
 	setupFilemanager();
   setupNotification();
-  setupScreen();
+  setupDisplay();
 
   // Initialize components
-  setupWiFi();
   setupExtender();
+  setupCliffDetector();
   setupOrientation();
   setupMotors();
   setupServos();
   setupDistanceSensor();
-  setupCliffDetector();
   setupTouchDetector();
   setupTemperatureSensor();
   setupMicrophone();
   setupSpeakers();
-  setupGPT();
   setupCommandMapper();
   setupAutomation();
-  setupFTPServer();
   setupPicoTTS();
   setupSpeechRecognition();
   setupCamera();
 
   delay(10);
+
+  setupWiFi();
+  setupGPT();
+  setupFTPServer();
   setupWebServer();
 
-  if (motors && screen)
-    motors->setScreen(screen);
-  if (servos && screen)
-    servos->setScreen(screen);
+  if (motors && display)
+    motors->setDisplay(display);
+  if (servos && display)
+    servos->setDisplay(display);
+
+  delay(10);
+  setupWeather();
   
   logger->info("System initialization complete");
   
-  if (screen) {
-    screen->clear();
-    screen->drawCenteredText(20, "Cozmo System");
-    screen->drawCenteredText(40, "Ready!");
-    screen->update();
+  if (display) {
+    display->clear();
+    display->drawCenteredText(20, "Cozmo System");
+    display->drawCenteredText(40, "Ready!");
+    display->update();
   }
 }

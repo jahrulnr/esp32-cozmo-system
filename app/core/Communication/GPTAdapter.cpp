@@ -4,7 +4,7 @@
 
 namespace Communication {
 
-GPTAdapter::GPTAdapter() : _model("gpt-3.5-turbo"), 
+GPTAdapter::GPTAdapter() : _model("gpt-4.1-nano-2025-04-14"), 
                            _maxTokens(1024), _temperature(0.7), _initialized(false) {
     _systemMessage = Utils::Sstring(R"===(
 You are a digital pet named Cozmo running inside an ESP32-CAM system.
@@ -105,6 +105,7 @@ void GPTAdapter::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const 
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Authorization", "Bearer " + _apiKey.toString());
     http.setReuse(true);
+    http.setTimeout(15000);
     
     // Prepare JSON payload
     Utils::SpiJsonDocument doc;
