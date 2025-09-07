@@ -156,6 +156,8 @@ static void audio_feed_task(void *arg) {
     esp_system_abort("No mem for audio buffer");
   }
   g_sr_data->afe_in_buffer = audio_buffer;
+	TickType_t lastWakeTime = xTaskGetTickCount();
+	TickType_t updateFrequency = 1;
 
   while (true) {
     EventBits_t bits = xEventGroupGetBits(g_sr_data->event_group);
@@ -204,7 +206,9 @@ static void audio_feed_task(void *arg) {
 
     /* Feed samples of an audio stream to the AFE_SR */
     g_sr_data->afe_handle->feed(g_sr_data->afe_data, audio_buffer);
-    vTaskDelay(1);
+
+    // vTaskDelay(1);
+		vTaskDelayUntil(&lastWakeTime, updateFrequency);
   }
   vTaskDelete(NULL);
 }
@@ -326,7 +330,7 @@ esp_err_t sr_set_mode(sr_mode_t mode) {
   return ESP_OK;
 }
 
-esp_err_t sr_start(
+esp_err_t sr_setup(
   sr_fill_cb fill_cb, void *fill_cb_arg, sr_channels_t rx_chan, sr_mode_t mode, const csr_cmd_t sr_commands[], size_t cmd_number, sr_event_cb cb, void *cb_arg
 ) {
   if(NULL != g_sr_data){
@@ -398,8 +402,12 @@ esp_err_t sr_start(
     }
   }
 
+  return ESP_OK;
+}
+
+esp_err_t sr_start(bool core) {
   //Start tasks
-  ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, configMAX_PRIORITIES - 5, &g_sr_data->feed_task, 0);
+  esp_err_t ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, configMAX_PRIORITIES - 5, &g_sr_data->feed_task, core);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio feed task");
     ::sr_stop();
@@ -407,14 +415,14 @@ esp_err_t sr_start(
   }
   
   vTaskDelay(10);
-  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, 0);
+  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, core);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio detect task");
     ::sr_stop();
     return ESP_FAIL;
   }
   
-  ret_val = xTaskCreatePinnedToCore(&SR::sr_handler_task, "SR Handler Task", 6 * 1024, NULL, configMAX_PRIORITIES - 1, &g_sr_data->handle_task, 0);
+  ret_val = xTaskCreatePinnedToCore(&SR::sr_handler_task, "SR Handler Task", 6 * 1024, NULL, configMAX_PRIORITIES - 1, &g_sr_data->handle_task, core);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio handler task");
     ::sr_stop();

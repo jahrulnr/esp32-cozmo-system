@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <sdkconfig.h>
+#include <sdkconfig.h>
 #include "esp_log.h"
 #include <soc/soc.h>
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
@@ -26,9 +27,10 @@ void setup() {
 
   LittleFS.begin(false);
   setupApp();
+  setupTasksCpu0();
+  setupTasksCpu1();
 }
 
 void loop() {
-  setupTasks();
   vTaskDelete(NULL);
 }

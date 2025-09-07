@@ -17,10 +17,12 @@ namespace Display {
 typedef enum {
     STATE_FACE,
     STATE_TEXT,
+    STATE_MIC,
     STATE_WEATHER,
     STATE_ORIENTATION,
     STATE_SPACE_GAME,
     STATE_STATUS,
+
     STATE_MAX
 } display_event_t;
 

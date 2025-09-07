@@ -24,9 +24,10 @@ typedef struct csr_cmd_t {
 
 namespace SR {
 
-	esp_err_t sr_start(
+	esp_err_t sr_setup(
 		sr_fill_cb fill_cb, void *fill_cb_arg, sr_channels_t rx_chan, sr_mode_t mode, const csr_cmd_t *sr_commands, size_t cmd_number, sr_event_cb cb, void *cb_arg
 	);
+	esp_err_t sr_start(bool core = 0);
 	esp_err_t sr_stop(void);
 	esp_err_t sr_pause(void);
 	esp_err_t sr_resume(void);

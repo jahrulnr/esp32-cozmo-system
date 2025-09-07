@@ -18,7 +18,8 @@ static const csr_cmd_t voice_commands[] = {
 	{7, "show orientation", "sb eRmfNTdscN"},
 	{8, "play a game", "PLd c GdM"},
 	{9, "record audio", "RfKkD nDmb"},
-	{10, "show status", "sb STaTcS"}
+	{10, "show status", "sb STaTcS"},
+	{10, "Tumbil cun status", "TcMBcL KcN STaTcS"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";

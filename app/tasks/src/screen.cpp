@@ -33,11 +33,7 @@ void displayTask(void *param){
 				if (updateDelay == 0){
 					switch(lastEvent) {
 						case EVENT_DISPLAY::WAKEWORD:
-								display->setState(Display::STATE_FACE);
-								updateDelay = millis() + 3000;
-								display->getFace()->LookFront();
-								display->getFace()->Expression.GoTo_Happy();
-								display->autoFace(false);
+								display->setState(Display::STATE_MIC);
 						break;
 						case EVENT_DISPLAY::LOOK_LEFT:
 								display->setState(Display::STATE_FACE);
@@ -52,7 +48,6 @@ void displayTask(void *param){
 						case EVENT_DISPLAY::CLOSE_EYE:
 								display->setState(Display::STATE_FACE);
 								updateDelay = millis() + 6000;
-								lastEvent = EVENT_DISPLAY::CLOSE_EYE;
 								display->getFace()->LookFront();
 								display->getFace()->Expression.GoTo_Sleepy();
 						break;
@@ -95,9 +90,10 @@ void displayTask(void *param){
 								display->drawCenteredText(40, "Complete!");
 								updateDelay = millis() + 2000; // Show for 2 seconds then return to face
 						break;
+						case EVENT_DISPLAY::NOTHING:
+							// nothing
+							break;
 						default:
-							display->setState(Display::STATE_FACE);
-							ESP_LOGW(TAG, "Unknow display event. Event: %d", lastEvent);
 							lastEvent = EVENT_DISPLAY::NOTHING;
 					}
 				}

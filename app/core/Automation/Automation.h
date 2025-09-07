@@ -19,7 +19,8 @@ public:
                Utils::Logger* logger);
     ~Automation();
 
-    void start();
+    // core 0 or 1
+    void start(bool core = false);
     void stop();
     void updateManualControlTime();
     bool isEnabled() const;

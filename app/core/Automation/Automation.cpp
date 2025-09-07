@@ -75,7 +75,7 @@ Automation::~Automation() {
 }
 
 // Start automation task
-void Automation::start() {
+void Automation::start(bool core) {
     if (_taskHandle != NULL) {
         return; // Task already running
     }
@@ -84,17 +84,18 @@ void Automation::start() {
     loadTemplateBehaviors();
     
     // Create the task
-    xTaskCreate(
+    xTaskCreateUniversal(
         taskFunction,    // Function that implements the task
         "automation",    // Task name
         4096 * 2,           // Stack size in words
         this,           // Parameter passed to the task
         0,              // Priority
-        &_taskHandle   // Task handle
+        &_taskHandle,   // Task handle
+        core
     );
 
     if (_fileManager && !_fileManager->exists(_templatesUpdateFile)) {
-        xTaskCreatePinnedToCore(
+        xTaskCreateUniversal(
             [](void * param){
                 vTaskDelay(pdMS_TO_TICKS(20099));
                 if (WiFi.isConnected()) {
@@ -243,11 +244,11 @@ void Automation::taskFunction(void* parameter) {
         }
 
         if (millis() - updateTimer > updateInterval) {
-            xTaskCreate([](void * param){
+            xTaskCreateUniversal([](void * param){
             Automation* automation = static_cast<Automation*>(param);
                 automation->fetchAndAddNewBehaviors();
                 vTaskDelete(NULL);
-            }, "UpdateTemplate", 20 * 1024, automation, 1, NULL);
+            }, "UpdateTemplate", 20 * 1024, automation, 1, NULL, 0);
             updateTimer = millis();
         }
         

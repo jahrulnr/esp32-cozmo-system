@@ -3,7 +3,7 @@
 
 void setupSpeechRecognition() {
 		float volume = 1.f;
-		esp_err_t ret = SR::sr_start(
+		esp_err_t ret = SR::sr_setup(
 				mic_fill_callback,                                 // data fill callback
 				&volume,																							 // data fill callback argument
 #if MICROPHONE_I2S

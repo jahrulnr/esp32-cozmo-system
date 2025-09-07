@@ -96,7 +96,6 @@ void setupSpeakers();
 void setupDisplay();
 void setupWiFi();
 void setupGPT();
-void setupTasks();
 void setupCommandMapper();
 void setupAutomation();
 void setupExtender();
@@ -105,6 +104,9 @@ void setupPicoTTS();
 void setupFTPServer();
 void setupWeather();
 void setupAudioRecorder();
+
+void setupTasksCpu0();
+void setupTasksCpu1();
 
 #if PICOTTS_ENABLED
 extern bool picotts_initialized;
