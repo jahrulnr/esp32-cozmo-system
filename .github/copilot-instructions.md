@@ -10,6 +10,145 @@ This is an ESP32-S3-based intelligent robot system with speech recognition, TTS,
 - **Modular design**: Core components in `app/core/`, libraries in `lib/`, web routes in `app/web/`
 - **FreeRTOS tasks**: Multi-core processing with task-based automation and SR
 
+## 📁 Project Structure
+
+### Root Directory Layout
+```
+├── platformio.ini              # PlatformIO configuration (environments, libraries, build flags)
+├── hiesp.csv / hiesp-8mb.csv    # Custom partition tables for ESP-SR model storage
+├── boards/                     # Custom board definitions (ESP32-S3-N16R8, Seeed XIAO)
+├── app/                        # Main application code (NOT src/ - custom src_dir)
+├── lib/                        # Custom libraries and hardware abstraction layers
+├── include/                    # Global headers (Config.h, feature flags)
+├── data/                       # LittleFS filesystem content (web assets, config)
+├── model/                      # ESP-SR speech recognition models (flashed separately)
+├── tools/                      # Build tools and utilities
+└── tmp/                        # Temporary build artifacts
+```
+
+### Application Code Structure (`app/`)
+```
+app/
+├── app.ino                     # Arduino entry point (setup/loop delegation)
+├── Constants.h                 # Global constants, event keys, voice commands
+├── core/                       # Core robot functionality modules
+│   ├── Audio/                  # Audio recording and playback
+│   ├── Automation/             # GPT-powered behavior generation
+│   ├── Communication/          # WiFi, GPT API, Weather services
+│   ├── Motors/                 # Motor and servo control
+│   ├── Sensors/                # Camera, distance, orientation sensors
+│   └── Utils/                  # Memory management, string utilities
+├── display/                    # Display control and face animation system
+│   ├── Display.cpp/.h          # Main display controller
+│   ├── DisplayFace.cpp         # Eye animation and expressions
+│   ├── DisplayGraphic.cpp      # Graphics primitives
+│   ├── DisplayText.cpp         # Text rendering
+│   ├── Icons.h                 # Icon definitions
+│   └── components/             # Display UI components
+├── repository/                 # Data models and configuration persistence
+├── setup/                      # System initialization and component setup
+│   ├── setup.cpp/.h            # Main setup orchestration
+│   └── src/                    # Component-specific setup functions
+├── tasks/                      # FreeRTOS task definitions
+│   ├── register.h              # Task registration and spawning
+│   └── src/                    # Task implementation files
+├── web/                        # Web interface (MVC framework)
+│   ├── Controllers/            # API endpoint handlers
+│   └── Routes/                 # Route definitions (web, api, websocket)
+└── callback/                   # Event system callback registration
+    ├── register.h              # Notification callback setup
+    └── src/                    # Component-specific event handlers
+```
+
+### Custom Libraries (`lib/`)
+```
+lib/
+├── ESP_CSR/                    # ESP-SR speech recognition wrapper
+├── FileManager/                # LittleFS and SD card file operations
+├── I2CManager/                 # Multi-bus I2C management and scanning
+├── IOExtern/                   # PCF8575 I2C expander for motor control
+├── Logger/                     # Centralized logging system
+├── SendTask/                   # Task execution with status tracking
+└── Sstring/                    # Memory-efficient string class
+```
+
+### Configuration & Data (`include/` & `data/`)
+```
+include/
+├── Config.h.example            # Template configuration file
+├── Config.h                    # Hardware pins, feature flags, credentials
+└── README.md                   # Configuration documentation
+
+data/                           # LittleFS filesystem content
+├── assets/                     # Web application static files
+│   ├── bootstrap.bundle.js     # Frontend framework
+│   ├── bootstrap.min.css       # Styling
+│   └── joy.js                  # Joystick control library
+├── cache/                      # API response caching
+├── config/                     # Runtime configuration files
+│   ├── templates.txt           # GPT behavior templates
+│   ├── wifi.json               # WiFi credentials
+│   └── wifi.json.sample        # WiFi template
+├── database/                   # Static data files
+│   └── administrative_regions.csv  # Location database
+└── views/                      # Web application HTML
+    └── app.html               # Single-page application
+```
+
+### Speech Recognition Models (`model/`)
+```
+model/
+├── srmodels.bin               # Combined SR models (flash to 0x47D000)
+├── fst/                       # Finite State Transducer (command grammar)
+│   ├── commands.txt           # Voice command definitions
+│   ├── fst.txt                # Grammar rules
+│   └── tokens.txt             # Token mappings
+├── mn5q8_en/                  # Multinet wake word model
+├── nsnet2/                    # Noise suppression model
+├── picoTTS/                   # Text-to-speech voice data
+│   ├── en-US_lh0_sg.bin       # Voice synthesis model
+│   └── en-US_ta.bin           # Text analysis model
+├── vadnet1_medium/            # Voice activity detection
+└── wn9_hiesp/                 # Custom wake word model
+```
+
+### Key File Purposes
+
+#### Entry Points
+- **`app/app.ino`**: Arduino setup/loop delegation to C++ classes
+- **`app/setup/setup.cpp`**: Component initialization orchestration
+- **`app/tasks/register.h`**: FreeRTOS task spawning
+
+#### Configuration
+- **`include/Config.h`**: Hardware pins, feature flags (`MOTOR_ENABLED`, `CAMERA_ENABLED`)
+- **`app/Constants.h`**: Event keys, voice commands, system constants
+- **`platformio.ini`**: Build configuration, library dependencies
+
+#### Communication
+- **`app/callback/register.h`**: Event system callback registration
+- **`app/web/Routes/`**: Web API endpoint definitions
+- **`app/core/Communication/`**: External service integrations
+
+#### Hardware Control
+- **`app/core/Motors/`**: Motor and servo control via IOExtern
+- **`app/core/Sensors/`**: Hardware sensor interfaces
+- **`app/display/`**: Complex face animation system
+
+#### Memory Management
+- **`lib/Sstring/`**: Custom string class for memory efficiency
+- **`app/core/Utils/`**: SpiJsonDocument for large JSON handling
+
+### Navigation Guidelines for AI Agents
+
+1. **Feature Implementation**: Check `include/Config.h` for feature flags before adding code
+2. **Event Communication**: Use constants from `app/Constants.h` for notification keys
+3. **Hardware Control**: Implement in `app/core/` with proper abstractions
+4. **Web APIs**: Add routes in `app/web/Routes/`, controllers in `app/web/Controllers/`
+5. **Component Setup**: Add initialization in `app/setup/src/` and register in `setup.cpp`
+6. **Task Creation**: Define in `app/tasks/src/`, register in `app/tasks/register.h`
+7. **Custom Libraries**: Place hardware-specific code in `lib/` for reusability
+8. **Configuration**: Store runtime config in `data/config/`, compile-time in `include/Config.h`
+
 ### Memory Management
 - Uses **external SPI RAM** extensively via `Utils::SpiJsonDocument` (custom allocator)
 - **Never use** standard `DynamicJsonDocument` - always use `Utils::SpiJsonDocument`
@@ -27,9 +166,13 @@ This is an ESP32-S3-based intelligent robot system with speech recognition, TTS,
 # Standard PlatformIO commands
 pio run -e esp32s3dev        # Build for ESP32-S3-N16R8
 pio run -e esp32s3dev -t upload  # Upload firmware
-
-# Flash ESP-SR models separately (required for voice recognition)
+   
+# Flash speech recognition models (required for voice features)
 esptool.py --baud 2000000 write_flash 0x47D000 model/srmodels.bin
+
+# Flash PicoTTS models (required for text-to-speech)
+esptool.py --baud 2000000 write_flash 0x310000 model/picoTTS/en-US_ta.bin
+esptool.py --baud 2000000 write_flash 0x3B0000 model/picoTTS/en-US_lh0_sg.bin
 ```
 
 ### Configuration System
