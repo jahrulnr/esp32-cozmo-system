@@ -83,7 +83,6 @@ void setupLogger();
 void setupNotification();
 void setupFilemanager();
 void setupWebServer();
-void setupCamera();
 void setupMotors();
 void setupServos();
 void setupOrientation();

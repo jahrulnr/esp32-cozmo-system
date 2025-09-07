@@ -22,7 +22,6 @@ void setupApp() {
   setupPicoTTS();
   setupSpeechRecognition();
   setupAudioRecorder();
-  setupCamera();
 
   delay(10);
 

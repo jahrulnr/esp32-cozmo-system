@@ -15,6 +15,7 @@ void sensorMonitorTask(void* parameter);
 void ftpTask(void* param);
 void weatherServiceTask(void* param);
 void srControlTask(void* param);
+void cameraTask(void* param);
 
 // Function prototypes
 void protectCozmo();

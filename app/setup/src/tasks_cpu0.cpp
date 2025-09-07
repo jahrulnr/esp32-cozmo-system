@@ -7,55 +7,41 @@
  */
 void setupTasksCpu0() {
     logger->info("Initializing tasks cpu 0 ...");
+    const bool core = 0;
 
-    #if PROTECT_COZMO
-    // protect cozmo
-    xTaskCreateUniversal(
-            protectCozmoTask, "protectCozmo", 4 * 1024, NULL, 2, NULL, 0
+    if (display) {
+        xTaskCreateUniversal(
+            displayTask, 
+            "displayTaskHandler", 
+            4096, 
+            NULL, 
+            5, 
+            NULL,
+            core
         );
-    #endif
-    
-    // Create automation task
-    if (automation) {
-        automation->start();
-        automation->setRandomBehaviorOrder();
     }
-
+    
+    // Create sensor monitoring task
     xTaskCreateUniversal(
-        ftpTask, 
-        "ftpTaskHandler", 
-        1024 * 8, 
-        NULL, 
-        1, 
-        NULL,
-        0
+        sensorMonitorTask,         // Task function
+        "SensorMonitor",           // Task name
+        4096,                      // Stack size
+        NULL,                      // Parameters
+        5,                         // Priority
+        &sensorMonitorTaskHandle,  // Task handle
+        core
     );
-
+    
+    // Create camera task
     xTaskCreateUniversal(
-        weatherServiceTask, "weatherServiceTaskHandler", 
-        1024 * 4, 
-        NULL, 
-        0, 
-        &weatherServiceTaskHandle,
-        0
+        cameraTask,         // Task function
+        "cameraTask",           // Task name
+        4096,                      // Stack size
+        NULL,                      // Parameters
+        0,                         // Priority
+        NULL,  // Task handle
+        core
     );
-
-    #if MICROPHONE_ENABLED
-    SR::sr_start(0);
-    #endif
-
-    #if MICROPHONE_ENABLED
-    // Create SR control task for handling ESP-SR pause/resume events
-    xTaskCreateUniversal(
-        srControlTask,
-        "SRControl",
-        4096,                     // Small stack size - just handles notifications
-        NULL,
-        0,                        // Higher priority for responsiveness
-        NULL,
-        0                         // Core 0 - same as ESP-SR
-    );
-    #endif
 
     delay(1000);
     logger->info("Tasks initialized on cpu 0");
