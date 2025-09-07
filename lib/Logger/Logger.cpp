@@ -118,6 +118,21 @@ void Logger::log(LogLevel level, const String& message) {
     if (_serialEnabled) {
         switch(level){
             case LogLevel::INFO:
+                Serial.printf("\033[36m[I] %s\033[0m\n", msg); // Cyan
+                break;
+            case LogLevel::WARNING:
+                Serial.printf("\033[33m[W] %s\033[0m\n", msg); // Yellow
+                break;
+            case LogLevel::ERROR:
+                Serial.printf("\033[31m[E] %s\033[0m\n", msg); // Red
+                break;
+            default:
+                Serial.printf("\033[37m[D] %s\033[0m\n", msg); // White
+                break;
+        };
+    } else {
+        switch(level){
+            case LogLevel::INFO:
                 log_i("%s", msg);
                 break;
             case LogLevel::WARNING:

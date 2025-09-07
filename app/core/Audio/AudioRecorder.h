@@ -9,6 +9,7 @@
 #include "Constants.h"
 #include "Sstring.h"
 #include "Logger.h"
+#include "SendTask.h"
 #include "Notification.h"
 #include "FileManager.h"
 #include "AnalogMicrophone.h"

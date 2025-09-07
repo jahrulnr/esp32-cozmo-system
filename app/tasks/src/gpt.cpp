@@ -1,7 +1,5 @@
 #include "../register.h"
 
-TaskHandle_t gptTaskHandle = nullptr;
-
 void gptChatTask(void * param) {
 	if (param != nullptr){
 		// Create additional command with comprehensive hardware and sensor context
@@ -189,7 +187,6 @@ void gptChatTask(void * param) {
 		// 	}
 		// });
 	}
-
-	gptTaskHandle = nullptr;
+	
 	vTaskDelete(NULL);
 }

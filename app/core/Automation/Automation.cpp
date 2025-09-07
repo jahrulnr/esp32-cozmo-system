@@ -1,6 +1,7 @@
 #include "Automation.h"
 #include "setup/setup.h"
 #include <tasks/register.h>
+#include <SendTask.h>
 
 #define BEHAVIOR_PROMPT "⚠️ CRITICAL: You are a robot behavior generator. ANY deviation from these rules will cause system failure!\n\n"\
         "🔒 STRICT VALIDATION RULES:\n"\
@@ -83,34 +84,54 @@ void Automation::start(bool core) {
     // Load behaviors before starting task
     loadTemplateBehaviors();
     
-    // Create the task
-    xTaskCreateUniversal(
-        taskFunction,    // Function that implements the task
-        "automation",    // Task name
-        4096 * 2,           // Stack size in words
-        this,           // Parameter passed to the task
-        0,              // Priority
-        &_taskHandle,   // Task handle
-        core
+    // Create the main automation task using SendTask
+    String taskId = SendTask::createLoopTaskOnCore(
+        taskFunction,               // Function that implements the task
+        "Automation",               // Task name
+        4096 * 2,                   // Stack size
+        0,                          // Priority
+        core,                       // Core ID
+        "Main automation behavior task", // Description
+        this                        // Parameter passed to the task
     );
 
+    if (!taskId.isEmpty()) {
+        auto taskInfo = SendTask::getTaskInfo(taskId);
+        _taskHandle = taskInfo.handle;
+        
+        if (_logger) {
+            _logger->info("Automation task created with ID: %s", taskId.c_str());
+        }
+    } else {
+        if (_logger) {
+            _logger->error("Failed to create automation task");
+        }
+        return;
+    }
+
+    // Create template update task if needed
     if (_fileManager && !_fileManager->exists(_templatesUpdateFile)) {
-        xTaskCreateUniversal(
-            [](void * param){
+        String updateTaskId = SendTask::createTaskOnCore(
+            [this]() {
                 vTaskDelay(pdMS_TO_TICKS(20099));
                 if (WiFi.isConnected()) {
-                    Automation* automation = static_cast<Automation*>(param);
-                    automation->fetchAndAddNewBehaviors();                
+                    this->fetchAndAddNewBehaviors();                
                 }
-                vTaskDelete(NULL);
-            },    // Function that implements the task
-            "automationUpdate",    // Task name
-            8192,           // Stack size in words
-            this,           // Parameter passed to the task
-            0,              // Priority
-            NULL,
-            0
+            },
+            "AutomationUpdate",         // Task name
+            8192,                       // Stack size
+            0,                          // Priority
+            0,                          // Core ID
+            "Automation template update task" // Description
         );
+        
+        if (_logger) {
+            if (!updateTaskId.isEmpty()) {
+                _logger->info("Automation update task created with ID: %s", updateTaskId.c_str());
+            } else {
+                _logger->error("Failed to create automation update task");
+            }
+        }
     }
     
     if (_logger) {
@@ -244,11 +265,22 @@ void Automation::taskFunction(void* parameter) {
         }
 
         if (millis() - updateTimer > updateInterval) {
-            xTaskCreateUniversal([](void * param){
-            Automation* automation = static_cast<Automation*>(param);
-                automation->fetchAndAddNewBehaviors();
-                vTaskDelete(NULL);
-            }, "UpdateTemplate", 20 * 1024, automation, 1, NULL, 0);
+            // Create a template update task using SendTask
+            String updateTaskId = SendTask::createTaskOnCore(
+                [automation]() {
+                    automation->fetchAndAddNewBehaviors();
+                },
+                "UpdateTemplate",           // Task name
+                20 * 1024,                  // Stack size
+                1,                          // Priority
+                0,                          // Core ID
+                "Periodic template update task" // Description
+            );
+            
+            if (automation->_logger && updateTaskId.isEmpty()) {
+                automation->_logger->error("Failed to create template update task");
+            }
+            
             updateTimer = millis();
         }
         

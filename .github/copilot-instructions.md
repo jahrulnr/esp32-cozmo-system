@@ -347,8 +347,8 @@ Response executeMiddleware(const std::vector<String>& middleware, Request& reque
 - **Main loop exits** via `vTaskDelete(NULL)` - system runs on FreeRTOS tasks
 - **Task registration** in `tasks/register.h`, spawned in `setupTasks()`
 - **Watchdog configured** for 120s timeout (long for ESP-SR processing)
-- **SendTask library**: Command execution with task tracking (`Command::Send()`, task status monitoring)
-- **Task scheduling**: Uses `xTaskCreateUniversal()` and `xTaskCreatePinnedToCore()` for core affinity
+- **SendTask library**: Advanced task creation and management with core affinity (`SendTask::createTaskOnCore()`, `SendTask::createLoopTaskOnCore()`, task status monitoring)
+- **Task scheduling**: Uses `SendTask` for managed task creation with tracking, plus direct `xTaskCreateUniversal()` and `xTaskCreatePinnedToCore()` for core affinity
 
 ### File System Layout
 - **LittleFS**: Configuration, web assets, logs (`/data/` directory contents)
@@ -388,7 +388,7 @@ Response executeMiddleware(const std::vector<String>& middleware, Request& reque
 - **Memory debugging**: Monitor via SystemController `/api/v1/system/stats`
 - **Component status**: Check global pointers and `logger->error()` messages
 - **Network debugging**: mDNS service at `devicename.local`, FTP server for file access
-- **Task monitoring**: Use `Command::Send()` for trackable task execution with status monitoring
+- **Task monitoring**: Use `SendTask::createTaskOnCore()` for trackable task execution with status monitoring, or legacy `Command::Send()` interface
 - **Display debugging**: Two-phase init - basic display in setup(), full thread-safety after setupTasks()
 
 ## 🎯 GPIO Pin Reference (ESP32-S3)

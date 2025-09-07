@@ -3,6 +3,8 @@
 
 #include "csr.h"
 
+static const char* deviceName = "pio-esp32-cam";
+
 // for generate phonetic, run `python3 tools/multinet_g2p.py --text="new command"`
 // Define voice commands (phonetic representations)
 static const csr_cmd_t voice_commands[] = {

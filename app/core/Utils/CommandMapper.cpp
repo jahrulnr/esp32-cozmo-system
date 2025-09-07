@@ -390,7 +390,7 @@ bool CommandMapper::executeCommand(const Utils::Sstring& commandStr) {
         Utils::Sstring command = Utils::Sstring(matches[1].str().c_str());
         Utils::Sstring parameter = matches.size() > 2 ? Utils::Sstring(matches[2].str().c_str()) : "";
         
-        _logger->debug("Executing command: %s%s", command, parameter.isEmpty() ? "" : (String(" with param: ") + parameter.c_str()));
+        _logger->debug("Executing command: %s%s", command.c_str(), parameter.isEmpty() ? "" : (String(" with param: ") + parameter.c_str()).c_str());
         
         // Look up command handler
         if (_commandHandlers.count(command.c_str()) > 0) {

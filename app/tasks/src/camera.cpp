@@ -32,5 +32,6 @@ void cameraTask(void * param) {
 
   ESP_LOGI(TAG, "cam_task stack size after initiated: %d", CONFIG_CAMERA_TASK_STACK_SIZE);
 
-  vTaskDelete(NULL);
+  // vTaskDelete(NULL);
+  SendTask::removeTask(cameraTaskId);
 }
