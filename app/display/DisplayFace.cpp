@@ -3,7 +3,7 @@
 namespace Display {
 
 void Display::faceInit() {
-    _face = new Face(_u8g2, _width, _height, 40);
+    _face = new Face(_u8g2, _width, _height - 14, 40); // last 20 px for status bar
     _face->Expression.GoTo_Normal();
 
     // Assign a weight to each emotion

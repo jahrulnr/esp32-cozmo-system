@@ -5,9 +5,9 @@
 #include <Wire.h>
 #include <U8g2lib.h>
 #include "I2CManager.h"
+#include "./components/Status/Status.h"
 #include "./components/Face/Face.h"
 #include "./components/Bar/Bar.h"
-#include "./components/Mochi/Mochi.h"
 #include "./components/Weather/Weather.h"
 #include "./components/Cube3D/Cube3D.h"
 #include "./components/SpaceGame/SpaceGame.h"
@@ -17,10 +17,10 @@ namespace Display {
 typedef enum {
     STATE_FACE,
     STATE_TEXT,
-    STATE_MOCHI,
     STATE_WEATHER,
     STATE_ORIENTATION,
     STATE_SPACE_GAME,
+    STATE_STATUS,
     STATE_MAX
 } display_event_t;
 

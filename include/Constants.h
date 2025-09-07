@@ -11,11 +11,14 @@ static const csr_cmd_t voice_commands[] = {
 	{2, "close your eyes", "KLbS YeR iZ"},
 	{3, "you can play", "Yo KaN PLd"},
 	{4, "silent", "SiLcNT"},
+	{5, "show weather", "sb Wfjk"},
 	{5, "show weather status", "sb Wfjk STaTcS"},
 	{6, "reboot", "RgBoT"},
+	{6, "restart", "RmSTnRT"},
 	{7, "show orientation", "sb eRmfNTdscN"},
 	{8, "play a game", "PLd c GdM"},
-	{9, "record audio", "RfKkD nDmb"}
+	{9, "record audio", "RfKkD nDmb"},
+	{10, "show status", "sb STaTcS"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -40,6 +43,7 @@ typedef enum  {
 	OBSTACLE_DETECTED,
 	STUCK_DETECTED,
 	TOUCH_DETECTED,
+	BASIC_STATUS,
 	WEATHER_STATUS,
 	ORIENTATION_DISPLAY,
 	SPACE_GAME,

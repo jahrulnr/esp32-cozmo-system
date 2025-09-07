@@ -34,11 +34,13 @@ bool Display::init(int sda, int scl, int width, int height) {
     Utils::I2CManager::getInstance().initBus("base", sda, scl);
     
     _u8g2->begin();
-    _u8g2->setFont(u8g2_font_6x10_tf);
     _u8g2->setDrawColor(1);
+    _u8g2->setFontMode(1);
+    _u8g2->setBitmapMode(1);
     _u8g2->setFontRefHeightExtendedText();
     _u8g2->setFontPosTop();
     _u8g2->setFontDirection(0);
+    _u8g2->setFont(u8g2_font_6x10_tf);
 
     _micBar = new MicBar(_u8g2);
     _weather = new Weather(_u8g2, width, height);
@@ -89,12 +91,14 @@ void Display::update() {
         _spaceGame->pauseGame();
     }
 
+    // each state maybe need clearBuffer or not, check each state to makesure.
     switch(_state) {
         case STATE_TEXT:
             if (_holdTimer == 0) {
                 _holdTimer = millis() + 3000;
             }
 
+            // dont clear buffer, the buffer text writed at DisplayGraphic.cpp and DisplayText.cpp
             _micBar->drawBar(_micLevel);
             _u8g2->sendBuffer();
 
@@ -107,11 +111,8 @@ void Display::update() {
             _u8g2->clearBuffer();
 
             _micBar->drawBar(_micLevel);
+
             _face->Update();
-            break;
-        case STATE_MOCHI:
-            drawMochiFrame(_u8g2);
-            _state = STATE_FACE;
             break;
         case STATE_WEATHER:
             _weather->draw();
@@ -127,6 +128,11 @@ void Display::update() {
                 
                 _spaceGame->draw();
             }
+            break;
+        case STATE_STATUS:
+            _u8g2->clearBuffer();
+            (new Status(_u8g2))->Draw();
+            _u8g2->sendBuffer();
             break;
         default:
             _state = STATE_FACE;

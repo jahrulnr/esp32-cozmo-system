@@ -3,6 +3,7 @@
 void displayTask(void *param){
 		TickType_t lastWakeTime = xTaskGetTickCount();
 		TickType_t updateFrequency = pdMS_TO_TICKS(50);
+		const char* TAG = "displayTask";
 
 		size_t updateDelay = 0;
 		EVENT_DISPLAY lastEvent = EVENT_DISPLAY::NOTHING;
@@ -17,6 +18,7 @@ void displayTask(void *param){
 					display->getFace()->LookFront();
 					display->getFace()->Expression.GoTo_Normal();
 					display->autoFace(true);
+					ESP_LOGI(TAG, "Reset Event Screen %d triggered", lastEvent);
 				}
 
 				if (notification->has(NOTIFICATION_DISPLAY)){
@@ -25,76 +27,79 @@ void displayTask(void *param){
 					if (event >= 0 && event <= EVENT_DISPLAY::NOTHING) {
 						lastEvent = event;
 					}
-					logger->info("Event Screen %d triggered", lastEvent);
+					ESP_LOGI(TAG, "Event Screen %d triggered", lastEvent);
 				}
 
-				if (lastEvent == EVENT_DISPLAY::WAKEWORD && updateDelay == 0) {
-						display->setState(Display::STATE_FACE);
-						updateDelay = millis() + 3000;
-						display->getFace()->LookFront();
-						display->getFace()->Expression.GoTo_Happy();
-						display->autoFace(false);
-				}
-				else if (lastEvent == EVENT_DISPLAY::LOOK_LEFT && updateDelay == 0) {
-						display->setState(Display::STATE_FACE);
-						display->getFace()->Expression.GoTo_Happy();
-						display->autoFace(false);
-				}
-				else if (lastEvent == EVENT_DISPLAY::LOOK_LEFT && updateDelay == 0) {
-						display->setState(Display::STATE_FACE);
-						updateDelay = millis() + 6000;
-						display->getFace()->LookLeft();
-				}
-				else if (lastEvent == EVENT_DISPLAY::LOOK_RIGHT && updateDelay == 0) {
-						display->setState(Display::STATE_FACE);
-						updateDelay = millis() + 6000;
-						display->getFace()->LookRight();
-				}
-				else if (lastEvent == EVENT_DISPLAY::CLOSE_EYE && updateDelay == 0) {
-						display->setState(Display::STATE_FACE);
-						updateDelay = millis() + 6000;
-						lastEvent = EVENT_DISPLAY::CLOSE_EYE;
-						display->getFace()->LookFront();
-						display->getFace()->Expression.GoTo_Sleepy();
-				}
-				else if (lastEvent == EVENT_DISPLAY::CLIFF_DETECTED && updateDelay == 0) {
-						display->drawCenteredText(20, "Oops! Not a safe area.");
-						updateDelay = millis() + 3000;
-				}
-				else if (lastEvent == EVENT_DISPLAY::OBSTACLE_DETECTED && updateDelay == 0) {
-						display->drawCenteredText(20, "Oops! Finding another way!");
-						updateDelay = millis() + 3000;
-				}
-				else if (lastEvent == EVENT_DISPLAY::STUCK_DETECTED && updateDelay == 0) {
-						display->drawCenteredText(20, "I am stuck!");
-						updateDelay = millis() + 3000;
-				} 
-				else if (lastEvent == EVENT_DISPLAY::TOUCH_DETECTED && updateDelay == 0) {
-						display->setState(Display::STATE_MOCHI);
-						updateDelay = 1; // for trigger default screen
-				}
-				else if (lastEvent == EVENT_DISPLAY::WEATHER_STATUS && updateDelay == 0) {
-						display->setState(Display::STATE_WEATHER);
-				}
-				else if (lastEvent == EVENT_DISPLAY::ORIENTATION_DISPLAY && updateDelay == 0) {
-						display->setState(Display::STATE_ORIENTATION);
-				}
-				else if (lastEvent == EVENT_DISPLAY::SPACE_GAME && updateDelay == 0) {
-						display->setState(Display::STATE_SPACE_GAME);
-				}
-				else if (lastEvent == EVENT_DISPLAY::RECORDING_STARTED && updateDelay == 0) {
-						display->setState(Display::STATE_TEXT);
-						display->clearBuffer();
-						display->drawCenteredText(20, "Recording...");
-						display->drawCenteredText(40, "10 seconds");
-						updateDelay = millis() + 2000;
-				}
-				else if (lastEvent == EVENT_DISPLAY::RECORDING_STOPPED && updateDelay == 0) {
-						display->setState(Display::STATE_TEXT);
-						display->clearBuffer();
-						display->drawCenteredText(20, "Recording");
-						display->drawCenteredText(40, "Complete!");
-						updateDelay = millis() + 2000; // Show for 2 seconds then return to face
+				if (updateDelay == 0){
+					switch(lastEvent) {
+						case EVENT_DISPLAY::WAKEWORD:
+								display->setState(Display::STATE_FACE);
+								updateDelay = millis() + 3000;
+								display->getFace()->LookFront();
+								display->getFace()->Expression.GoTo_Happy();
+								display->autoFace(false);
+						break;
+						case EVENT_DISPLAY::LOOK_LEFT:
+								display->setState(Display::STATE_FACE);
+								updateDelay = millis() + 6000;
+								display->getFace()->LookLeft();
+						break;
+						case EVENT_DISPLAY::LOOK_RIGHT:
+								display->setState(Display::STATE_FACE);
+								updateDelay = millis() + 6000;
+								display->getFace()->LookRight();
+						break;
+						case EVENT_DISPLAY::CLOSE_EYE:
+								display->setState(Display::STATE_FACE);
+								updateDelay = millis() + 6000;
+								lastEvent = EVENT_DISPLAY::CLOSE_EYE;
+								display->getFace()->LookFront();
+								display->getFace()->Expression.GoTo_Sleepy();
+						break;
+						case EVENT_DISPLAY::CLIFF_DETECTED:
+								display->drawCenteredText(20, "Oops! Not a safe area.");
+								updateDelay = millis() + 3000;
+						break;
+						case EVENT_DISPLAY::OBSTACLE_DETECTED:
+								display->drawCenteredText(20, "Oops! Finding another way!");
+								updateDelay = millis() + 3000;
+						break;
+						case EVENT_DISPLAY::STUCK_DETECTED:
+								display->drawCenteredText(20, "I am stuck!");
+								updateDelay = millis() + 3000;
+						break; 
+						case EVENT_DISPLAY::BASIC_STATUS:
+								display->setState(Display::STATE_STATUS);
+								updateDelay = millis() + 6000;
+						break;
+						case EVENT_DISPLAY::WEATHER_STATUS:
+								display->setState(Display::STATE_WEATHER);
+						break;
+						case EVENT_DISPLAY::ORIENTATION_DISPLAY:
+								display->setState(Display::STATE_ORIENTATION);
+						break;
+						case EVENT_DISPLAY::SPACE_GAME:
+								display->setState(Display::STATE_SPACE_GAME);
+						break;
+						case EVENT_DISPLAY::RECORDING_STARTED:
+								display->setState(Display::STATE_TEXT);
+								display->clearBuffer();
+								display->drawCenteredText(20, "Recording...");
+								display->drawCenteredText(40, "10 seconds");
+								updateDelay = millis() + 2000;
+						break;
+						case EVENT_DISPLAY::RECORDING_STOPPED:
+								display->setState(Display::STATE_TEXT);
+								display->clearBuffer();
+								display->drawCenteredText(20, "Recording");
+								display->drawCenteredText(40, "Complete!");
+								updateDelay = millis() + 2000; // Show for 2 seconds then return to face
+						break;
+						default:
+							display->setState(Display::STATE_FACE);
+							ESP_LOGW(TAG, "Unknow display event. Event: %d", lastEvent);
+							lastEvent = EVENT_DISPLAY::NOTHING;
+					}
 				}
 				
 		#if MICROPHONE_ENABLED

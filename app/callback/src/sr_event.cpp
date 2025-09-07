@@ -102,6 +102,11 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         sayText("Recording already in progress!");
                     }
                     break;
+                case 10: // show status
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::BASIC_STATUS);
+                    servos->setHead(180);
+                    sayText("Here my status!");
+                    break;
                 default: 
                     logger->info("Unknown command ID: %d", command_id);
                     servos->setHead(DEFAULT_HEAD_ANGLE);

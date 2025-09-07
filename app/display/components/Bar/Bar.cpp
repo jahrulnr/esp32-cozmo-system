@@ -15,5 +15,5 @@ void MicBar::drawBar(int micLevel) {
 	int halfBarWidth = barWidth / 2;
 	
 	// Draw from center outwards
-	_display->drawBox(centerX - halfBarWidth, 62, barWidth, 2);
+	_display->drawBox(centerX - halfBarWidth, 60, barWidth, 2);
 }
