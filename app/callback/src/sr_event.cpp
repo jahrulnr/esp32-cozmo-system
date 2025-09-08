@@ -79,7 +79,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     automationStatus = false;
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
-                    resetScreenWhenTimeout = false;
+                    resetScreenWhenTimeout = true;
                     break;
                 case 5: // show weather status
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WEATHER_STATUS);
@@ -117,6 +117,8 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     if (audioRecorder && !audioRecorder->isRecordingActive()) {
                         sayText("Starting recording for 10 seconds!");
+                        automationStatus = false;
+                        resetScreenWhenTimeout = true;
                         delay(500);
                         if (audioRecorder->startRecording()) {
                             logger->info("Recording started via voice command");
@@ -132,6 +134,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::BASIC_STATUS);
                     servos->setHead(180);
                     sayText("Here my status!");
+                    resetScreenWhenTimeout = true;
                     break;
                 case 11: // battery status  
                     if (batteryManager) {
