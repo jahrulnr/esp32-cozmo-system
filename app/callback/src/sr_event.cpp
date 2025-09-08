@@ -44,6 +44,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                 case 0: // look to left
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::LOOK_LEFT);
+                    notification->send(NOTIFICATION_NOTE, (void*)Note::STOP);
                     motors->move(motors->LEFT);
                     delay(500);
                     motors->stop();
@@ -192,6 +193,131 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::HAPPY);
                         resetScreenWhenTimeout = true;
                         SR::sr_set_mode(SR_MODE_WAKEWORD);
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+
+                // Sound type commands
+                case 15: // use piano sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::PIANO);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Piano");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 16: // use guitar sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::GUITAR);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Guitar");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 17: // use organ sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::ORGAN);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Organ");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 18: // use flute sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::FLUTE);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Flute");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 19: // use bell sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::BELL);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Bell");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 20: // use square wave sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::SQUARE_WAVE);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Square Wave");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 21: // use sawtooth sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::SAWTOOTH);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Sawtooth");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 22: // use triangle sound
+                    if (notePlayer) {
+                        notePlayer->setSoundType(Note::TRIANGLE);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Sound type changed to: Triangle");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+
+                // Volume control commands
+                case 23: // set lower sound
+                    if (notePlayer) {
+                        notePlayer->setVolume(20);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Volume set to: 20%% (lower)");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 24: // set middle sound
+                    if (notePlayer) {
+                        notePlayer->setVolume(50);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Volume set to: 50%% (middle)");
+                        resetScreenWhenTimeout = true;
+                        return;
+                    } else {
+                        sayText("Music system not available!");
+                    }
+                    break;
+                case 25: // set full sound
+                    if (notePlayer) {
+                        notePlayer->setVolume(100);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        logger->info("Volume set to: 100%% (full)");
+                        resetScreenWhenTimeout = true;
                         return;
                     } else {
                         sayText("Music system not available!");

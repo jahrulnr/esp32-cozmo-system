@@ -26,6 +26,20 @@ static const csr_cmd_t voice_commands[] = {
 	{11, "show battery", "sb BaTkm"},
 	{12, "do re mi", "Do Rd Mm"},
 	{13, "happy birthday", "haPm BkvDd"},
+	{14, "play music", "PLd MyoZgK"},
+	// Sound type commands
+	{15, "use piano sound", "YoS PmaNb StND"},
+	{16, "use guitar sound", "YoS GgTnR StND"},
+	{17, "use organ sound", "YoS eRGcN StND"},
+	{18, "use flute sound", "YoS FLoT StND"},
+	{19, "use bell sound", "YoS BfL StND"},
+	{20, "use square wave sound", "YoS SKWfR WdV StND"},
+	{21, "use sawtooth sound", "YoS SeTWnv StND"},
+	{22, "use triangle sound", "YoS TRialGcL StND"},
+	// Volume control commands
+	{23, "set lower sound", "SfT Lbk StND"},
+	{24, "set middle sound", "SfT MgDcL StND"},
+	{25, "set full sound", "SfT FwL StND"},
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -90,5 +104,17 @@ namespace EVENT_AUDIO {
 
 // Note Music Events
 static const char* NOTIFICATION_NOTE = "note";
+
+// Sound Type Events for Note Player
+namespace EVENT_SOUND_TYPE {
+	static const int PIANO = 15;
+	static const int GUITAR = 16;
+	static const int ORGAN = 17;
+	static const int FLUTE = 18;
+	static const int BELL = 19;
+	static const int SQUARE_WAVE = 20;
+	static const int SAWTOOTH = 21;
+	static const int TRIANGLE = 22;
+}
 
 #endif

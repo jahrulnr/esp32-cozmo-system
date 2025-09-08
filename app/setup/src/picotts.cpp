@@ -65,6 +65,7 @@ bool sayText(const char* text) {
     strcpy(arr, text);  // Copy the string to 
 
     // Send text to PicoTTS engine using the correct API
+    if (!i2sSpeaker->isActive()) i2sSpeaker->start();
     picotts_add(arr, sizeof(arr));
 
     return true;
