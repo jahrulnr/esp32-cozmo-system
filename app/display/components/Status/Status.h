@@ -3,12 +3,12 @@
 #include "../../Icons.h"
 #include <WiFi.h>
 
-class Status {
+class DisplayStatus {
 private:
 	U8G2_SSD1306_128X64_NONAME_F_HW_I2C *_display;
 public:
-	Status(U8G2_SSD1306_128X64_NONAME_F_HW_I2C *display): _display(display){}
-	~Status() { delete [] _display; }
+	DisplayStatus(U8G2_SSD1306_128X64_NONAME_F_HW_I2C *display): _display(display){}
+	~DisplayStatus() { delete [] _display; }
 
 	void Draw() {
 		_display->setFontMode(1);

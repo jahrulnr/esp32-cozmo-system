@@ -15,6 +15,7 @@ void setupApp() {
   setupDistanceSensor();
   setupTouchDetector();
   setupTemperatureSensor();
+  setupBatteryManager();
   setupMicrophone();
   setupSpeakers();
   setupCommandMapper();
@@ -22,6 +23,7 @@ void setupApp() {
   setupPicoTTS();
   setupSpeechRecognition();
   setupAudioRecorder();
+  setupNotePlayer();
 
   delay(10);
 

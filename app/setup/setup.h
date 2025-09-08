@@ -23,6 +23,7 @@
 #include <AudioSamples.h>
 #include <MP3Player.h>
 #include <FTPServer.h>
+#include "battery_manager.h"
 #include "core/Utils/SpiAllocator.h"
 #include "core/Automation/Automation.h"
 #include "core/Sensors/Camera.h"
@@ -37,6 +38,7 @@
 #include "core/Communication/GPTAdapter.h"
 #include "core/Communication/WeatherService.h"
 #include "core/Audio/AudioRecorder.h"
+#include "core/Audio/Note.h"
 #include "core/Utils/CommandMapper.h"
 #include "repository/Configuration.h"
 #include "repository/AdministrativeRegion.h"
@@ -60,12 +62,14 @@ extern Sensors::CliffDetector* cliffLeftDetector;
 extern Sensors::CliffDetector* cliffRightDetector;
 extern Sensors::TouchDetector* touchDetector;
 extern Sensors::TemperatureSensor* temperatureSensor;
+extern BatteryManager* batteryManager;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
 extern Communication::WiFiManager* wifiManager;
 extern Communication::GPTAdapter* gptAdapter;
 extern Communication::WeatherService* weatherService;
 extern AudioRecorder* audioRecorder;
+extern Note* notePlayer;
 extern Display::Display* display;
 extern Utils::FileManager* fileManager;
 extern Utils::Logger* logger;
@@ -90,6 +94,7 @@ void setupDistanceSensor();
 void setupCliffDetector();
 void setupTouchDetector();
 void setupTemperatureSensor();
+void setupBatteryManager();
 void setupMicrophone();
 void setupSpeakers();
 void setupDisplay();
@@ -103,6 +108,7 @@ void setupPicoTTS();
 void setupFTPServer();
 void setupWeather();
 void setupAudioRecorder();
+void setupNotePlayer();
 
 void setupTasksCpu0();
 void setupTasksCpu1();

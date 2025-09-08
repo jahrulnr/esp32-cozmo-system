@@ -1,6 +1,7 @@
 #include "SystemController.h"
 #include <esp_system.h>
 #include <esp_heap_caps.h>
+#include "../../setup/setup.h"
 
 Response SystemController::getStats(Request& request) {
     Utils::SpiJsonDocument response;
@@ -145,6 +146,30 @@ Utils::SpiJsonDocument SystemController::getSystemInfo() {
     software["compile_time"] = __TIME__;
     
     systemInfo["software"] = software;
+    
+    // Battery information
+    Utils::SpiJsonDocument battery;
+    if (batteryManager) {
+        batteryManager->update();
+        battery["enabled"] = true;
+        battery["voltage"] = batteryManager->getVoltage();
+        battery["level"] = batteryManager->getLevel();
+        battery["charging"] = batteryManager->isCharging();
+        
+        BatteryState state = batteryManager->getState();
+        const char* stateStr = "UNKNOWN";
+        switch (state) {
+            case BATTERY_STATE_CRITICAL: stateStr = "CRITICAL"; break;
+            case BATTERY_STATE_LOW:      stateStr = "LOW"; break;
+            case BATTERY_STATE_MEDIUM:   stateStr = "MEDIUM"; break;
+            case BATTERY_STATE_HIGH:     stateStr = "HIGH"; break;
+            case BATTERY_STATE_FULL:     stateStr = "FULL"; break;
+        }
+        battery["state"] = stateStr;
+    } else {
+        battery["enabled"] = false;
+    }
+    systemInfo["battery"] = battery;
     
     return systemInfo;
 }
@@ -340,4 +365,57 @@ Response SystemController::updateHostname(Request& request) {
     return Response(request.getServerRequest())
             .status(200)
             .json(response);
+}
+
+Response SystemController::getBatteryStatus(Request& request) {
+    Utils::SpiJsonDocument response;
+    Utils::SpiJsonDocument batteryInfo;
+    
+    // Include battery manager header
+    extern BatteryManager* batteryManager;
+    
+    if (batteryManager) {
+        batteryManager->update();
+        
+        batteryInfo["enabled"] = true;
+        batteryInfo["voltage"] = batteryManager->getVoltage();
+        batteryInfo["level"] = batteryManager->getLevel();
+        batteryInfo["charging"] = batteryManager->isCharging();
+        
+        // State as string
+        BatteryState state = batteryManager->getState();
+        const char* stateStr = "UNKNOWN";
+        switch (state) {
+            case BATTERY_STATE_CRITICAL: stateStr = "CRITICAL"; break;
+            case BATTERY_STATE_LOW:      stateStr = "LOW"; break;
+            case BATTERY_STATE_MEDIUM:   stateStr = "MEDIUM"; break;
+            case BATTERY_STATE_HIGH:     stateStr = "HIGH"; break;
+            case BATTERY_STATE_FULL:     stateStr = "FULL"; break;
+        }
+        batteryInfo["state"] = stateStr;
+        
+        // Charging state as string
+        ChargingState chargingState = batteryManager->getChargingState();
+        const char* chargingStr = "UNKNOWN";
+        switch (chargingState) {
+            case CHARGING_NOT_CONNECTED: chargingStr = "NOT_CONNECTED"; break;
+            case CHARGING_IN_PROGRESS:   chargingStr = "IN_PROGRESS"; break;
+            case CHARGING_COMPLETE:      chargingStr = "COMPLETE"; break;
+            default:                     chargingStr = "UNKNOWN"; break;
+        }
+        batteryInfo["charging_state"] = chargingStr;
+        
+        response["success"] = true;
+        response["battery"] = batteryInfo;
+    } else {
+        batteryInfo["enabled"] = false;
+        batteryInfo["message"] = "Battery monitoring not available";
+        
+        response["success"] = false;
+        response["battery"] = batteryInfo;
+    }
+    
+    return Response(request.getServerRequest())
+        .status(200)
+        .json(response);
 }

@@ -26,15 +26,21 @@ void displayTask(void *param){
 					EVENT_DISPLAY event = (EVENT_DISPLAY)(intptr_t)eventPtr;
 					if (event >= 0 && event <= EVENT_DISPLAY::NOTHING) {
 						lastEvent = event;
+						updateDelay = 0;
 					}
 					ESP_LOGI(TAG, "Event Screen %d triggered", lastEvent);
 				}
 
-				if (updateDelay == 0){
+				if (lastEvent != EVENT_DISPLAY::NOTHING && updateDelay == 0){
 					switch(lastEvent) {
 						case EVENT_DISPLAY::WAKEWORD:
 								display->setState(Display::STATE_MIC);
+								// update display will triggered after esp-sr timeout
 						break;
+						case EVENT_DISPLAY::HAPPY:
+								display->setState(Display::STATE_FACE);
+								display->getFace()->Expression.GoTo_Happy();
+								display->autoFace(true);
 						case EVENT_DISPLAY::LOOK_LEFT:
 								display->setState(Display::STATE_FACE);
 								updateDelay = millis() + 6000;
@@ -90,9 +96,37 @@ void displayTask(void *param){
 								display->drawCenteredText(40, "Complete!");
 								updateDelay = millis() + 2000; // Show for 2 seconds then return to face
 						break;
-						case EVENT_DISPLAY::NOTHING:
-							// nothing
-							break;
+						case EVENT_DISPLAY::BATTERY_CRITICAL:
+								display->setState(Display::STATE_TEXT);
+								display->clearBuffer();
+								display->drawCenteredText(10, "CRITICAL");
+								display->drawCenteredText(25, "BATTERY!");
+								if (batteryManager) {
+									char voltageText[32];
+									snprintf(voltageText, sizeof(voltageText), "%.1fV (%d%%)", 
+										batteryManager->getVoltage(), batteryManager->getLevel());
+									display->drawCenteredText(40, voltageText);
+								}
+								display->drawCenteredText(55, "CHARGE NOW!");
+								updateDelay = millis() + 5000; // Show for 5 seconds
+						break;
+						case EVENT_DISPLAY::BATTERY_LOW:
+								display->setState(Display::STATE_TEXT);
+								display->clearBuffer();
+								display->drawCenteredText(15, "LOW BATTERY");
+								if (batteryManager) {
+									char voltageText[32];
+									snprintf(voltageText, sizeof(voltageText), "%.1fV (%d%%)", 
+										batteryManager->getVoltage(), batteryManager->getLevel());
+									display->drawCenteredText(35, voltageText);
+								}
+								display->drawCenteredText(50, "Charge Soon");
+								updateDelay = millis() + 3000; // Show for 3 seconds
+						break;
+						case EVENT_DISPLAY::BATTERY_STATUS:
+								display->setState(Display::STATE_BATTERY);
+								updateDelay = millis() + 5000; // Show for 5 seconds
+						break;
 						default:
 							lastEvent = EVENT_DISPLAY::NOTHING;
 					}

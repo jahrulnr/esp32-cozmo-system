@@ -43,6 +43,12 @@ public:
     bool isGameActive() const { return _gameActive; }
 
     /**
+     * Check if game is in game over state
+     * @return true if showing game over screen
+     */
+    bool isGameOver() const { return _gameState == STATE_END; }
+
+    /**
      * Get current score
      * @return Current player score
      */
@@ -212,6 +218,11 @@ private:
      * Draw game UI (score, level, etc.)
      */
     void drawGameUI();
+
+    /**
+     * Draw game over screen
+     */
+    void drawGameOver();
 
     /**
      * Utility functions

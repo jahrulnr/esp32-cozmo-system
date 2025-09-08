@@ -21,7 +21,18 @@ static const csr_cmd_t voice_commands[] = {
 	{8, "play a game", "PLd c GdM"},
 	{9, "record audio", "RfKkD nDmb"},
 	{10, "show status", "sb STaTcS"},
-	{10, "Tumbil cun status", "TcMBcL KcN STaTcS"}
+	{10, "Tumbil cun status", "TcMBcL KcN STaTcS"},
+	{11, "battery status", "BaTkm STaTcS"},
+	{11, "show battery", "sb BaTkm"},
+	{12, "play music", "PLd MYoZkK"},
+	{13, "do re mi", "Do Rd Mm"},
+	{14, "happy birthday", "haPm BkvDd"},
+	{15, "twinkle star", "TWglKcL STnR"},
+	{16, "play note", "PLd Nb"},
+	{17, "stop music", "STnP MYoZgK"},
+	{18, "space music", "SPdS MYoZgK"},
+	{19, "star wars", "STnR WeRZ"},
+	{20, "alien sound", "dLmcN StND"}
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -52,6 +63,9 @@ typedef enum  {
 	SPACE_GAME,
 	RECORDING_STARTED,
 	RECORDING_STOPPED,
+	BATTERY_CRITICAL,
+	BATTERY_LOW,
+	BATTERY_STATUS,
 	NOTHING,
 } EVENT_DISPLAY;
 
@@ -79,6 +93,19 @@ namespace EVENT_AUDIO {
 	static const char* START_RECORDING = "start_recording";
 	static const char* STOP_RECORDING = "stop_recording";
 	static const char* RECORDING_COMPLETE = "recording_complete";
+}
+
+// Note Music Events
+static const char* NOTIFICATION_NOTE = "note";
+namespace EVENT_NOTE {
+	static const char* PLAY_DOREMI = "play_doremi";
+	static const char* PLAY_HAPPY_BIRTHDAY = "play_happy_birthday";
+	static const char* PLAY_TWINKLE_STAR = "play_twinkle_star";
+	static const char* PLAY_NOTE = "play_note";
+	static const char* STOP_MUSIC = "stop_music";
+	static const char* PLAY_SPACE_THEME = "play_space_theme";
+	static const char* PLAY_STAR_WARS = "play_star_wars";
+	static const char* PLAY_ALIEN_CONTACT = "play_alien_contact";
 }
 
 #endif

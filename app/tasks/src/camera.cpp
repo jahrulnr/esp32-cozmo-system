@@ -15,7 +15,7 @@ void cameraTask(void * param) {
   #undef CONFIG_CAMERA_TASK_STACK_SIZE
   #endif
 
-  #define CONFIG_CAMERA_TASK_STACK_SIZE 4096
+  #define CONFIG_CAMERA_TASK_STACK_SIZE 8192
   if (CAMERA_ENABLED) {
     camera = new Sensors::Camera();
     if (camera->init()) {
@@ -27,7 +27,7 @@ void cameraTask(void * param) {
     }
 
     vTaskDelay(pdMS_TO_TICKS(1000));
-    camera->~Camera();
+    // camera->~Camera();
   }
 
   ESP_LOGI(TAG, "cam_task stack size after initiated: %d", CONFIG_CAMERA_TASK_STACK_SIZE);

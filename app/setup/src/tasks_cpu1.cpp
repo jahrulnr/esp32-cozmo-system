@@ -8,6 +8,7 @@ String protectCozmoTaskId;
 String ftpTaskId;
 String weatherServiceTaskId;
 String srControlTaskId;
+String notePlayerTaskId;
 
 /**
  * Initialize all background tasks on CPU 1
@@ -95,6 +96,24 @@ void setupTasksCpu1() {
         logger->error("Failed to create SR control task");
     } else {
         logger->info("SR control task created with ID: %s", srControlTaskId.c_str());
+    }
+    #endif
+
+    #if SPEAKER_ENABLED
+    // Create Note task for musical note playback using SendTask library
+    notePlayerTaskId = SendTask::createLoopTaskOnCore(
+        notePlayerTask,
+        "NotePlayer",
+        4096,                    // Stack size
+        1,                       // Priority
+        core,                    // Core ID (CPU 1)
+        "Note musical playback task for audio effects and melodies"
+    );
+    
+    if (notePlayerTaskId.isEmpty()) {
+        logger->error("Failed to create Note task");
+    } else {
+        logger->info("Note task created with ID: %s", notePlayerTaskId.c_str());
     }
     #endif
 

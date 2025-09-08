@@ -25,6 +25,9 @@
 - **GPIO 38**: SD_MMC Command (**USED**)
 - **GPIO 40**: SD_MMC Data 0 (**USED**)
 
+### **Battery Monitoring**
+- **GPIO 1**: Battery Voltage ADC (via 100kΩ voltage divider) (**USED**)
+
 ### **Motors (via IOExtern/PCF8575 I2C Expander)**
 - **Expander Pin 1**: Right Motor Pin 2 (**USED**)
 - **Expander Pin 2**: Right Motor Pin 1 (**USED**)
@@ -41,7 +44,6 @@
 
 The following pins are currently **NOT USED** in this system configuration:
 
-- **GPIO 1**
 - **GPIO 4** (Camera: FREENOVE)
 - **GPIO 5** (Camera: AI Thinker, FREENOVE)
 - **GPIO 6** (Camera: FREENOVE)
@@ -91,5 +93,6 @@ The following pins are used by camera modules if enabled. If CAMERA_ENABLED is f
 - **I2C Bus Shared**: Display and orientation sensor share the same I2C bus (GPIO 3/46)
 - **IOExtern Dependency**: Motors require PCF8575 I2C expander; Cliff detectors are currently disabled
 - **I2S Audio**: Separate I2S buses for microphone input and speaker output
+- **Battery Monitoring**: Uses 12-bit ADC with 100kΩ voltage divider (R1=R2) + ceramic capacitor for stability
 - **Feature Flags**: All hardware controlled by `*_ENABLED` macros in Config.h
 - **Camera Pins**: See CameraConfig.h for camera-specific pin usage. All other camera pins are NOT USED unless camera is enabled and model matches.

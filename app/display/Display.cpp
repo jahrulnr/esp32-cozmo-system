@@ -1,11 +1,13 @@
 #include "display/Display.h"
+#include "setup/setup.h"
 
 namespace Display {
 
 Display::Display() : _u8g2(nullptr), _initialized(false), 
     _state(STATE_FACE), _holdTimer(0),
     _micLevel(0), _width(128), _height(64),
-    _mux(nullptr), _face(nullptr), _weather(nullptr), _cube3D(nullptr), _spaceGame(nullptr), _useMutex(false) {
+    _mux(nullptr), _face(nullptr), _weather(nullptr), _cube3D(nullptr), 
+    _spaceGame(nullptr), _battery(nullptr), _useMutex(false) {
 }
 
 Display::~Display() {
@@ -25,6 +27,13 @@ Display::~Display() {
         delete _spaceGame;
     }
 
+    if (_battery) {
+        delete _battery;
+    }
+
+    if (_micStatus) delete _micStatus;
+    if (_displayStatus) delete _displayStatus;
+
     vSemaphoreDelete(_mux);
 }
 
@@ -43,6 +52,8 @@ bool Display::init(int sda, int scl, int width, int height) {
     _u8g2->setFont(u8g2_font_6x10_tf);
 
     _micBar = new MicBar(_u8g2);
+    _micStatus = new MicStatus(_u8g2);
+    _displayStatus = new DisplayStatus(_u8g2);
     _weather = new Weather(_u8g2, width, height);
     _cube3D = new Cube3D(_u8g2, width, height);
     
@@ -51,6 +62,15 @@ bool Display::init(int sda, int scl, int width, int height) {
     if (_spaceGame) {
         _spaceGame->init();
         _spaceGame->setAutoFire(true); // Enable auto-fire for demo
+    }
+    
+    // Initialize Battery component
+    _battery = new Battery::BatteryDisplay(_u8g2);
+    if (_battery) {
+       esp_err_t err = _battery->init();
+       if (err != ESP_OK) {
+        log_e("failed to initiate battery display status: %s", esp_err_to_name(err));
+       }
     }
     
     _width = width;
@@ -114,6 +134,21 @@ void Display::update() {
 
             _face->Update();
             break;
+        case STATE_MIC:
+            _u8g2->clearBuffer();
+
+            static int mStatus = 0;
+            if (_micLevel > 0 && _micLevel < 128) {
+                mStatus = 1;
+            }
+            else if (_micLevel >= 128) {
+                mStatus = 2;
+            }
+
+            _micStatus->Draw(mStatus);
+
+            _u8g2->sendBuffer();
+            break;
         case STATE_WEATHER:
             _weather->draw();
             break;
@@ -131,8 +166,14 @@ void Display::update() {
             break;
         case STATE_STATUS:
             _u8g2->clearBuffer();
-            (new Status(_u8g2))->Draw();
+            
+            _displayStatus->Draw();
+            
             _u8g2->sendBuffer();
+            break;
+        case STATE_BATTERY:
+            _battery->update();
+            _battery->draw();
             break;
         default:
             _state = STATE_FACE;
@@ -167,6 +208,10 @@ void Display::updateOrientation(Sensors::OrientationSensor* orientation) {
 
 SpaceGame* Display::getSpaceGame() {
     return _spaceGame;
+}
+
+Battery::BatteryDisplay* Display::getBattery() {
+    return _battery;
 }
 
 int Display::getWidth() const {

@@ -38,7 +38,7 @@ bool SpaceGame::init() {
 
 void SpaceGame::startGame() {
     _gameActive = true;
-    _gameState = STATE_GAME; // Start playing immediately
+    _gameState = STATE_GAME; // Reset to game state
     setupInGame(); // Initialize the game objects right away
     _lastGyroUpdate = 0; // Reset gyro timing
 }
@@ -136,11 +136,13 @@ void SpaceGame::draw() {
     
     _display->clearBuffer();
     
-    // Simplified - only draw the game
+    // Draw based on game state
     if (_gameState == STATE_GAME) {
-				stepInGame();
+        stepInGame();
         drawGameObjects();
         drawGameUI();
+    } else if (_gameState == STATE_END) {
+        drawGameOver();
     }
     
     _display->sendBuffer();
@@ -387,8 +389,12 @@ void SpaceGame::handleCollisions() {
                     _objects[k].ot == OT_BIG_TRASH || _objects[k].ot == OT_WALL_SOLID) {
                     
                     if (checkCollision(j, k)) {
-                        // Game over - player hit, but handle via voice command stop
-                        _gameActive = false; // Stop the game
+                        // Game over - player hit
+                        _gameState = STATE_END;
+                        // Update high score if needed
+                        if (_playerPoints > _highScore) {
+                            _highScore = _playerPoints;
+                        }
                         return;
                     }
                 }
@@ -703,6 +709,51 @@ char* SpaceGame::intToString(unsigned long value) {
         if (value == 0) break;
     }
     return _itoaBuf + i;
+}
+
+void SpaceGame::drawGameOver() {
+    _display->setDrawColor(1);
+    _display->setFont(u8g2_font_6x10_tf);
+    
+    // Game Over title
+    const char* gameOverText = "GAME OVER";
+    int titleWidth = strlen(gameOverText) * 6;
+    int titleX = (_width - titleWidth) / 2;
+    _display->drawStr(titleX, 15, gameOverText);
+    
+    // Final score
+    _display->setFont(u8g2_font_5x7_tr);
+    const char* scoreLabel = "Score:";
+    char* scoreStr = intToString(_playerPoints);
+    int scoreLabelWidth = strlen(scoreLabel) * 5;
+    int scoreWidth = strlen(scoreStr) * 5;
+    int totalScoreWidth = scoreLabelWidth + scoreWidth + 5; // +5 for space
+    int scoreX = (_width - totalScoreWidth) / 2;
+    
+    _display->drawStr(scoreX, 28, scoreLabel);
+    _display->drawStr(scoreX + scoreLabelWidth + 5, 28, scoreStr);
+    
+    // High score (if it's a new high score or just show current high score)
+    if (_playerPoints >= _highScore) {
+        _display->drawStr((_width - strlen("NEW HIGH SCORE!") * 5) / 2, 40, "NEW HIGH SCORE!");
+    } else if (_highScore > 0) {
+        const char* highLabel = "High:";
+        char* highStr = intToString(_highScore);
+        int highLabelWidth = strlen(highLabel) * 5;
+        int highScoreWidth = strlen(highStr) * 5;
+        int totalHighWidth = highLabelWidth + highScoreWidth + 5;
+        int highX = (_width - totalHighWidth) / 2;
+        
+        _display->drawStr(highX, 40, highLabel);
+        _display->drawStr(highX + highLabelWidth + 5, 40, highStr);
+    }
+    
+    // Instructions
+    _display->setFont(u8g2_font_4x6_tr);
+    const char* restartText = "Say 'play a game' to restart";
+    int instructionWidth = strlen(restartText) * 4;
+    int instructionX = (_width - instructionWidth) / 2;
+    _display->drawStr(instructionX, 55, restartText);
 }
 
 } // namespace Display

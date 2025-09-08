@@ -90,6 +90,11 @@ void registerApiRoutes(Router* router) {
 								return SystemController::updateConfiguration(request);
 						}).name("api.system.configs.update");
 						
+						// Get battery status
+						system.get("/battery", [](Request& request) -> Response {
+								return SystemController::getBatteryStatus(request);
+						}).name("api.system.battery");
+						
 						// System restart (admin only)
 						system.post("/restart", [](Request& request) -> Response {
 								return SystemController::restart(request);

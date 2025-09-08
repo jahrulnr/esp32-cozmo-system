@@ -11,6 +11,7 @@ extern String protectCozmoTaskId;
 extern String ftpTaskId;
 extern String weatherServiceTaskId;
 extern String srControlTaskId;
+extern String notePlayerTaskId;
 
 void taskMonitorer(void* param);
 void protectCozmoTask(void * param);
@@ -21,6 +22,7 @@ void ftpTask(void* param);
 void weatherServiceTask(void* param);
 void srControlTask(void* param);
 void cameraTask(void* param);
+void notePlayerTask(void* param);
 
 // Function prototypes
 void protectCozmo();
