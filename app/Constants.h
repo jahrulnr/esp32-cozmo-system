@@ -24,15 +24,8 @@ static const csr_cmd_t voice_commands[] = {
 	{10, "Tumbil cun status", "TcMBcL KcN STaTcS"},
 	{11, "battery status", "BaTkm STaTcS"},
 	{11, "show battery", "sb BaTkm"},
-	{12, "play music", "PLd MYoZkK"},
-	{13, "do re mi", "Do Rd Mm"},
-	{14, "happy birthday", "haPm BkvDd"},
-	{15, "twinkle star", "TWglKcL STnR"},
-	{16, "play note", "PLd Nb"},
-	{17, "stop music", "STnP MYoZgK"},
-	{18, "space music", "SPdS MYoZgK"},
-	{19, "star wars", "STnR WeRZ"},
-	{20, "alien sound", "dLmcN StND"}
+	{12, "do re mi", "Do Rd Mm"},
+	{13, "happy birthday", "haPm BkvDd"},
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -97,15 +90,5 @@ namespace EVENT_AUDIO {
 
 // Note Music Events
 static const char* NOTIFICATION_NOTE = "note";
-namespace EVENT_NOTE {
-	static const char* PLAY_DOREMI = "play_doremi";
-	static const char* PLAY_HAPPY_BIRTHDAY = "play_happy_birthday";
-	static const char* PLAY_TWINKLE_STAR = "play_twinkle_star";
-	static const char* PLAY_NOTE = "play_note";
-	static const char* STOP_MUSIC = "stop_music";
-	static const char* PLAY_SPACE_THEME = "play_space_theme";
-	static const char* PLAY_STAR_WARS = "play_star_wars";
-	static const char* PLAY_ALIEN_CONTACT = "play_alien_contact";
-}
 
 #endif

@@ -1,5 +1,8 @@
 #include "../register.h"
 
+bool interruptNotePlayer = false;
+String noteRandomPlayerId;
+
 void callbackNotePlayer(void* data) {
     if (!data) {
         logger->error("Note callback: No data received");
@@ -11,42 +14,74 @@ void callbackNotePlayer(void* data) {
         return;
     }
     
-    logger->info("Note callback triggered");
-    
-    const char* event = (const char*)data;
-    
-    if (strcmp(event, EVENT_NOTE::PLAY_DOREMI) == 0) {
-        logger->info("Playing DoReMi scale");
-        notePlayer->playMelody(Note::DOREMI_SCALE);
-        
-    } else if (strcmp(event, EVENT_NOTE::PLAY_HAPPY_BIRTHDAY) == 0) {
-        logger->info("Playing Happy Birthday");
-        notePlayer->playMelody(Note::HAPPY_BIRTHDAY);
-        
-    } else if (strcmp(event, EVENT_NOTE::PLAY_TWINKLE_STAR) == 0) {
-        logger->info("Playing Twinkle Star");
-        notePlayer->playMelody(Note::TWINKLE_STAR);
-        
-    } else if (strcmp(event, EVENT_NOTE::PLAY_NOTE) == 0) {
-        logger->info("Playing single note");
-        notePlayer->playFrequency(Note::C4, 500); // 500ms duration
-        
-    } else if (strcmp(event, EVENT_NOTE::STOP_MUSIC) == 0) {
-        logger->info("Music stop requested (simplified system - no stop needed)");
-        
-    } else if (strcmp(event, EVENT_NOTE::PLAY_SPACE_THEME) == 0) {
-        logger->info("Playing space theme");
-        notePlayer->playMelody(Note::SPACE_THEME);
-        
-    } else if (strcmp(event, EVENT_NOTE::PLAY_STAR_WARS) == 0) {
-        logger->info("Playing Star Wars theme");
-        notePlayer->playMelody(Note::STAR_WARS_THEME);
-        
-    } else if (strcmp(event, EVENT_NOTE::PLAY_ALIEN_CONTACT) == 0) {
-        logger->info("Playing alien contact sound");
-        notePlayer->playMelody(Note::ALIEN_CONTACT);
+    const Note::Melody event = (Note::Melody)(intptr_t)data;
+    logger->info("Note callback received event: %d", (int)event);
+
+    if (event == Note::STOP) {
+        logger->info("STOP command received - setting interrupt and calling notePlayer->stop()");
+        notePlayer->stop();
+        interruptNotePlayer = true;
+
+    }
+    else if (event == Note::DOREMI_SCALE) {
+        notePlayer->playMelody(Note::DOREMI_SCALE);   
+        interruptNotePlayer = false;
+
+    }
+    else if (event == Note::HAPPY_BIRTHDAY) {
+        notePlayer->playMelody(Note::HAPPY_BIRTHDAY);   
+        interruptNotePlayer = false;
+
+    }
+    else if (event == Note::RANDOM) {
+        if(!noteRandomPlayerId.isEmpty()) {
+            logger->warning("RANDOM command already played");
+            return;
+        }
+
+        logger->info("RANDOM command received - starting random melody loop");
+        noteRandomPlayerId = SendTask::createTaskOnCore([](){
+            const size_t melodyLength = 64;
+            Note::MusicNote melodyBuffer1[melodyLength];
+            
+            // Check if notePlayer is initialized before using it
+            if (notePlayer && notePlayer->isReady()) {
+                Note::Frequency endingNote = (Note::Frequency)0; // Start with auto-chosen note
+                
+                interruptNotePlayer = false; // Reset interrupt flag
+                logger->info("Starting random melody loop, interrupt = false");
+                
+                // Generate and play continuous random melodies until interrupted
+                while (!interruptNotePlayer) {
+                    if (notePlayer->generateRandomMelody(melodyLength, melodyBuffer1, endingNote, &endingNote)) {
+                        // Play the melody - this will be interrupted if stop() is called
+                        if (!notePlayer->playCustomMelody(melodyBuffer1, melodyLength, 1)) {
+                            logger->info("Melody playback failed - exiting loop");
+                            break; // Exit if playback failed
+                        }
+                        
+                        // Check interrupt flag again after playback
+                        if (interruptNotePlayer) {
+                            logger->info("Interrupt detected after melody playback - exiting loop");
+                            break;
+                        }
+                        
+                        // Short pause between melodies
+                        vTaskDelay(pdMS_TO_TICKS(300));
+                    } else {
+                        logger->error("Failed to generate random melody");
+                        break;
+                    }
+                }
+            }
+            logger->info("Random melody loop ended, interrupt = %s", interruptNotePlayer ? "true" : "false");
+
+            SendTask::stopTask(noteRandomPlayerId);
+            noteRandomPlayerId = "";
+        }, "RandomMusicTask");
         
     } else {
         logger->warning("Unknown Note event: %s", event);
+        interruptNotePlayer = false;
     }
 }

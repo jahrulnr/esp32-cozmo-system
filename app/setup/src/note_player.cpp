@@ -20,6 +20,8 @@ void setupNotePlayer() {
     notePlayer = new Note(i2sSpeaker, logger);
     
     if (notePlayer) {
+        notePlayer->setVolume(SPEAKER_VOLUME * 0.3 * 100);
+        notePlayer->setSoundType(Note::GUITAR);
         logger->info("Note: Musical system ready");
     } else {
         logger->error("Note: Failed to initialize musical system");

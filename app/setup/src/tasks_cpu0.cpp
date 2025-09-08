@@ -68,20 +68,20 @@ void setupTasksCpu0() {
     }
 
     // Create taskMonitorer task using SendTask library
-    // taskMonitorerId = SendTask::createLoopTaskOnCore(
-    //     taskMonitorer,
-    //     "taskMonitorer",
-    //     4096,                        // Stack size
-    //     0,                           // Priority (lower priority)
-    //     core,                        // Core ID (CPU 0)
-    //     "Task monitor"
-    // );
+    taskMonitorerId = SendTask::createLoopTaskOnCore(
+        taskMonitorer,
+        "taskMonitorer",
+        4096,                        // Stack size
+        0,                           // Priority (lower priority)
+        core,                        // Core ID (CPU 0)
+        "Task monitor"
+    );
     
-    // if (taskMonitorerId.isEmpty()) {
-    //     logger->error("Failed to create task monitor");
-    // } else {
-    //     logger->info("Task monitor created with ID: %s", taskMonitorerId.c_str());
-    // }
+    if (taskMonitorerId.isEmpty()) {
+        logger->error("Failed to create task monitor");
+    } else {
+        logger->info("Task monitor created with ID: %s", taskMonitorerId.c_str());
+    }
 
     delay(1000);
     logger->info("Tasks initialized on cpu 0");

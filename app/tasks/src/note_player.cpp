@@ -15,8 +15,8 @@ void notePlayerTask(void* param) {
         void* eventPtr = notification->consume(NOTIFICATION_NOTE, checkFrequency);
         
         if (eventPtr) {
-            const char* event = (const char*)eventPtr;
-            logger->info("Note task received event: %s", event);
+            const Note::Melody event = (Note::Melody)(intptr_t)eventPtr;
+            logger->info("Note task received event: %d", event);
             
             // Call the callback function to handle the event
             callbackNotePlayer(eventPtr);

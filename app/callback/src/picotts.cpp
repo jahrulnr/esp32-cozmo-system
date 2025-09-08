@@ -6,7 +6,7 @@
 // Speed control factor (1.0 = normal, >1.0 = faster, <1.0 = slower)
 static float playback_speed = 1.1f;
 // Volume amplification factor (adjust as needed)
-const float volume_multiplier = 1.5f;
+const float volume_multiplier = SPEAKER_VOLUME;
 
 // Buffer to collect audio samples
 static std::vector<int16_t> collected_audio;

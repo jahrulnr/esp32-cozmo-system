@@ -15,7 +15,16 @@ class Note {
 public:
     // Musical notes frequencies (in Hz)
     enum Frequency {
-        // Octave 4 (middle octave)
+        // Octave 3 (low octave - was middle)
+        C3 = 131,   // Do (low)
+        D3 = 147,   // Re (low)
+        E3 = 165,   // Mi (low)
+        F3 = 175,   // Fa (low)
+        G3 = 196,   // Sol (low)
+        A3 = 220,   // La (low)
+        B3 = 247,   // Si (low)
+        
+        // Octave 4 (middle octave - was high)
         C4 = 262,   // Do
         D4 = 294,   // Re
         E4 = 330,   // Mi
@@ -24,7 +33,7 @@ public:
         A4 = 440,   // La
         B4 = 494,   // Si
         
-        // Octave 5 (higher octave)
+        // Octave 5 (high octave - for occasional high notes)
         C5 = 523,   // Do (high)
         D5 = 587,   // Re (high)
         E5 = 659,   // Mi (high)
@@ -34,14 +43,7 @@ public:
         B5 = 988,   // Si (high)
         
         // Special notes
-        REST = 0,   // Silence
-        C3 = 131,   // Low Do
-        D3 = 147,   // Low Re
-        E3 = 165,   // Low Mi
-        F3 = 175,   // Low Fa
-        G3 = 196,   // Low Sol
-        A3 = 220,   // Low La
-        B3 = 247    // Low Si
+        REST = 0    // Silence
     };
     
     // Note duration types
@@ -53,23 +55,25 @@ public:
         SIXTEENTH = 62      // 0.0625 second
     };
     
+    // Instrument sound types
+    enum SoundType {
+        PIANO = 0,          // Clean sine wave (default)
+        GUITAR,             // Plucked string with decay
+        ORGAN,              // Rich harmonics
+        FLUTE,              // Pure tone with vibrato
+        BELL,               // Metallic with long decay
+        SQUARE_WAVE,        // Classic 8-bit sound
+        SAWTOOTH,           // Bright, buzzy sound
+        TRIANGLE            // Soft, mellow tone
+    };
+    
     // Predefined melodies
     enum Melody {
-        DOREMI_SCALE,       // Do-Re-Mi-Fa-Sol-La-Si-Do
-        HAPPY_BIRTHDAY,     // Happy Birthday melody
-        TWINKLE_STAR,       // Twinkle Twinkle Little Star
-        JINGLE_BELLS,       // Jingle Bells
-        STARTUP_SOUND,      // Robot startup sound
-        SUCCESS_SOUND,      // Success notification
-        ERROR_SOUND,        // Error notification
-        MARIO_COIN,         // Mario coin sound
-        BEEP_SEQUENCE,      // Simple beep sequence
-        SPACE_THEME,        // Space exploration theme
-        STAR_WARS_THEME,    // Imperial March style
-        UFO_LANDING,        // Sci-fi UFO landing
-        COSMIC_JOURNEY,     // Deep space travel theme
-        ALIEN_CONTACT,      // First contact melody
-        WARP_SPEED          // Hyperspace jump sound
+        DOREMI_SCALE = 1,
+        HAPPY_BIRTHDAY,
+
+        RANDOM,
+        STOP
     };
     
     // Musical note structure
@@ -81,10 +85,13 @@ public:
 private:
     I2SSpeaker* _speaker;
     Utils::Logger* _logger;
+    volatile bool _interrupt; // Make volatile for thread safety
+    uint16_t _amplitude; // Dynamic amplitude control
+    SoundType _soundType; // Current instrument sound
     
     // Audio generation parameters
     static const uint32_t SAMPLE_RATE = 16000;  // 16kHz sample rate
-    static const uint16_t AMPLITUDE = 30000;    // Volume level (about 90% of max 32767)
+    static const uint16_t DEFAULT_AMPLITUDE = 15000;  // Default volume level (about 45% of max 32767)
     static const uint8_t CHANNELS = 1;          // Mono output
     
     // Wave generation
@@ -93,12 +100,20 @@ private:
     void generateSilence(uint32_t durationMs, int16_t* buffer, size_t bufferSize);
     void applyFade(int16_t* buffer, size_t sampleCount, size_t fadeInSamples, size_t fadeOutSamples);
     
+    // Instrument-specific wave generation
+    void generateInstrumentWave(uint16_t frequency, uint32_t durationMs, int16_t* buffer, size_t totalSamples, size_t channelCount, SoundType soundType);
+    void generateGuitarWave(uint16_t frequency, uint32_t durationMs, int16_t* buffer, size_t totalSamples, size_t channelCount);
+    void generateOrganWave(uint16_t frequency, uint32_t durationMs, int16_t* buffer, size_t totalSamples, size_t channelCount);
+    void generateFluteWave(uint16_t frequency, uint32_t durationMs, int16_t* buffer, size_t totalSamples, size_t channelCount);
+    void generateBellWave(uint16_t frequency, uint32_t durationMs, int16_t* buffer, size_t totalSamples, size_t channelCount);
+    void generateSawtoothWave(uint16_t frequency, uint32_t durationMs, int16_t* buffer, size_t totalSamples, size_t channelCount);
+    void generateTriangleWave(uint16_t frequency, uint32_t durationMs, int16_t* buffer, size_t totalSamples, size_t channelCount);
+    
     // Internal playback methods
     bool playFrequencyInternal(uint16_t frequency, uint32_t durationMs, bool checkPlaying = true);
     
     // Melody definitions
     const MusicNote* getMelodyNotes(Melody melody, size_t* noteCount);
-    void playNoteTask(Frequency note, Duration duration);
     
 public:
     // Constructor with dependency injection
@@ -106,29 +121,35 @@ public:
     ~Note();
     
     // Single note playback
-    bool playNote(Frequency note, Duration duration = QUARTER);
     bool playFrequency(uint16_t frequency, uint32_t durationMs);
     
     // Melody playback
-    bool playMelody(Melody melody);
-    bool playCustomMelody(const MusicNote* notes, size_t noteCount);
+    bool playMelody(Melody melody, int repeatCount = 1); // 0 = once, -1 = forever
+    bool playCustomMelody(const MusicNote* notes, size_t noteCount, int repeatCount = 1);
     
     // Simple sound effects
-    bool playBeep(uint16_t frequency = A4, uint32_t durationMs = 100);
-    bool playChord(Frequency note1, Frequency note2, Duration duration = QUARTER);
     bool playScale(Frequency startNote = C4, bool ascending = true);
     
-    // Volume and tone control
-    void setVolume(uint8_t volume); // 0-100
-    void setWaveform(bool useSquareWave = false); // false = sine, true = square
+    // Random melody generation
+    bool generateRandomMelody(size_t noteCount, MusicNote* outputBuffer);
+    bool generateRandomMelody(size_t noteCount, MusicNote* outputBuffer, Frequency startNote, Frequency* endNote = nullptr);
+    bool playRandomMelody(size_t noteCount, int repeatCount = 1);
+    
+    // Volume control
+    void setVolume(uint8_t volumePercent);      // 0-100 percent
+    void setVolumeRaw(uint16_t amplitude);      // Raw amplitude 0-32767
+    uint8_t getVolume() const;                  // Returns 0-100 percent
+    uint16_t getVolumeRaw() const;              // Returns raw amplitude
+    
+    // Sound type control
+    void setSoundType(SoundType soundType);     // Set instrument sound
+    SoundType getSoundType() const;             // Get current sound type
+    const char* getSoundTypeName() const;       // Get sound type name as string
     
     // System status
     bool isReady() const;
-    
-    // Musical helper functions
-    static Frequency getNoteFromString(const char* noteStr); // "C4", "D#4", etc.
-    static const char* getNoteString(Frequency note);
-    static uint16_t getFrequency(Frequency note) { return (uint16_t)note; }
+    void stop();
+    void interrupt();
 };
 
 #endif

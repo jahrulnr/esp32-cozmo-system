@@ -11,6 +11,8 @@ void batteryCallback(void* arg) {
     BatteryState state = batteryManager->getState();
     float voltage = batteryManager->getVoltage();
     int level = batteryManager->getLevel();
+    static int predict = 0;
+    static size_t lastCheck = millis();
     
     // Log battery state changes
     logger->info("Battery callback: %.3fV (%d%%) - State: %s", 

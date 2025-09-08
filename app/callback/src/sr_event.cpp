@@ -6,7 +6,7 @@
 void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {
     static bool automationStatus = automation->isEnabled();
     static sr_mode_t lastMode = SR_MODE_WAKEWORD;
-    bool resetScreenWhenTimeout = true;
+    static bool resetScreenWhenTimeout = true;
     switch (event) {
         case SR_EVENT_WAKEWORD:
             resetScreenWhenTimeout = true;
@@ -109,6 +109,8 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     servos->setHead(180);
                     automationStatus = false;
                     resetScreenWhenTimeout = false;
+                    SR::sr_set_mode(SR_MODE_WAKEWORD);
+                    return;
                     break;
                 case 9: // start recording
                     servos->setHead(DEFAULT_HEAD_ANGLE);
@@ -117,6 +119,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         delay(500);
                         if (audioRecorder->startRecording()) {
                             logger->info("Recording started via voice command");
+                            SR::sr_set_mode(SR_MODE_WAKEWORD);
                         } else {
                             sayText("Recording failed to start!");
                         }
@@ -154,105 +157,47 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         sayText("Battery monitoring not available!");
                     }
                     break;
-                case 12: // play music
+
+                // music
+                case 12: // do re mi
                     if (notePlayer) {
                         servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Playing music!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_DOREMI);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::HAPPY);
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
+                        sayText("Doremi play!");
+                        return;
                     } else {
                         sayText("Music system not available!");
                     }
                     break;
-                case 13: // do re mi
+                case 13: // happy birthday
                     if (notePlayer) {
                         servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Do Re Mi!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_DOREMI);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::HAPPY_BIRTHDAY);
+                        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::HAPPY);
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
+                        sayText("Happy birthday play!");
+                        return;
                     } else {
                         sayText("Music system not available!");
                     }
                     break;
-                case 14: // happy birthday
+                case 14: // play music
                     if (notePlayer) {
                         servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Happy Birthday!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_HAPPY_BIRTHDAY);
+                        notification->send(NOTIFICATION_NOTE, (void*)Note::RANDOM);
+                        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::HAPPY);
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
+                        return;
                     } else {
                         sayText("Music system not available!");
                     }
                     break;
-                case 15: // twinkle star
-                    if (notePlayer) {
-                        servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Twinkle little star!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_TWINKLE_STAR);
-                        resetScreenWhenTimeout = true;
-                    } else {
-                        sayText("Music system not available!");
-                    }
-                    break;
-                case 16: // play note
-                    if (notePlayer) {
-                        servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Playing note!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_NOTE);
-                        resetScreenWhenTimeout = true;
-                    } else {
-                        sayText("Music system not available!");
-                    }
-                    break;
-                case 17: // stop music
-                    if (notePlayer) {
-                        servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Stopping music!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::STOP_MUSIC);
-                        resetScreenWhenTimeout = true;
-                    } else {
-                        sayText("Music system not available!");
-                    }
-                    break;
-                case 18: // space music
-                    if (notePlayer) {
-                        servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Playing space theme!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_SPACE_THEME);
-                        resetScreenWhenTimeout = true;
-                    } else {
-                        sayText("Music system not available!");
-                    }
-                    break;
-                case 19: // star wars
-                    if (notePlayer) {
-                        servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Imperial March!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_STAR_WARS);
-                        resetScreenWhenTimeout = true;
-                    } else {
-                        sayText("Music system not available!");
-                    }
-                    break;
-                case 20: // alien sound
-                    if (notePlayer) {
-                        servos->setHead(DEFAULT_HEAD_ANGLE);
-                        sayText("Alien contact!");
-                        delay(100);
-                        notification->send(NOTIFICATION_NOTE, (void*)EVENT_NOTE::PLAY_ALIEN_CONTACT);
-                        resetScreenWhenTimeout = true;
-                    } else {
-                        sayText("Music system not available!");
-                    }
-                    break;
+
                 default: 
                     logger->info("Unknown command ID: %d", command_id);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
