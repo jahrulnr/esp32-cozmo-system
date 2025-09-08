@@ -26,7 +26,7 @@ static const csr_cmd_t voice_commands[] = {
 	{11, "show battery", "sb BaTkm"},
 	{12, "do re mi", "Do Rd Mm"},
 	{13, "happy birthday", "haPm BkvDd"},
-	{14, "music", "MyoZgK"},
+	{14, "play a music", "PLd c MYoZgK"},
 	// Sound type commands
 	{15, "use piano sound", "YoS PmaNb StND"},
 	{16, "use guitar sound", "YoS GgTnR StND"},
