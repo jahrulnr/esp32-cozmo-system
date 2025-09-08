@@ -12,6 +12,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             resetScreenWhenTimeout = true;
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
             notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WAKEWORD);
+            notification->send(NOTIFICATION_NOTE, (void*)Note::STOP);
 
             sayText("whats up?");
             SR::sr_set_mode(SR_MODE_COMMAND);
@@ -44,7 +45,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                 case 0: // look to left
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::LOOK_LEFT);
-                    notification->send(NOTIFICATION_NOTE, (void*)Note::STOP);
                     motors->move(motors->LEFT);
                     delay(500);
                     motors->stop();
