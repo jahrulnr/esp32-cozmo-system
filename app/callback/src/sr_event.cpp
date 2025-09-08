@@ -209,6 +209,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Piano");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -220,6 +221,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Guitar");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -231,6 +233,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Organ");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -242,6 +245,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Flute");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -253,6 +257,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Bell");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -264,6 +269,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Square Wave");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -275,6 +281,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Sawtooth");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -286,6 +293,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Sound type changed to: Triangle");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -299,6 +307,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Volume set to: 20%% (lower)");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -310,6 +319,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Volume set to: 50%% (middle)");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
@@ -321,6 +331,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
                         logger->info("Volume set to: 100%% (full)");
                         resetScreenWhenTimeout = true;
+                        SR::sr_set_mode(SR_MODE_WAKEWORD);
                         return;
                     } else {
                         sayText("Music system not available!");
