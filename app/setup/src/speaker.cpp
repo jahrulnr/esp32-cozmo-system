@@ -17,7 +17,7 @@ void setupSpeakers() {
     I2S_SPEAKER_WCLK_PIN
   );
   
-  if (i2sSpeaker->init(I2S_SPEAKER_SAMPLE_RATE, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO) == ESP_OK) {
+  if (i2sSpeaker->init(I2S_SPEAKER_SAMPLE_RATE, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO) == ESP_OK) {
     logger->info("I2S speaker (MAX98357) initialized successfully");
     
     // Now initialize dependent components AFTER i2sSpeaker is created

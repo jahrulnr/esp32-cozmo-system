@@ -86,7 +86,6 @@
 #define I2S_SPEAKER_WCLK_PIN GPIO_NUM_2  // Word Clock/Left-Right Clock (WCLK/WS/LRC)
 #define I2S_SPEAKER_DATA_PIN GPIO_NUM_41  // Data Input (DIN) - NOT the SD pin
 #define I2S_SPEAKER_SAMPLE_RATE 16000
-#define I2S_SPEAKER_DEFAULT_VOLUME 100
 
 // SD card
 #define SD_MMC_CLK 39 

@@ -1,6 +1,5 @@
 #include "../register.h"
 
-bool interruptNotePlayer = false;
 String noteRandomPlayerId;
 
 void callbackNotePlayer(void* data) {
@@ -19,18 +18,16 @@ void callbackNotePlayer(void* data) {
 
     if (event == Note::STOP) {
         logger->info("STOP command received - setting interrupt and calling notePlayer->stop()");
-        notePlayer->stop();
-        interruptNotePlayer = true;
+        SendTask::stopTask(noteRandomPlayerId);
+        noteRandomPlayerId = "";
 
     }
     else if (event == Note::DOREMI_SCALE) {
         notePlayer->playMelody(Note::DOREMI_SCALE);   
-        interruptNotePlayer = false;
 
     }
     else if (event == Note::HAPPY_BIRTHDAY) {
         notePlayer->playMelody(Note::HAPPY_BIRTHDAY);   
-        interruptNotePlayer = false;
 
     }
     else if (event == Note::RANDOM) {
@@ -48,22 +45,15 @@ void callbackNotePlayer(void* data) {
             if (notePlayer && notePlayer->isReady()) {
                 Note::Frequency endingNote = (Note::Frequency)0; // Start with auto-chosen note
                 
-                interruptNotePlayer = false; // Reset interrupt flag
                 logger->info("Starting random melody loop, interrupt = false");
                 
                 // Generate and play continuous random melodies until interrupted
-                while (!interruptNotePlayer) {
+                while (true) {
                     if (notePlayer->generateRandomMelody(melodyLength, melodyBuffer1, endingNote, &endingNote)) {
                         // Play the melody - this will be interrupted if stop() is called
                         if (!notePlayer->playCustomMelody(melodyBuffer1, melodyLength, 1)) {
                             logger->info("Melody playback failed - exiting loop");
                             break; // Exit if playback failed
-                        }
-                        
-                        // Check interrupt flag again after playback
-                        if (interruptNotePlayer) {
-                            logger->info("Interrupt detected after melody playback - exiting loop");
-                            break;
                         }
                         
                         // Short pause between melodies
@@ -74,14 +64,14 @@ void callbackNotePlayer(void* data) {
                     }
                 }
             }
-            logger->info("Random melody loop ended, interrupt = %s", interruptNotePlayer ? "true" : "false");
+            logger->info("Random melody loop ended");
 
-            SendTask::stopTask(noteRandomPlayerId);
+            String id = noteRandomPlayerId;
             noteRandomPlayerId = "";
+            SendTask::stopTask(id);
         }, "RandomMusicTask");
         
     } else {
         logger->warning("Unknown Note event: %s", event);
-        interruptNotePlayer = false;
     }
 }

@@ -15,7 +15,7 @@ void setupMicrophone() {
         MICROPHONE_DIN,    // Data pin
         MICROPHONE_SCK,    // Clock pin  
         MICROPHONE_WS,     // Word select pin
-        I2S_NUM_1                      // Port 
+        I2S_NUM_1          // Port 
     );
     esp_err_t ret = microphone->init(16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO);
     if (ret != ESP_OK) {

@@ -26,13 +26,13 @@ std::vector<int16_t> apply_speed_adjustment(const std::vector<int16_t>& samples)
     size_t output_size = (size_t)(samples.size() / playback_speed);
     adjusted_samples.reserve(output_size);
     
-    for (size_t i = 0; i < output_size; i += 2) { // Process stereo pairs
+    for (size_t i = 0; i < output_size; i += 1) { // Process stereo pairs
         float source_index = i * playback_speed;
         size_t index = (size_t)source_index;
         
         if (index + 1 < samples.size()) {
             adjusted_samples.push_back(samples[index]);     // Left channel
-            adjusted_samples.push_back(samples[index + 1]); // Right channelb
+            // adjusted_samples.push_back(samples[index + 1]); // Right channelb
         }
     }
     
@@ -55,7 +55,7 @@ void picotts_output_callback(int16_t *samples, unsigned count) {
         
         // Add stereo samples to collection buffer
         collected_audio.push_back(boosted_sample);     // Left channel
-        collected_audio.push_back(boosted_sample);     // Right channel
+        // collected_audio.push_back(boosted_sample);     // Right channel
     }
     vTaskDelay(pdMS_TO_TICKS(1));
 }
