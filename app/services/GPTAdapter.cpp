@@ -2,7 +2,7 @@
 #include <HTTPClient.h>
 #include "core/Utils/SpiAllocator.h"
 
-namespace Communication {
+namespace Services {
 
 GPTAdapter::GPTAdapter() : _model("gpt-4.1-nano-2025-04-14"), 
                            _maxTokens(1024), _temperature(0.7), _initialized(false) {

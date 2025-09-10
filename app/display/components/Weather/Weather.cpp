@@ -14,7 +14,7 @@ Weather::~Weather() {
     // Destructor
 }
 
-void Weather::updateWeatherData(const Communication::WeatherService::WeatherData& weatherData) {
+void Weather::updateWeatherData(const Services::WeatherService::WeatherData& weatherData) {
     _currentWeather = weatherData;
     _hasData = weatherData.isValid;
     _lastUpdate = millis();
@@ -36,7 +36,7 @@ void Weather::draw() {
 
 void Weather::clearData() {
     _hasData = false;
-    _currentWeather = Communication::WeatherService::WeatherData();
+    _currentWeather = Services::WeatherService::WeatherData();
 }
 
 void Weather::drawAllWeatherInfo() {
@@ -102,7 +102,7 @@ void Weather::drawAllWeatherInfo() {
     }
 }
 
-void Weather::drawWeatherIcon(int x, int y, Communication::WeatherService::WeatherCondition condition) {
+void Weather::drawWeatherIcon(int x, int y, Services::WeatherService::WeatherCondition condition) {
     // Use smaller, simpler icons that fit the compact layout
     _display->setFont(u8g2_font_unifont_t_symbols);
     
@@ -112,24 +112,24 @@ void Weather::drawWeatherIcon(int x, int y, Communication::WeatherService::Weath
     }
 }
 
-uint16_t Weather::getWeatherIconGlyph(Communication::WeatherService::WeatherCondition condition) {
+uint16_t Weather::getWeatherIconGlyph(Services::WeatherService::WeatherCondition condition) {
     // Use Unicode weather symbols that fit better in compact space
     switch (condition) {
-        case Communication::WeatherService::WeatherCondition::CLEAR:
+        case Services::WeatherService::WeatherCondition::CLEAR:
             return 0x2600; // Sun symbol ☀
-        case Communication::WeatherService::WeatherCondition::PARTLY_CLOUDY:
+        case Services::WeatherService::WeatherCondition::PARTLY_CLOUDY:
             return 0x26C5; // Partly cloudy ⛅
-        case Communication::WeatherService::WeatherCondition::CLOUDY:
-        case Communication::WeatherService::WeatherCondition::OVERCAST:
+        case Services::WeatherService::WeatherCondition::CLOUDY:
+        case Services::WeatherService::WeatherCondition::OVERCAST:
             return 0x2601; // Cloud ☁
-        case Communication::WeatherService::WeatherCondition::LIGHT_RAIN:
-        case Communication::WeatherService::WeatherCondition::MODERATE_RAIN:
-        case Communication::WeatherService::WeatherCondition::HEAVY_RAIN:
+        case Services::WeatherService::WeatherCondition::LIGHT_RAIN:
+        case Services::WeatherService::WeatherCondition::MODERATE_RAIN:
+        case Services::WeatherService::WeatherCondition::HEAVY_RAIN:
             return 0x2614; // Rain ☔
-        case Communication::WeatherService::WeatherCondition::THUNDERSTORM:
+        case Services::WeatherService::WeatherCondition::THUNDERSTORM:
             return 0x26C8; // Thunder cloud ⛈
-        case Communication::WeatherService::WeatherCondition::FOG:
-        case Communication::WeatherService::WeatherCondition::MIST:
+        case Services::WeatherService::WeatherCondition::FOG:
+        case Services::WeatherService::WeatherCondition::MIST:
             return 0x1F32B; // Fog 🌫 (or fallback to cloud)
         default:
             return 0x2753; // Question mark ❓

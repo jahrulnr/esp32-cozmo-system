@@ -2,7 +2,7 @@
 #include <HTTPClient.h>
 #include "core/Utils/SpiAllocator.h"
 
-namespace Communication {
+namespace Services {
 
 const char* WeatherService::CACHE_FILE_PATH = "/cache/weather_cache.json";
 

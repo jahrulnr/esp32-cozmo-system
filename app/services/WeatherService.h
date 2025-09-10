@@ -7,7 +7,7 @@
 #include "FileManager.h"
 #include "repository/AdministrativeRegion.h"
 
-namespace Communication {
+namespace Services {
 
 class WeatherService {
 public:

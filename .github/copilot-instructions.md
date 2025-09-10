@@ -32,30 +32,47 @@ app/
 ├── app.ino                     # Arduino entry point (setup/loop delegation)
 ├── Constants.h                 # Global constants, event keys, voice commands
 ├── core/                       # Core robot functionality modules
-│   ├── Audio/                  # Audio recording and playback
-│   ├── Automation/             # GPT-powered behavior generation
-│   ├── Communication/          # WiFi, GPT API, Weather services
-│   ├── Motors/                 # Motor and servo control
-│   ├── Sensors/                # Camera, distance, orientation sensors
-│   └── Utils/                  # Memory management, string utilities
+│   ├── Audio/                  # Audio recording and note playback (AudioRecorder, Note)
+│   ├── Automation/             # Automation system (currently empty, under development)
+│   ├── Logic/                  # Logic components
+│   │   └── Area/               # Area scanning functionality (ScanArea)
+│   ├── Motors/                 # Motor and servo control (MotorControl, ServoControl)
+│   ├── Sensors/                # Hardware sensors (Camera, Distance, Orientation, Touch, etc.)
+│   └── Utils/                  # Memory management, command mapping (SpiAllocator, CommandMapper)
 ├── display/                    # Display control and face animation system
 │   ├── Display.cpp/.h          # Main display controller
 │   ├── DisplayFace.cpp         # Eye animation and expressions
 │   ├── DisplayGraphic.cpp      # Graphics primitives
 │   ├── DisplayText.cpp         # Text rendering
 │   ├── Icons.h                 # Icon definitions
-│   └── components/             # Display UI components
+│   └── components/             # Complex display UI components
+│       ├── Bar/                # Progress bars and indicators
+│       ├── Battery/            # Battery status display
+│       ├── Cube3D/             # 3D cube animation
+│       ├── Face/               # Advanced eye animation system (Eye, Blink, Transition, etc.)
+│       ├── Mic/                # Microphone status visualization
+│       ├── SpaceGame/          # Interactive space game
+│       ├── Status/             # System status displays
+│       └── Weather/            # Weather information display
 ├── repository/                 # Data models and configuration persistence
+├── services/                   # External service integrations
+│   ├── GPTAdapter.cpp/.h       # OpenAI GPT integration
+│   ├── WeatherService.cpp/.h   # BMKG weather API integration
+│   └── WiFiManager.cpp/.h      # WiFi connection management
 ├── setup/                      # System initialization and component setup
 │   ├── setup.cpp/.h            # Main setup orchestration
-│   └── src/                    # Component-specific setup functions
-├── tasks/                      # FreeRTOS task definitions
+│   └── src/                    # 30+ component-specific setup functions
+├── tasks/                      # FreeRTOS task definitions (9 task modules)
 │   ├── register.h              # Task registration and spawning
 │   └── src/                    # Task implementation files
 ├── web/                        # Web interface (MVC framework)
 │   ├── Controllers/            # API endpoint handlers
-│   └── Routes/                 # Route definitions (web, api, websocket)
-└── callback/                   # Event system callback registration
+│   └── Routes/                 # Route definitions
+│       ├── api.cpp             # REST API endpoints
+│       ├── web.cpp             # Web page routes
+│       ├── websocket.cpp       # Real-time communication
+│       └── routes.h            # Route registration header
+└── callback/                   # Event system callback registration (6 callback modules)
     ├── register.h              # Notification callback setup
     └── src/                    # Component-specific event handlers
 ```
@@ -124,10 +141,10 @@ model/
 - **`app/Constants.h`**: Event keys, voice commands, system constants
 - **`platformio.ini`**: Build configuration, library dependencies
 
-#### Communication
+#### Services
 - **`app/callback/register.h`**: Event system callback registration
 - **`app/web/Routes/`**: Web API endpoint definitions
-- **`app/core/Communication/`**: External service integrations
+- **`app/services/`**: External service integrations
 
 #### Hardware Control
 - **`app/core/Motors/`**: Motor and servo control via IOExtern
@@ -253,7 +270,6 @@ return Response(request.getServerRequest()).status(200).json(response);
   - **Core notifications**: `NOTIFICATION_SPEAKER`, `NOTIFICATION_DISPLAY`, `NOTIFICATION_AUTOMATION`
   - **Speech Recognition**: `EVENT_SR` namespace (`WAKEWORD`, `COMMAND`, `TIMEOUT`, `PAUSE`, `RESUME`)
   - **Display Control**: `EVENT_DISPLAY` namespace (`WAKEWORD`, `LOOK_LEFT`, `LOOK_RIGHT`, `CLOSE_EYE`, `CLIFF_DETECTED`, `OBSTACLE_DETECTED`)
-  - **Automation Control**: `EVENT_AUTOMATION` namespace (`PAUSE`, `RESUME`)
 - **Callback registration**: Components register in `callback/register.h`
 
 ```cpp
@@ -284,10 +300,6 @@ void sensorMonitorTask(void* parameter) {
 // Motors controlled via IOExtern or direct GPIO
 motors->forward(speed);    // Non-blocking movement
 motors->setDisplay(display); // Link display for feedback
-
-// Automation system with GPT integration
-automation->start();       // Background behavior generation
-automation->updateManualControlTime(); // Pause automation on manual control
 ```
 
 ## 🎯 Critical Integration Points
@@ -325,11 +337,12 @@ if (data) {
 5. **Phonetic generation**: Use `python tools/multinet_g2p.py --text="new command"` for ESP-SR phonetic representations
 6. **Microphone callback**: `mic_fill_callback()` handles volume control and audio processing for ESP-SR system
 
-### Automation & AI Integration
+### AI Integration
 - **GPT behavior generation**: Automation system uses gpt-4.1-nano-2025-04-14 to generate robot behaviors
 - **Behavior format**: `[ACTION=time][ACTION2=time] *Complete vocalization*` (50 behaviors per batch)
 - **Weather integration**: BMKG API integration with caching, location-based forecasts
 - **Command validation**: Strict behavior validation prevents invalid GPT responses
+- **Automation state**: Core automation framework exists with pause/resume events, but specific automation logic is under development
 
 ### Web Framework Flow
 ```cpp

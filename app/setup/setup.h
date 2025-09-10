@@ -25,7 +25,6 @@
 #include <FTPServer.h>
 #include "battery_manager.h"
 #include "core/Utils/SpiAllocator.h"
-#include "core/Automation/Automation.h"
 #include "core/Sensors/Camera.h"
 #include "core/Sensors/OrientationSensor.h"
 #include "core/Sensors/DistanceSensor.h"
@@ -34,14 +33,14 @@
 #include "core/Sensors/TemperatureSensor.h"
 #include "core/Motors/MotorControl.h"
 #include "core/Motors/ServoControl.h"
-#include "core/Communication/WiFiManager.h"
-#include "core/Communication/GPTAdapter.h"
-#include "core/Communication/WeatherService.h"
 #include "core/Audio/AudioRecorder.h"
 #include "core/Audio/Note.h"
 #include "core/Utils/CommandMapper.h"
 #include "repository/Configuration.h"
 #include "repository/AdministrativeRegion.h"
+#include "services/WiFiManager.h"
+#include "services/GPTAdapter.h"
+#include "services/WeatherService.h"
 #include "tasks/register.h"
 #include "callback/register.h"
 #include "web/Routes/routes.h"
@@ -56,7 +55,6 @@ struct {
 #endif
 
 extern Notification* notification;
-extern Automation::Automation* automation;
 extern Sensors::Camera* camera;
 extern Sensors::OrientationSensor* orientation;
 extern Sensors::DistanceSensor* distanceSensor;
@@ -67,9 +65,9 @@ extern Sensors::TemperatureSensor* temperatureSensor;
 extern BatteryManager* batteryManager;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
-extern Communication::WiFiManager* wifiManager;
-extern Communication::GPTAdapter* gptAdapter;
-extern Communication::WeatherService* weatherService;
+extern Services::WiFiManager* wifiManager;
+extern Services::GPTAdapter* gptAdapter;
+extern Services::WeatherService* weatherService;
 extern AudioRecorder* audioRecorder;
 extern Note* notePlayer;
 extern Display::Display* display;
@@ -104,7 +102,7 @@ void setupDisplay();
 void setupWiFi();
 void setupGPT();
 void setupCommandMapper();
-void setupAutomation();
+// void setupAutomation();
 void setupExtender();
 void setupSpeechRecognition();
 void setupPicoTTS();

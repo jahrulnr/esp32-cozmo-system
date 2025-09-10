@@ -6,7 +6,7 @@
 #include <Sstring.h>
 #include <setup/setup.h>
 
-namespace Communication {
+namespace Services {
 
 WiFiManager::WiFiManager(Utils::FileManager *fileManager) : _initialized(false), _isAP(false) {
     // Initialize with default config from Config.h

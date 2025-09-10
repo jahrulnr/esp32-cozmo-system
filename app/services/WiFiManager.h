@@ -7,7 +7,7 @@
 #include <Sstring.h>
 #include "FileManager.h"
 
-namespace Communication {
+namespace Services {
 
 class WiFiManager {
 public:

@@ -5,7 +5,7 @@
 #include <functional>
 #include "Sstring.h"
 
-namespace Communication {
+namespace Services {
 
 class GPTAdapter {
 public:

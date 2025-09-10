@@ -191,7 +191,7 @@ void Display::setMicLevel(int level) {
     _micLevel = level;
 }
 
-void Display::updateWeatherData(const Communication::WeatherService::WeatherData& weatherData) {
+void Display::updateWeatherData(const Services::WeatherService::WeatherData& weatherData) {
     if (_weather) {
         _weather->updateWeatherData(weatherData);
     }

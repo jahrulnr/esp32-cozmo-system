@@ -19,7 +19,7 @@ void setupApp() {
   setupMicrophone();
   setupSpeakers();
   setupCommandMapper();
-  setupAutomation();
+  // setupAutomation();
   setupPicoTTS();
   setupSpeechRecognition();
   setupAudioRecorder();

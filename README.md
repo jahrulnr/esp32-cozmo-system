@@ -1,6 +1,6 @@
 # ESP32 Cozmo Robot System
 
-An intelligent robot system built with ESP32-S3, featuring speech recognition, text-to-speech, vision capabilities, and automation features. This project uses PlatformIO with the Arduino framework and implements a custom MVC web framework for control and monitoring.
+An intelligent robot system built with ESP32-S3, featuring speech recognition, text-to-speech, vision capabilities features. This project uses PlatformIO with the Arduino framework and implements a custom MVC web framework for control and monitoring.
 
 ## 🚀 Features
 
@@ -18,7 +18,6 @@ An intelligent robot system built with ESP32-S3, featuring speech recognition, t
 - FTP Server for File Management
 - Weather Service Integration
 - GPT Integration for AI capabilities
-- Automation System
 
 ## 🛠️ Hardware Requirements
 
@@ -76,8 +75,6 @@ An intelligent robot system built with ESP32-S3, featuring speech recognition, t
 /app
   ├── app.ino              # Main application entry
   ├── core/                # Core functionality
-  │   ├── Automation/      # Automation system
-  │   ├── Communication/   # WiFi, GPT, Weather services
   │   ├── Motors/          # Motor and servo control
   │   └── Sensors/         # Various sensor implementations
   ├── display/             # Display and face animations

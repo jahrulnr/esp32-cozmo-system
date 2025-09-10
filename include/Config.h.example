@@ -5,11 +5,6 @@
 #define FTP_PASS "root"
 
 #define PROTECT_COZMO true
-#define AUTOMATION_ENABLED true
-#define AUTOMATION_INACTIVITY_TIMEOUT 10000  // 10 seconds inactivity before resuming automation
-#define AUTOMATION_CHECK_INTERVAL 2000      // Check for automation resumption every 1 second
-#define AUTOMATION_MAX_BEHAVIORS 50         // Maximum number of behaviors to store (prevent memory issues)
-#define AUTOMATION_MAX_BEHAVIOR_LENGTH 512  // Maximum length in bytes for a single behavior
 
 // Camera configuration
 #define CAMERA_MODEL_FREENOVE_ESP32S3_CAM

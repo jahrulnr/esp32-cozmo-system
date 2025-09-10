@@ -99,7 +99,7 @@ public:
      * Update weather data for display
      * @param weatherData The weather data to display
      */
-    void updateWeatherData(const Communication::WeatherService::WeatherData& weatherData);
+    void updateWeatherData(const Services::WeatherService::WeatherData& weatherData);
 
     /**
      * Update orientation display with sensor data

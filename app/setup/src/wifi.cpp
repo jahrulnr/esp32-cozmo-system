@@ -1,16 +1,16 @@
 #include <Arduino.h>
 #include "setup/setup.h"
 
-Communication::WiFiManager *wifiManager;
+Services::WiFiManager *wifiManager;
 
 void setupWiFi() {
   if (WIFI_ENABLED) {
     logger->info("Setting up WiFi...");
-    wifiManager = new Communication::WiFiManager(fileManager);
+    wifiManager = new Services::WiFiManager(fileManager);
     wifiManager->init();
     
     // Get config (already loaded from file or defaults in constructor)
-    Communication::WiFiManager::WiFiConfig config = wifiManager->getConfig();
+    Services::WiFiManager::WiFiConfig config = wifiManager->getConfig();
     
     if (display) {
       display->clear();

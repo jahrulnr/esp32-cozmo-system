@@ -4,7 +4,6 @@
 
 // Event callback for SR system
 void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {
-    static bool automationStatus = automation->isEnabled();
     static sr_mode_t lastMode = SR_MODE_WAKEWORD;
     static bool resetScreenWhenTimeout = true;
 
@@ -38,8 +37,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
 
             lastMode = SR_MODE_WAKEWORD;
             SR::sr_set_mode(SR_MODE_WAKEWORD);
-            if (automationStatus)
-                notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
             break;
             
         case SR_EVENT_COMMAND:
@@ -49,7 +46,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             switch (command_id) {
                 case Commands::AUTOMATION_ACTIVE:
                     sayText("Thankyou!");
-                    automationStatus = true;
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::NOTHING);
                     resetScreenWhenTimeout = true;
@@ -57,7 +53,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                 case Commands::AUTOMATION_PAUSED:
                     sayText("Ok!");
                     servos->setHead(0);
-                    automationStatus = false;
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
                     resetScreenWhenTimeout = true;
                     break;
@@ -65,7 +60,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WEATHER_STATUS);
                     sayText("Here is weather status!");
                     servos->setHead(180);
-                    automationStatus = false;
                     resetScreenWhenTimeout = false;
                     break;
                 case Commands::REBOOT:
@@ -77,7 +71,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::ORIENTATION_DISPLAY);
                     sayText("Here is orientation display!");
                     servos->setHead(180);
-                    automationStatus = false;
                     resetScreenWhenTimeout = false;
                     break;
                 case Commands::GAME_SPACE:
@@ -86,7 +79,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     sayText("Starting space game!");
                     delay(100);
                     servos->setHead(180);
-                    automationStatus = false;
                     resetScreenWhenTimeout = false;
                     SR::sr_set_mode(SR_MODE_WAKEWORD);
                     return;
@@ -95,7 +87,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     if (!audioRecorder->isRecordingActive()) {
                         if (audioRecorder->startRecording()) {
-                            automationStatus = false;
                             resetScreenWhenTimeout = false;
                             notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WAKEWORD);
                             logger->info("Recording started via voice command");
@@ -162,7 +153,6 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     logger->info("Unknown command ID: %d", command_id);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     sayText("Sorry, I not understand!");
-                    automationStatus = true;
                     resetScreenWhenTimeout = true;
                     break;
             }

@@ -11,6 +11,6 @@ void picotts_output_callback(int16_t *samples, unsigned count);
 void picotts_error_callback(void);
 void picotts_idle_callback(void);
 
-void weatherCallback(const Communication::WeatherService::WeatherData &data, bool success);
+void weatherCallback(const Services::WeatherService::WeatherData &data, bool success);
 void batteryCallback(void* arg);
 void callbackNotePlayer(void* data);

@@ -3,14 +3,14 @@
 
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include "core/Communication/WeatherService.h"
+#include "services/WeatherService.h"
 
 namespace Display {
 
 class Weather {
 private:
     U8G2_SSD1306_128X64_NONAME_F_HW_I2C* _display;
-    Communication::WeatherService::WeatherData _currentWeather;
+    Services::WeatherService::WeatherData _currentWeather;
     bool _hasData;
     unsigned long _lastUpdate;
     int _width;
@@ -29,7 +29,7 @@ public:
      * Update weather data to display
      * @param weatherData The weather data to display
      */
-    void updateWeatherData(const Communication::WeatherService::WeatherData& weatherData);
+    void updateWeatherData(const Services::WeatherService::WeatherData& weatherData);
 
     /**
      * Draw the weather display (called during display update cycle)
@@ -54,7 +54,7 @@ private:
      * @param y Y position
      * @param condition Weather condition
      */
-    void drawWeatherIcon(int x, int y, Communication::WeatherService::WeatherCondition condition);
+    void drawWeatherIcon(int x, int y, Services::WeatherService::WeatherCondition condition);
 
     /**
      * Draw all weather information on single page
@@ -66,7 +66,7 @@ private:
      * @param condition Weather condition
      * @return Icon glyph code
      */
-    uint16_t getWeatherIconGlyph(Communication::WeatherService::WeatherCondition condition);
+    uint16_t getWeatherIconGlyph(Services::WeatherService::WeatherCondition condition);
 
     /**
      * Draw scrolling text for long strings

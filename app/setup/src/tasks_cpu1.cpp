@@ -35,13 +35,6 @@ void setupTasksCpu1() {
         logger->info("Protect Cozmo task created with ID: %s", protectCozmoTaskId.c_str());
     }
     #endif
-    
-    // Create automation task using automation component's built-in method
-    if (automation) {
-        automation->start(1);  // Start on core 1
-        automation->setRandomBehaviorOrder();
-        logger->info("Automation task started on core 1");
-    }
 
     // Create FTP task using SendTask library
     ftpTaskId = SendTask::createLoopTaskOnCore(

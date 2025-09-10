@@ -2,10 +2,10 @@
 #include "setup/setup.h"
 #include "tasks/register.h"
 
-Communication::GPTAdapter *gptAdapter;
+Services::GPTAdapter *gptAdapter;
 
 void setupGPT(){
-	gptAdapter = new Communication::GPTAdapter();
+	gptAdapter = new Services::GPTAdapter();
 	#if GPT_ENABLED
 	gptAdapter->init(GPT_API_KEY);
 	gptAdapter->setModel(GPT_MODEL);
