@@ -10,16 +10,13 @@ bool handleCliffDetection() {
         return false;  // No cliff detected
     }
 
-    if (notification)
-        notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::CLIFF_DETECTED);
-
     if (motors) {
         motors->interuptMotor();
 
         motors->move(Motors::MotorControl::BACKWARD, 1000);
         Motors::MotorControl::Direction turnDirection = (rand() % 2 == 0) ?
                 Motors::MotorControl::LEFT : Motors::MotorControl::RIGHT;
-        motors->move(turnDirection, 3000);
+        motors->move(turnDirection, 1000);
         motors->stop();
     }
 
@@ -40,8 +37,6 @@ bool handleObstacleDetection() {
     }
 
     bool pathFound = false;
-    if (notification)
-        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY::OBSTACLE_DETECTED);
 
     if (motors) {
         Motors::MotorControl::Direction currentMove = motors->getCurrentDirection();
@@ -69,10 +64,6 @@ bool handleObstacleDetection() {
         }
         
         if(!pathFound) motors->interuptMotor();
-    }
-
-    if (display && !pathFound && notification) {
-        notification->send(NOTIFICATION_DISPLAY, (void*) EVENT_DISPLAY::STUCK_DETECTED);
     }
 
     if (logger) {

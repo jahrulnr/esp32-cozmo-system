@@ -264,6 +264,19 @@ if (data) {
     int* temp = (int*)data;  // Manual casting
     processTemperature(*temp);
 }
+
+// Task implementation pattern (from tasks/src/)
+void sensorMonitorTask(void* parameter) {
+    logger->info("Sensor monitoring task started");
+    TickType_t lastWakeTime = xTaskGetTickCount();
+    TickType_t updateFrequency = pdMS_TO_TICKS(50);
+    
+    while (true) {
+        vTaskDelayUntil(&lastWakeTime, updateFrequency);
+        // Sensor reading logic
+        if (sendLog) logger->info("sensor data...");
+    }
+}
 ```
 
 ### Robot Control Architecture
@@ -309,6 +322,8 @@ if (data) {
 2. **Wake word detection** → **Speech recognition** → **Command execution**
 3. Models stored in `model/` directory, flashed separately to partition
 4. Phonetic command definitions in `Constants.h` voice_commands array
+5. **Phonetic generation**: Use `python tools/multinet_g2p.py --text="new command"` for ESP-SR phonetic representations
+6. **Microphone callback**: `mic_fill_callback()` handles volume control and audio processing for ESP-SR system
 
 ### Automation & AI Integration
 - **GPT behavior generation**: Automation system uses gpt-4.1-nano-2025-04-14 to generate robot behaviors
@@ -349,6 +364,8 @@ Response executeMiddleware(const std::vector<String>& middleware, Request& reque
 - **Watchdog configured** for 120s timeout (long for ESP-SR processing)
 - **SendTask library**: Advanced task creation and management with core affinity (`SendTask::createTaskOnCore()`, `SendTask::createLoopTaskOnCore()`, task status monitoring)
 - **Task scheduling**: Uses `SendTask` for managed task creation with tracking, plus direct `xTaskCreateUniversal()` and `xTaskCreatePinnedToCore()` for core affinity
+- **Task tracking**: Global task ID strings defined in `register.h` for monitoring and cleanup (`taskMonitorerId`, `displayTaskId`, etc.)
+- **Task utilities**: `printTaskStatus()` and `cleanupTasks()` for debugging and resource management
 
 ### File System Layout
 - **LittleFS**: Configuration, web assets, logs (`/data/` directory contents)
@@ -390,6 +407,8 @@ Response executeMiddleware(const std::vector<String>& middleware, Request& reque
 - **Network debugging**: mDNS service at `devicename.local`, FTP server for file access
 - **Task monitoring**: Use `SendTask::createTaskOnCore()` for trackable task execution with status monitoring, or legacy `Command::Send()` interface
 - **Display debugging**: Two-phase init - basic display in setup(), full thread-safety after setupTasks()
+- **Voice debugging**: Use `tools/multinet_g2p.py` to generate phonetic representations for new commands
+- **Volume control**: Microphone volume multiplier handled in `mic_fill_callback()` for ESP-SR system
 
 ## 🎯 GPIO Pin Reference (ESP32-S3)
 

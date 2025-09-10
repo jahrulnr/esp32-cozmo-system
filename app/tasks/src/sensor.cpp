@@ -140,15 +140,6 @@ void sensorMonitorTask(void* parameter) {
                 logger->info("Battery instant: %.3fV (samples: %d, avg so far: %.3fV)", 
                     currentVoltage, batterySampleCount, batteryVoltageSum / batterySampleCount);
             }
-
-            // Send critical battery notifications to display system (only if we have stable data)
-            if (batteryDataReady) {
-                if (batteryState == BATTERY_STATE_CRITICAL) {
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::BATTERY_CRITICAL);
-                } else if (batteryState == BATTERY_STATE_LOW) {
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::BATTERY_LOW);
-                }
-            }
         }
 
         if (sendLog) {

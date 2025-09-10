@@ -37,38 +37,10 @@ void displayTask(void *param){
 								display->setState(Display::STATE_MIC);
 								// update display will triggered after esp-sr timeout
 						break;
-						case EVENT_DISPLAY::HAPPY:
+						case EVENT_DISPLAY::FACE:
 								display->setState(Display::STATE_FACE);
 								display->getFace()->Expression.GoTo_Happy();
 								display->autoFace(true);
-						case EVENT_DISPLAY::LOOK_LEFT:
-								display->setState(Display::STATE_FACE);
-								updateDelay = millis() + 6000;
-								display->getFace()->LookLeft();
-						break;
-						case EVENT_DISPLAY::LOOK_RIGHT:
-								display->setState(Display::STATE_FACE);
-								updateDelay = millis() + 6000;
-								display->getFace()->LookRight();
-						break;
-						case EVENT_DISPLAY::CLOSE_EYE:
-								display->setState(Display::STATE_FACE);
-								updateDelay = millis() + 6000;
-								display->getFace()->LookFront();
-								display->getFace()->Expression.GoTo_Sleepy();
-						break;
-						case EVENT_DISPLAY::CLIFF_DETECTED:
-								display->drawCenteredText(20, "Oops! Not a safe area.");
-								updateDelay = millis() + 3000;
-						break;
-						case EVENT_DISPLAY::OBSTACLE_DETECTED:
-								display->drawCenteredText(20, "Oops! Finding another way!");
-								updateDelay = millis() + 3000;
-						break;
-						case EVENT_DISPLAY::STUCK_DETECTED:
-								display->drawCenteredText(20, "I am stuck!");
-								updateDelay = millis() + 3000;
-						break; 
 						case EVENT_DISPLAY::BASIC_STATUS:
 								display->setState(Display::STATE_STATUS);
 								updateDelay = millis() + 6000;
@@ -95,33 +67,6 @@ void displayTask(void *param){
 								display->drawCenteredText(20, "Recording");
 								display->drawCenteredText(40, "Complete!");
 								updateDelay = millis() + 2000; // Show for 2 seconds then return to face
-						break;
-						case EVENT_DISPLAY::BATTERY_CRITICAL:
-								display->setState(Display::STATE_TEXT);
-								display->clearBuffer();
-								display->drawCenteredText(10, "CRITICAL");
-								display->drawCenteredText(25, "BATTERY!");
-								if (batteryManager) {
-									char voltageText[32];
-									snprintf(voltageText, sizeof(voltageText), "%.1fV (%d%%)", 
-										batteryManager->getVoltage(), batteryManager->getLevel());
-									display->drawCenteredText(40, voltageText);
-								}
-								display->drawCenteredText(55, "CHARGE NOW!");
-								updateDelay = millis() + 5000; // Show for 5 seconds
-						break;
-						case EVENT_DISPLAY::BATTERY_LOW:
-								display->setState(Display::STATE_TEXT);
-								display->clearBuffer();
-								display->drawCenteredText(15, "LOW BATTERY");
-								if (batteryManager) {
-									char voltageText[32];
-									snprintf(voltageText, sizeof(voltageText), "%.1fV (%d%%)", 
-										batteryManager->getVoltage(), batteryManager->getLevel());
-									display->drawCenteredText(35, voltageText);
-								}
-								display->drawCenteredText(50, "Charge Soon");
-								updateDelay = millis() + 3000; // Show for 3 seconds
 						break;
 						case EVENT_DISPLAY::BATTERY_STATUS:
 								display->setState(Display::STATE_BATTERY);
