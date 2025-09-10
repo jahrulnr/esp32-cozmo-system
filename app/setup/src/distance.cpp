@@ -8,7 +8,7 @@ void setupDistanceSensor() {
     logger->info("Setting up HC-SR04 ultrasonic distance sensor...");
     distanceSensor = new Sensors::DistanceSensor();
     
-    if (distanceSensor->init(ULTRASONIC_TRIGGER_PIN, ULTRASONIC_ECHO_PIN, ULTRASONIC_MAX_DISTANCE)) {
+    if (distanceSensor->init(ULTRASONIC_TRIGGER_PIN, ULTRASONIC_ECHO_PIN)) {
     	distanceSensor->setThresHold(ULTRASONIC_OBSTACLE_TRESHOLD);
       logger->info("HC-SR04 initialized successfully");
       

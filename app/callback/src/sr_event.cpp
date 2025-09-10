@@ -7,14 +7,19 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
     static bool automationStatus = automation->isEnabled();
     static sr_mode_t lastMode = SR_MODE_WAKEWORD;
     static bool resetScreenWhenTimeout = true;
+
+    float targetYaw = 0;
     switch (event) {
         case SR_EVENT_WAKEWORD:
+            sayText("whats up?");
             resetScreenWhenTimeout = true;
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
             notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WAKEWORD);
             notification->send(NOTIFICATION_NOTE, (void*)Note::STOP);
+            motors->stop();
+            servos->setHand(0);
+            servos->setHead(180);
 
-            sayText("whats up?");
             SR::sr_set_mode(SR_MODE_COMMAND);
             logger->info("Listening for commands...");
             lastMode = SR_MODE_WAKEWORD;
@@ -45,8 +50,13 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                 case 0: // look to left
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::LOOK_LEFT);
+                    targetYaw = floor(scanArea->calculateDegrees(45));
+                    ESP_LOGI("left", "current: %.2f, target %2.f", floor(scanArea->getCurrentYaw()), targetYaw);
                     motors->move(motors->LEFT);
-                    delay(500);
+                    while(floor(scanArea->getCurrentYaw()) != targetYaw){
+                        scanArea->update();
+                    }
+                    ESP_LOGI("right", "current: %.2f, target %2.f", floor(scanArea->getCurrentYaw()), targetYaw);
                     motors->stop();
                     resetScreenWhenTimeout = true;
                     break;
@@ -54,8 +64,13 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                 case 1: // look to right
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::LOOK_RIGHT);
+                    targetYaw = floor(scanArea->calculateDegrees(-45));
+                    ESP_LOGI("right", "current: %.2f, target %2.f", floor(scanArea->getCurrentYaw()), targetYaw);
                     motors->move(motors->RIGHT);
-                    delay(500);
+                    while(floor(scanArea->getCurrentYaw()) != targetYaw){
+                        scanArea->update();
+                    }
+                    ESP_LOGI("right", "current: %.2f, target %2.f", floor(scanArea->getCurrentYaw()), targetYaw);
                     motors->stop();
                     resetScreenWhenTimeout = true;
                     break;
@@ -336,6 +351,18 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     } else {
                         sayText("Music system not available!");
                     }
+                    break;
+                case 26:
+                    targetYaw = floor(scanArea->calculateDegrees(5));
+                    ESP_LOGI("right", "current: %.2f, target %2.f", floor(scanArea->getCurrentYaw()), targetYaw);
+                    motors->move(motors->RIGHT);
+                    while(floor(scanArea->getCurrentYaw()) != targetYaw){
+                        scanArea->update();
+                    }
+                    ESP_LOGI("right", "current: %.2f, target %2.f", floor(scanArea->getCurrentYaw()), targetYaw);
+                    motors->stop();
+                    resetScreenWhenTimeout = true;
+                    SR::sr_set_mode(SR_MODE_COMMAND);
                     break;
 
                 default: 

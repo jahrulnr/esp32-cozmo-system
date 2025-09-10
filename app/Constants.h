@@ -40,6 +40,7 @@ static const csr_cmd_t voice_commands[] = {
 	{23, "set lower sound", "SfT Lbk StND"},
 	{24, "set middle sound", "SfT MgDcL StND"},
 	{25, "set full sound", "SfT FwL StND"},
+	{26, "go to spin", "Gb To SPgN"},
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";

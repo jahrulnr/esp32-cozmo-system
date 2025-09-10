@@ -4,7 +4,7 @@
 Response FileController::download(Request& request) {
     // Check authentication for protected downloads
     if (requiresAuthentication("download")) {
-        User* user = AuthController::getCurrentUser(request);
+        IModel::User* user = AuthController::getCurrentUser(request);
         if (!user) {
             return unauthorizedResponse(request);
         }
@@ -43,7 +43,7 @@ Response FileController::download(Request& request) {
 
 Response FileController::upload(Request& request) {
     // Check authentication
-    User* user = AuthController::getCurrentUser(request);
+    IModel::User* user = AuthController::getCurrentUser(request);
     if (!user) {
         return unauthorizedResponse(request);
     }
@@ -112,7 +112,7 @@ Response FileController::upload(Request& request) {
 Response FileController::listFiles(Request& request) {
     // Check authentication for file listing
     if (requiresAuthentication("list")) {
-        User* user = AuthController::getCurrentUser(request);
+        IModel::User* user = AuthController::getCurrentUser(request);
         if (!user) {
             return unauthorizedResponse(request);
         }
@@ -186,7 +186,7 @@ Response FileController::listFiles(Request& request) {
 
 Response FileController::deleteFile(Request& request) {
     // Check authentication
-    User* user = AuthController::getCurrentUser(request);
+    IModel::User* user = AuthController::getCurrentUser(request);
     if (!user) {
         return unauthorizedResponse(request);
     }

@@ -15,10 +15,9 @@ DistanceSensor::~DistanceSensor() {
     }
 }
 
-bool DistanceSensor::init(int triggerPin, int echoPin, int maxDistance) {
+bool DistanceSensor::init(int triggerPin, int echoPin) {
     _triggerPin = triggerPin;
     _echoPin = echoPin;
-    _maxDistance = maxDistance;
     
     // Calculate the timeout based on the maximum distance
     // Sound speed varies with temperature: v = 331.3 + (0.606 * temperature)

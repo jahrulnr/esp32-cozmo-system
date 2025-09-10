@@ -46,6 +46,8 @@
 #include "callback/register.h"
 #include "web/Routes/routes.h"
 
+#include "core/Logic/Area/ScanArea.h"
+
 #ifndef WEB_VAR_H
 #define WEB_VAR_H
 struct {
@@ -80,6 +82,7 @@ extern I2SMicrophone* microphone;
 extern I2SSpeaker* i2sSpeaker;
 extern AudioSamples* audioSamples;
 extern FTPServer ftpSrv;
+extern Logic::ScanArea* scanArea;
 
 void setupApp();
 
@@ -109,6 +112,7 @@ void setupFTPServer();
 void setupWeather();
 void setupAudioRecorder();
 void setupNotePlayer();
+void setupScanArea();
 
 void setupTasksCpu0();
 void setupTasksCpu1();

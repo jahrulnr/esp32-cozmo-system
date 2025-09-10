@@ -55,7 +55,6 @@
 #define ULTRASONIC_TRIGGER_PIN 0
 #define ULTRASONIC_ECHO_PIN 45
 #define ULTRASONIC_OBSTACLE_TRESHOLD 8.0
-#define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in centimeters
 
 // Microphone configuration (MAX9814)
 #define MICROPHONE_ENABLED true

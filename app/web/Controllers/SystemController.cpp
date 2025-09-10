@@ -217,7 +217,7 @@ Response SystemController::getHostname(Request& request) {
     Utils::SpiJsonDocument response;
     
     // Get hostname from configuration
-    Utils::Sstring hostname = Configuration::get("hostname", WiFi.getHostname());
+    Utils::Sstring hostname = IModel::Configuration::get("hostname", WiFi.getHostname());
     
     response["success"] = true;
     response["hostname"] = hostname;
@@ -287,7 +287,7 @@ Response SystemController::updateConfiguration(Request& request) {
     }
     
     // Store the configuration
-    if (Configuration::set(key, value)) {
+    if (IModel::Configuration::set(key, value)) {
         response["success"] = true;
         response["message"] = "Configuration updated successfully";
         response["key"] = key;
@@ -336,7 +336,7 @@ Response SystemController::updateHostname(Request& request) {
     }
     
     // Store in Configuration model
-    if (!Configuration::set("hostname", newHostname)) {
+    if (!IModel::Configuration::set("hostname", newHostname)) {
         response["success"] = false;
         response["message"] = "Failed to save hostname configuration";
         return Response(request.getServerRequest())

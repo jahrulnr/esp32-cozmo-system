@@ -3,7 +3,7 @@
 
 #include <MVCFramework.h>
 
-// DECLARE_MODEL(User, "users")
+namespace IModel {
 
 class User : public Model {
 public:
@@ -107,5 +107,7 @@ private:
 protected:
     void touch() override {};
 };
+
+}; // end namespace
 
 #endif

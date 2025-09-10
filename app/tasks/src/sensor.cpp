@@ -43,13 +43,11 @@ void sensorMonitorTask(void* parameter) {
                     orientation->getAccelMagnitude());
         }
 
-        // Distance sensor
-        if (distanceSensor) {
-            distance = distanceSensor->measureDistance();
 
-            if (sendLog)
-                logger->info("distance: %.2fcm", distance);
-        }
+        scanArea->update();
+        ESP_LOGD("ScanArea", "Y: %.2f, D: %.2f", 
+            scanArea->getCurrentYaw(), 
+            scanArea->getLastDistance());
 
         // Cliff detectors
         if (cliffLeftDetector && cliffRightDetector) {

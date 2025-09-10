@@ -45,7 +45,7 @@ Response AuthController::login(Request& request) {
 		}
 		
 		// Validate credentials
-		User* user = nullptr;
+		IModel::User* user = nullptr;
 		if (!validateCredentials(username, password)) {
 				Utils::SpiJsonDocument error;
 				error["success"] = false;
@@ -57,7 +57,7 @@ Response AuthController::login(Request& request) {
 		}
 		
 		// Get user data from database
-		user = User::findByUsername(username.c_str());
+		user = IModel::User::findByUsername(username.c_str());
 		
 		// Generate JWT token
 		Utils::Sstring token = generateToken(username);
@@ -116,7 +116,7 @@ Response AuthController::dashboard(Request& request) {
 
 bool AuthController::validateCredentials(const Utils::Sstring& username, const Utils::Sstring& password) {
 		// Find user by username in CSV database
-		User* user = User::findByUsername(username.c_str());
+		IModel::User* user = IModel::User::findByUsername(username.c_str());
 		
 		if (user == nullptr) {
 				return false; // User not found
@@ -186,20 +186,20 @@ Utils::Sstring AuthController::getCurrentUserUsername(Request& request) {
 		return "";
 }
 
-User* AuthController::getCurrentUser(Request& request) {
+IModel::User* AuthController::getCurrentUser(Request& request) {
 		Utils::Sstring username = getCurrentUserUsername(request);
 
 		if (username.length() == 0) {
 				return nullptr;
 		}
 		
-		User* user = User::findByUsername(username.c_str());
+		IModel::User* user = IModel::User::findByUsername(username.c_str());
 		return user;
 }
 
 Response AuthController::getUserInfo(Request& request) {
 	// Use the same authentication logic as other methods
-	User* user = getCurrentUser(request);
+	IModel::User* user = getCurrentUser(request);
 	if (user == nullptr) {
 		Utils::SpiJsonDocument error;
 		error["success"] = false;
