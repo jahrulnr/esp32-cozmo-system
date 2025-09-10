@@ -4,6 +4,8 @@
 #include "Database/Model.h"
 #include <Arduino.h>
 
+namespace IModel {
+
 class Configuration : public Model {
 public:
     // Constructor
@@ -99,5 +101,7 @@ private:
         return true;
     }
 };
+
+}; // end namespace
 
 #endif // CONFIGURATION_MODEL_H

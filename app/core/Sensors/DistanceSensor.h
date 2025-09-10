@@ -22,7 +22,7 @@ public:
      * @param maxDistance Maximum distance to measure in centimeters (default: 400cm)
      * @return true if initialization was successful, false otherwise
      */
-    bool init(int triggerPin, int echoPin, int maxDistance = 400);
+    bool init(int triggerPin, int echoPin);
 
 		void setThresHold(float threshold = 20.0);
 

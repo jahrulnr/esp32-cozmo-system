@@ -57,7 +57,7 @@ void WeatherService::setLocation(const Utils::Sstring& adm4Code) {
     clearCache();
 }
 
-void WeatherService::setLocation(const AdministrativeRegion& region) {
+void WeatherService::setLocation(const IModel::AdministrativeRegion& region) {
     _config.adm4Code = region.getAdm4();
     
     // Clear cache when location changes
@@ -402,12 +402,12 @@ WeatherService::WeatherCondition WeatherService::getConditionFromCode(int weathe
     }
 }
 
-AdministrativeRegion* WeatherService::getCurrentRegion() const {
+IModel::AdministrativeRegion* WeatherService::getCurrentRegion() const {
     if (_config.adm4Code.isEmpty()) {
         return nullptr;
     }
     
-    return AdministrativeRegion::findByAdm4(_config.adm4Code.c_str());
+    return IModel::AdministrativeRegion::findByAdm4(_config.adm4Code.c_str());
 }
 
 Utils::Sstring WeatherService::paramToString(WeatherParam param) {

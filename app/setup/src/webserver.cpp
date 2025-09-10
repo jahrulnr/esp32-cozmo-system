@@ -4,7 +4,6 @@
 Application* app;
 CsvDatabase* database;
 Router* webRouter = nullptr;
-String deviceName = "pio-esp32-cam";
 
 void setupWebServer() {
 	if (webRouter) {
@@ -13,18 +12,18 @@ void setupWebServer() {
 
 	// Initialize application
 	app = Application::getInstance(LittleFS);
-	app->setDeviceName(deviceName.c_str());
+	app->setDeviceName(deviceName);
 	
 	// Boot the framework
 	app->boot();
     
 	// Set up mDNS responder for local name resolution
-	if (MDNS.begin(deviceName.c_str())) {
-			Serial.println("mDNS responder started: " + deviceName + ".local");
+	if (MDNS.begin(deviceName)) {
+			logger->info("mDNS responder started: %s.local", deviceName);
 			// Add service to mDNS
 			MDNS.addService("http", "tcp", 80);
 	} else {
-			Serial.println("Error setting up mDNS responder");
+			logger->info("Error setting up mDNS responder");
 	}
     
 	// Initialize CSV database first (needed for Configuration model)

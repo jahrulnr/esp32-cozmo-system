@@ -6,12 +6,20 @@
 void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {
     static bool automationStatus = automation->isEnabled();
     static sr_mode_t lastMode = SR_MODE_WAKEWORD;
+    static bool resetScreenWhenTimeout = true;
+
+    float targetYaw = 0;
     switch (event) {
         case SR_EVENT_WAKEWORD:
+            sayText("whats up?");
+            resetScreenWhenTimeout = true;
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
             notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WAKEWORD);
+            notification->send(NOTIFICATION_NOTE, (void*)Note::STOP);
+            motors->stop();
+            servos->setHand(0);
+            servos->setHead(180);
 
-            sayText("whats up?");
             SR::sr_set_mode(SR_MODE_COMMAND);
             logger->info("Listening for commands...");
             lastMode = SR_MODE_WAKEWORD;
@@ -22,79 +30,77 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             SR::sr_set_mode(lastMode);
             break;
             
+        case SR_EVENT_TIMEOUT:
+            sayText("Call me again later!");
+            logger->info("⏰ Command timeout - returning to wake word mode");
+            if (resetScreenWhenTimeout)
+                notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
+
+            lastMode = SR_MODE_WAKEWORD;
+            SR::sr_set_mode(SR_MODE_WAKEWORD);
+            if (automationStatus)
+                notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
+            break;
+            
         case SR_EVENT_COMMAND:
             logger->info("Command detected! ID=%d, Phrase=%d\n", command_id, phrase_id);
             
             // Handle specific command groups based on command_id (from voice_commands array)
             switch (command_id) {
-                case 0: // look to left
-                    servos->setHead(DEFAULT_HEAD_ANGLE);
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::LOOK_LEFT);
-                    motors->move(motors->LEFT);
-                    delay(500);
-                    motors->stop();
-                    break;
-                    
-                case 1: // look to right
-                    servos->setHead(DEFAULT_HEAD_ANGLE);
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::LOOK_RIGHT);
-                    motors->move(motors->RIGHT);
-                    delay(500);
-                    motors->stop();
-                    break;
-                    
-                case 2: // close your eyes
-                    servos->setHead(DEFAULT_HEAD_ANGLE);
-                    delay(100);
-                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::CLOSE_EYE);
-                    servos->setHead(180);
-                    break;
-                case 3: // you can play
+                case Commands::AUTOMATION_ACTIVE:
                     sayText("Thankyou!");
                     automationStatus = true;
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::NOTHING);
+                    resetScreenWhenTimeout = true;
                     break;
-                case 4: // silent
+                case Commands::AUTOMATION_PAUSED:
                     sayText("Ok!");
-                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    servos->setHead(0);
                     automationStatus = false;
                     notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
+                    resetScreenWhenTimeout = true;
                     break;
-                case 5: // show weather status
+                case Commands::WEATHER:
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WEATHER_STATUS);
-                    servos->setHead(DEFAULT_HEAD_ANGLE);
                     sayText("Here is weather status!");
-                    delay(100);
                     servos->setHead(180);
                     automationStatus = false;
+                    resetScreenWhenTimeout = false;
                     break;
-                case 6: // restart system
+                case Commands::REBOOT:
+                    sayText("restart!");
+                    vTaskDelay(pdMS_TO_TICKS(1000));
                     ESP.restart();
                     break;
-                case 7: // show orientation
+                case Commands::ORIENTATION:
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::ORIENTATION_DISPLAY);
-                    servos->setHead(DEFAULT_HEAD_ANGLE);
                     sayText("Here is orientation display!");
-                    delay(100);
                     servos->setHead(180);
                     automationStatus = false;
+                    resetScreenWhenTimeout = false;
                     break;
-                case 8: // play space game
+                case Commands::GAME_SPACE:
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::SPACE_GAME);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     sayText("Starting space game!");
                     delay(100);
                     servos->setHead(180);
                     automationStatus = false;
+                    resetScreenWhenTimeout = false;
+                    SR::sr_set_mode(SR_MODE_WAKEWORD);
+                    return;
                     break;
-                case 9: // start recording
+                case Commands::RECORD_START: 
                     servos->setHead(DEFAULT_HEAD_ANGLE);
-                    if (audioRecorder && !audioRecorder->isRecordingActive()) {
-                        sayText("Starting recording for 10 seconds!");
-                        delay(500);
+                    if (!audioRecorder->isRecordingActive()) {
                         if (audioRecorder->startRecording()) {
+                            automationStatus = false;
+                            resetScreenWhenTimeout = false;
+                            notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WAKEWORD);
                             logger->info("Recording started via voice command");
+                            SR::sr_set_mode(SR_MODE_WAKEWORD);
+                            return;
                         } else {
                             sayText("Recording failed to start!");
                         }
@@ -102,30 +108,66 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                         sayText("Recording already in progress!");
                     }
                     break;
-                case 10: // show status
+                case Commands::SYSTEM_STATUS:
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::BASIC_STATUS);
                     servos->setHead(180);
                     sayText("Here my status!");
+                    resetScreenWhenTimeout = true;
                     break;
+                case Commands::NOTE_HAPPY_BIRTHDAY:
+                    servos->setHead(180);
+                    notification->send(NOTIFICATION_NOTE, (void*)Note::HAPPY_BIRTHDAY);
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
+                    resetScreenWhenTimeout = true;
+                    SR::sr_set_mode(SR_MODE_WAKEWORD);
+                    return;
+                    break;
+                case Commands::NOTE_RANDOM:
+                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    notification->send(NOTIFICATION_NOTE, (void*)Note::RANDOM);
+                    resetScreenWhenTimeout = true;
+                    break;
+                case Commands::SPEAKER_LOWER:
+                    notePlayer->setVolume(30);
+                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
+
+                    resetScreenWhenTimeout = true;
+                    SR::sr_set_mode(SR_MODE_WAKEWORD);
+                    return;
+                    break;
+                case Commands::SPEAKER_MIDDLE:
+                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    notePlayer->setVolume(55);
+                    notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
+
+                    resetScreenWhenTimeout = true;
+                    SR::sr_set_mode(SR_MODE_WAKEWORD);
+                    return;
+                    break;
+                case Commands::SPEAKER_LOUD:
+                    servos->setHead(DEFAULT_HEAD_ANGLE);
+                    notePlayer->setVolume(80);
+                    notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                    notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
+
+                    resetScreenWhenTimeout = true;
+                    SR::sr_set_mode(SR_MODE_WAKEWORD);
+                    return;
+                    break;
+
                 default: 
                     logger->info("Unknown command ID: %d", command_id);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     sayText("Sorry, I not understand!");
+                    automationStatus = true;
+                    resetScreenWhenTimeout = true;
                     break;
             }
             SR::sr_set_mode(SR_MODE_COMMAND);
             lastMode = SR_MODE_COMMAND;
-            break;
-            
-        case SR_EVENT_TIMEOUT:
-            logger->info("⏰ Command timeout - returning to wake word mode");
-            delay(5000);
-            sayText("Call me again later!");
-            SR::sr_set_mode(SR_MODE_WAKEWORD);
-            lastMode = SR_MODE_WAKEWORD;
-
-            if (automationStatus)
-                notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::RESUME);
             break;
             
         default:

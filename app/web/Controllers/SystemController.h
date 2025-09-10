@@ -35,6 +35,9 @@ public:
     
     // Update a configuration value
     static Response updateConfiguration(Request& request);
+    
+    // Get battery status
+    static Response getBatteryStatus(Request& request);
 
 private:
     // Helper methods

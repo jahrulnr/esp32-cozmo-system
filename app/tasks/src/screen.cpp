@@ -26,43 +26,21 @@ void displayTask(void *param){
 					EVENT_DISPLAY event = (EVENT_DISPLAY)(intptr_t)eventPtr;
 					if (event >= 0 && event <= EVENT_DISPLAY::NOTHING) {
 						lastEvent = event;
+						updateDelay = 0;
 					}
 					ESP_LOGI(TAG, "Event Screen %d triggered", lastEvent);
 				}
 
-				if (updateDelay == 0){
+				if (lastEvent != EVENT_DISPLAY::NOTHING && updateDelay == 0){
 					switch(lastEvent) {
 						case EVENT_DISPLAY::WAKEWORD:
 								display->setState(Display::STATE_MIC);
+								// update display will triggered after esp-sr timeout
 						break;
-						case EVENT_DISPLAY::LOOK_LEFT:
+						case EVENT_DISPLAY::FACE:
 								display->setState(Display::STATE_FACE);
-								updateDelay = millis() + 6000;
-								display->getFace()->LookLeft();
-						break;
-						case EVENT_DISPLAY::LOOK_RIGHT:
-								display->setState(Display::STATE_FACE);
-								updateDelay = millis() + 6000;
-								display->getFace()->LookRight();
-						break;
-						case EVENT_DISPLAY::CLOSE_EYE:
-								display->setState(Display::STATE_FACE);
-								updateDelay = millis() + 6000;
-								display->getFace()->LookFront();
-								display->getFace()->Expression.GoTo_Sleepy();
-						break;
-						case EVENT_DISPLAY::CLIFF_DETECTED:
-								display->drawCenteredText(20, "Oops! Not a safe area.");
-								updateDelay = millis() + 3000;
-						break;
-						case EVENT_DISPLAY::OBSTACLE_DETECTED:
-								display->drawCenteredText(20, "Oops! Finding another way!");
-								updateDelay = millis() + 3000;
-						break;
-						case EVENT_DISPLAY::STUCK_DETECTED:
-								display->drawCenteredText(20, "I am stuck!");
-								updateDelay = millis() + 3000;
-						break; 
+								display->getFace()->Expression.GoTo_Happy();
+								display->autoFace(true);
 						case EVENT_DISPLAY::BASIC_STATUS:
 								display->setState(Display::STATE_STATUS);
 								updateDelay = millis() + 6000;
@@ -90,9 +68,10 @@ void displayTask(void *param){
 								display->drawCenteredText(40, "Complete!");
 								updateDelay = millis() + 2000; // Show for 2 seconds then return to face
 						break;
-						case EVENT_DISPLAY::NOTHING:
-							// nothing
-							break;
+						case EVENT_DISPLAY::BATTERY_STATUS:
+								display->setState(Display::STATE_BATTERY);
+								updateDelay = millis() + 5000; // Show for 5 seconds
+						break;
 						default:
 							lastEvent = EVENT_DISPLAY::NOTHING;
 					}

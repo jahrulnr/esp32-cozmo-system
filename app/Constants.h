@@ -3,23 +3,46 @@
 
 #include "csr.h"
 
+static const char* deviceName = "pio-esp32-cam";
+
+typedef enum {
+	AUTOMATION_ACTIVE = 0,
+	AUTOMATION_PAUSED,
+	WEATHER,
+	REBOOT,
+	ORIENTATION,
+	GAME_SPACE,
+	RECORD_START,
+	RECORD_STOP,
+	SYSTEM_STATUS,
+	NOTE_TEST,
+	NOTE_HAPPY_BIRTHDAY,
+	NOTE_RANDOM,
+	SPEAKER_LOWER,
+	SPEAKER_MIDDLE,
+	SPEAKER_LOUD,
+} Commands;
+
 // for generate phonetic, run `python3 tools/multinet_g2p.py --text="new command"`
 // Define voice commands (phonetic representations)
 static const csr_cmd_t voice_commands[] = {
-	{0, "look to left", "LwK To LfFT"},
-	{1, "look to right", "LwK To RiT"},
-	{2, "close your eyes", "KLbS YeR iZ"},
-	{3, "you can play", "Yo KaN PLd"},
-	{4, "silent", "SiLcNT"},
-	{5, "show weather", "sb Wfjk"},
-	{5, "show weather status", "sb Wfjk STaTcS"},
-	{6, "reboot", "RgBoT"},
-	{6, "restart", "RmSTnRT"},
-	{7, "show orientation", "sb eRmfNTdscN"},
-	{8, "play a game", "PLd c GdM"},
-	{9, "record audio", "RfKkD nDmb"},
-	{10, "show status", "sb STaTcS"},
-	{10, "Tumbil cun status", "TcMBcL KcN STaTcS"}
+	{Commands::AUTOMATION_ACTIVE, "you can play", "Yo KaN PLd"},
+	{Commands::AUTOMATION_PAUSED, "silent", "SiLcNT"},
+	{Commands::WEATHER, "show weather", "sb Wfjk"},
+	{Commands::REBOOT, "reboot", "RgBoT"},
+	{Commands::REBOOT, "restart", "RmSTnRT"},
+	{Commands::ORIENTATION, "show orientation", "SPdS GdM"},
+	{Commands::GAME_SPACE, "space game", "PLd c GdM"},
+	{Commands::RECORD_START, "record audio", "RfKkD nDmb"},
+	{Commands::SYSTEM_STATUS, "show status", "sb STaTcS"},
+	{Commands::SYSTEM_STATUS, "Tumbil cun status", "TcMBcL KcN STaTcS"},
+	{Commands::NOTE_TEST, "do re mi", "Do Rd Mm"},
+	{Commands::NOTE_HAPPY_BIRTHDAY, "happy birthday", "haPm BkvDd"},
+	{Commands::NOTE_RANDOM, "play a music", "PLd c MYoZgK"},
+	// Volume control commands
+	{Commands::SPEAKER_LOWER, "set lower sound", "SfT Lbk StND"},
+	{Commands::SPEAKER_MIDDLE, "set middle sound", "SfT MgDcL StND"},
+	{Commands::SPEAKER_LOUD, "set full sound", "SfT FwL StND"},
 };
 
 static const char* NOTIFICATION_SPEAKER = "speaker";
@@ -36,13 +59,7 @@ namespace EVENT_AUTOMATION {
 static const char* NOTIFICATION_DISPLAY = "display";
 typedef enum  {
 	WAKEWORD,
-	HAPPY,
-	LOOK_LEFT,
-	LOOK_RIGHT,
-	CLOSE_EYE,
-	CLIFF_DETECTED,
-	OBSTACLE_DETECTED,
-	STUCK_DETECTED,
+	FACE,
 	TOUCH_DETECTED,
 	BASIC_STATUS,
 	WEATHER_STATUS,
@@ -50,6 +67,7 @@ typedef enum  {
 	SPACE_GAME,
 	RECORDING_STARTED,
 	RECORDING_STOPPED,
+	BATTERY_STATUS,
 	NOTHING,
 } EVENT_DISPLAY;
 
@@ -78,5 +96,8 @@ namespace EVENT_AUDIO {
 	static const char* STOP_RECORDING = "stop_recording";
 	static const char* RECORDING_COMPLETE = "recording_complete";
 }
+
+// Note Music Events
+static const char* NOTIFICATION_NOTE = "note";
 
 #endif

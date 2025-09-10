@@ -3,7 +3,7 @@
 
 #include <MVCFramework.h>
 #include <core/Utils/SpiAllocator.h>
-#include "../../repository/User.h"
+#include "repository/User.h"
 #include <Sstring.h>
 
 class AuthController : public Controller {
@@ -22,7 +22,7 @@ public:
     
     // Static helper methods for other controllers
     static Utils::Sstring getCurrentUserUsername(Request& request);
-    static class User* getCurrentUser(Request& request);
+    static class IModel::User* getCurrentUser(Request& request);
     
     // API method for getting current user info
     Response getUserInfo(Request& request);

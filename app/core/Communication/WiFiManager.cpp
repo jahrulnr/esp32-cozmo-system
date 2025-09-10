@@ -48,7 +48,8 @@ bool WiFiManager::connect(const Utils::Sstring& ssid, const Utils::Sstring& pass
     
     // Begin connection
     WiFi.begin(ssid.c_str(), password.c_str());
-    
+    WiFi.setHostname(deviceName);
+
     // Wait for connection with timeout
     unsigned long startTime = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < timeout) {
@@ -57,11 +58,11 @@ bool WiFiManager::connect(const Utils::Sstring& ssid, const Utils::Sstring& pass
     }
     
     if (WiFi.status() == WL_CONNECTED) {
-        logger->info("\nWiFi connected");
+        logger->info("WiFi connected");
         logger->info("IP address: %s", WiFi.localIP().toString().c_str());
         return true;
     } else {
-        logger->info("\nWiFi connection failed");
+        logger->info("WiFi connection failed");
         return false;
     }
 }

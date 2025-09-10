@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
+#include <Constants.h>
 #include <Sstring.h>
 #include "FileManager.h"
 

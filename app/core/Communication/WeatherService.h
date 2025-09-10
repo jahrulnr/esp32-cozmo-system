@@ -204,7 +204,7 @@ public:
      * Set the location by administrative region
      * @param region Administrative region object
      */
-    void setLocation(const AdministrativeRegion& region);
+    void setLocation(const IModel::AdministrativeRegion& region);
 
     /**
      * Set cache expiry time
@@ -246,7 +246,7 @@ public:
      * Get administrative region for current location
      * @return Pointer to AdministrativeRegion object (caller owns memory)
      */
-    AdministrativeRegion* getCurrentRegion() const;
+    IModel::AdministrativeRegion* getCurrentRegion() const;
 
     /**
      * Convert weather description to categorized condition (updated for new API)

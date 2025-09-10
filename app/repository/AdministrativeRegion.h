@@ -6,6 +6,8 @@
 #include <set>
 #include <vector>
 
+namespace IModel {
+
 class AdministrativeRegion : public Model {
 public:
     // Constructor
@@ -179,5 +181,7 @@ private:
         return true;
     }
 };
+
+}; // end namespace
 
 #endif // ADMINISTRATIVE_REGION_MODEL_H

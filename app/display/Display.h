@@ -6,11 +6,13 @@
 #include <U8g2lib.h>
 #include "I2CManager.h"
 #include "./components/Status/Status.h"
+#include "./components/Mic/Status.h"
 #include "./components/Face/Face.h"
 #include "./components/Bar/Bar.h"
 #include "./components/Weather/Weather.h"
 #include "./components/Cube3D/Cube3D.h"
 #include "./components/SpaceGame/SpaceGame.h"
+#include "./components/Battery/Battery.h"
 
 namespace Display {
 
@@ -22,6 +24,7 @@ typedef enum {
     STATE_ORIENTATION,
     STATE_SPACE_GAME,
     STATE_STATUS,
+    STATE_BATTERY,
 
     STATE_MAX
 } display_event_t;
@@ -111,6 +114,12 @@ public:
     SpaceGame* getSpaceGame();
 
     /**
+     * Get the Battery component
+     * @return Pointer to the Battery instance
+     */
+    Battery::BatteryDisplay* getBattery();
+
+    /**
      * Update the display (call this after drawing operations)
      */
     void update();
@@ -154,9 +163,12 @@ private:
     
     int _micLevel;
     MicBar *_micBar;
+    MicStatus* _micStatus;
+    DisplayStatus* _displayStatus;
     Weather *_weather;
     Cube3D *_cube3D;
     SpaceGame *_spaceGame;
+    Battery::BatteryDisplay *_battery;
 
     bool _lock();
     void _unlock();
