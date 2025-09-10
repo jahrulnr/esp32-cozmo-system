@@ -41,6 +41,7 @@ void displayTask(void *param){
 								display->setState(Display::STATE_FACE);
 								display->getFace()->Expression.GoTo_Happy();
 								display->autoFace(true);
+						break;
 						case EVENT_DISPLAY::BASIC_STATUS:
 								display->setState(Display::STATE_STATUS);
 								updateDelay = millis() + 6000;
