@@ -32,13 +32,6 @@ public:
      */
     float measureDistance();
 
-    /**
-     * Check if an obstacle is detected within the specified range
-     * @param threshold Distance threshold in centimeters
-     * @return true if an obstacle is detected within the threshold, false otherwise
-     */
-    bool isObstacleDetected();
-
 private:
     int _triggerPin;
     int _echoPin;

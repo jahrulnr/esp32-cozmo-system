@@ -4,7 +4,6 @@
 #include <SendTask.h>
 
 // Task IDs for tracking
-String protectCozmoTaskId;
 String ftpTaskId;
 String weatherServiceTaskId;
 String srControlTaskId;
@@ -17,24 +16,6 @@ void setupTasksCpu1() {
     logger->info("Initializing tasks cpu 1 ...");
 
     bool core = 1;
-
-    #if PROTECT_COZMO
-    // Create protect cozmo task using SendTask library
-    protectCozmoTaskId = SendTask::createLoopTaskOnCore(
-        protectCozmoTask,
-        "ProtectCozmo",
-        4 * 1024,                // Stack size
-        2,                       // Priority
-        core,                    // Core ID (CPU 1)
-        "Protect Cozmo task for safety monitoring"
-    );
-    
-    if (protectCozmoTaskId.isEmpty()) {
-        logger->error("Failed to create protect cozmo task");
-    } else {
-        logger->info("Protect Cozmo task created with ID: %s", protectCozmoTaskId.c_str());
-    }
-    #endif
 
     // Create FTP task using SendTask library
     ftpTaskId = SendTask::createLoopTaskOnCore(
