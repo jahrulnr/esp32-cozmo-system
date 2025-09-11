@@ -38,8 +38,8 @@
 #include "core/Utils/CommandMapper.h"
 #include "repository/Configuration.h"
 #include "repository/AdministrativeRegion.h"
-#include "services/WiFiManager.h"
-#include "services/GPTAdapter.h"
+#include "services/WiFiService.h"
+#include "services/GPTService.h"
 #include "services/WeatherService.h"
 #include "tasks/register.h"
 #include "callback/register.h"
@@ -65,8 +65,8 @@ extern Sensors::TemperatureSensor* temperatureSensor;
 extern BatteryManager* batteryManager;
 extern Motors::MotorControl* motors;
 extern Motors::ServoControl* servos;
-extern Services::WiFiManager* wifiManager;
-extern Services::GPTAdapter* gptAdapter;
+extern Services::WiFiService* wifiService;
+extern Services::GPTService* gptService;
 extern Services::WeatherService* weatherService;
 extern AudioRecorder* audioRecorder;
 extern Note* notePlayer;

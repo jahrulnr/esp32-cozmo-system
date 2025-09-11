@@ -7,13 +7,13 @@
 
 namespace Services {
 
-class GPTAdapter {
+class GPTService {
 public:
     // Callback type for GPT responses
     using ResponseCallback = std::function<void(const Utils::Sstring& response)>;
 
-    GPTAdapter();
-    ~GPTAdapter();
+    GPTService();
+    ~GPTService();
 
     /**
      * Initialize GPT adapter

@@ -1,4 +1,4 @@
-#include "WiFiManager.h"
+#include "WiFiService.h"
 #include "Config.h"
 
 #include "core/Utils/SpiAllocator.h"
@@ -8,7 +8,7 @@
 
 namespace Services {
 
-WiFiManager::WiFiManager(Utils::FileManager *fileManager) : _initialized(false), _isAP(false) {
+WiFiService::WiFiService(Utils::FileManager *fileManager) : _initialized(false), _isAP(false) {
     // Initialize with default config from Config.h
     _config.ssid = WIFI_SSID;
     _config.password = WIFI_PASSWORD;
@@ -26,11 +26,11 @@ WiFiManager::WiFiManager(Utils::FileManager *fileManager) : _initialized(false),
     loadConfig();
 }
 
-WiFiManager::~WiFiManager() {
+WiFiService::~WiFiService() {
     disconnect();
 }
 
-bool WiFiManager::init() {
+bool WiFiService::init() {
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
     _initialized = true;
@@ -38,7 +38,7 @@ bool WiFiManager::init() {
     return true;
 }
 
-bool WiFiManager::connect(const Utils::Sstring& ssid, const Utils::Sstring& password, uint32_t timeout) {
+bool WiFiService::connect(const Utils::Sstring& ssid, const Utils::Sstring& password, uint32_t timeout) {
     if (!_initialized) {
         init();
     }
@@ -67,7 +67,7 @@ bool WiFiManager::connect(const Utils::Sstring& ssid, const Utils::Sstring& pass
     }
 }
 
-bool WiFiManager::startAP(const Utils::Sstring& ssid, const Utils::Sstring& password) {
+bool WiFiService::startAP(const Utils::Sstring& ssid, const Utils::Sstring& password) {
     if (!_initialized) {
         init();
     }
@@ -97,11 +97,11 @@ bool WiFiManager::startAP(const Utils::Sstring& ssid, const Utils::Sstring& pass
     return success;
 }
 
-bool WiFiManager::isConnected() const {
+bool WiFiService::isConnected() const {
     return WiFi.status() == WL_CONNECTED;
 }
 
-void WiFiManager::disconnect() {
+void WiFiService::disconnect() {
     if (_isAP) {
         WiFi.softAPdisconnect(true);
         _isAP = false;
@@ -111,7 +111,7 @@ void WiFiManager::disconnect() {
     delay(100);
 }
 
-std::vector<WiFiManager::NetworkInfo> WiFiManager::scanNetworks() {
+std::vector<WiFiService::NetworkInfo> WiFiService::scanNetworks() {
     std::vector<NetworkInfo> networks;
     
     int numNetworks = WiFi.scanNetworks();
@@ -128,7 +128,7 @@ std::vector<WiFiManager::NetworkInfo> WiFiManager::scanNetworks() {
     return networks;
 }
 
-Utils::Sstring WiFiManager::getIP() const {
+Utils::Sstring WiFiService::getIP() const {
     if (_isAP) {
         return WiFi.softAPIP().toString().c_str();
     } else {
@@ -136,7 +136,7 @@ Utils::Sstring WiFiManager::getIP() const {
     }
 }
 
-Utils::Sstring WiFiManager::getMAC() const {
+Utils::Sstring WiFiService::getMAC() const {
     if (_isAP) {
         return WiFi.softAPmacAddress();
     } else {
@@ -144,11 +144,11 @@ Utils::Sstring WiFiManager::getMAC() const {
     }
 }
 
-int32_t WiFiManager::getRSSI() const {
+int32_t WiFiService::getRSSI() const {
     return WiFi.RSSI();
 }
 
-bool WiFiManager::loadConfig() {
+bool WiFiService::loadConfig() {
     // Debug output to help diagnose the issue
     logger->info("FileManager initialized successfully");
     logger->info("Checking for wifi.json...");
@@ -207,7 +207,7 @@ bool WiFiManager::loadConfig() {
     return true;
 }
 
-bool WiFiManager::saveConfig(const WiFiConfig& config) {
+bool WiFiService::saveConfig(const WiFiConfig& config) {
     if (!_fileManager->init()) {
         logger->info("Failed to initialize FileManager");
         return false;
@@ -288,11 +288,11 @@ bool WiFiManager::saveConfig(const WiFiConfig& config) {
     return false;
 }
 
-WiFiManager::WiFiConfig WiFiManager::getConfig() const {
+WiFiService::WiFiConfig WiFiService::getConfig() const {
     return _config;
 }
 
-bool WiFiManager::updateConfig(const WiFiConfig& config) {
+bool WiFiService::updateConfig(const WiFiConfig& config) {
     _config = config;
     return saveConfig(_config);
 }

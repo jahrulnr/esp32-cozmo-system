@@ -9,7 +9,7 @@
 
 namespace Services {
 
-class WiFiManager {
+class WiFiService {
 public:
     struct NetworkInfo {
         Utils::Sstring ssid;
@@ -26,8 +26,8 @@ public:
         Utils::Sstring apPassword;
     };
 
-    WiFiManager(Utils::FileManager *fileManager);
-    ~WiFiManager();
+    WiFiService(Utils::FileManager *fileManager);
+    ~WiFiService();
 
     /**
      * Initialize WiFi manager

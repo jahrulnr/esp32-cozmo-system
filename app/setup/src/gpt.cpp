@@ -2,14 +2,14 @@
 #include "setup/setup.h"
 #include "tasks/register.h"
 
-Services::GPTAdapter *gptAdapter;
+Services::GPTService *gptService;
 
 void setupGPT(){
-	gptAdapter = new Services::GPTAdapter();
+	gptService = new Services::GPTService();
 	#if GPT_ENABLED
-	gptAdapter->init(GPT_API_KEY);
-	gptAdapter->setModel(GPT_MODEL);
-	gptAdapter->setMaxTokens(GPT_MAX_TOKENS);
-	gptAdapter->setTemperature(GPT_TEMPERATURE);
+	gptService->init(GPT_API_KEY);
+	gptService->setModel(GPT_MODEL);
+	gptService->setMaxTokens(GPT_MAX_TOKENS);
+	gptService->setTemperature(GPT_TEMPERATURE);
   #endif
 }

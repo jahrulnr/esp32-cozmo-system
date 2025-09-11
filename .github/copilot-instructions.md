@@ -56,9 +56,9 @@ app/
 │       └── Weather/            # Weather information display
 ├── repository/                 # Data models and configuration persistence
 ├── services/                   # External service integrations
-│   ├── GPTAdapter.cpp/.h       # OpenAI GPT integration
+│   ├── GPTService.cpp/.h       # OpenAI GPT integration
 │   ├── WeatherService.cpp/.h   # BMKG weather API integration
-│   └── WiFiManager.cpp/.h      # WiFi connection management
+│   └── WiFiService.cpp/.h      # WiFi connection management
 ├── setup/                      # System initialization and component setup
 │   ├── setup.cpp/.h            # Main setup orchestration
 │   └── src/                    # 30+ component-specific setup functions

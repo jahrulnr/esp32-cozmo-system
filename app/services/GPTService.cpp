@@ -1,10 +1,10 @@
-#include "GPTAdapter.h"
+#include "GPTService.h"
 #include <HTTPClient.h>
 #include "core/Utils/SpiAllocator.h"
 
 namespace Services {
 
-GPTAdapter::GPTAdapter() : _model("gpt-4.1-nano-2025-04-14"), 
+GPTService::GPTService() : _model("gpt-4.1-nano-2025-04-14"), 
                            _maxTokens(1024), _temperature(0.7), _initialized(false) {
     _systemMessage = Utils::Sstring(R"===(
 You are a digital pet named Cozmo running inside an ESP32-CAM system.
@@ -72,27 +72,27 @@ Follow these rules strictly. Your goal is to act as a cute, simple digital pet n
 			)===");
 }
 
-GPTAdapter::~GPTAdapter() {
+GPTService::~GPTService() {
     // Clean up resources if needed
 }
 
-bool GPTAdapter::init(const Utils::Sstring& apiKey) {
+bool GPTService::init(const Utils::Sstring& apiKey) {
     _apiKey = apiKey;
     _initialized = true;
     return true;
 }
 
-void GPTAdapter::sendPrompt(const Utils::Sstring& prompt, ResponseCallback callback) {
+void GPTService::sendPrompt(const Utils::Sstring& prompt, ResponseCallback callback) {
     sendPrompt(prompt, "", callback);
 }
 
-void GPTAdapter::sendPrompt(const Utils::Sstring& prompt, const Utils::Sstring& additionalCommand, ResponseCallback callback) {
+void GPTService::sendPrompt(const Utils::Sstring& prompt, const Utils::Sstring& additionalCommand, ResponseCallback callback) {
     Utils::Sstring msg = _systemMessage;
     msg.replace("--*additional command*--", additionalCommand);
     sendPromptWithCustomSystem(prompt, msg.toString(), callback);
 }
 
-void GPTAdapter::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const Utils::Sstring& systemCommand, ResponseCallback callback) {
+void GPTService::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const Utils::Sstring& systemCommand, ResponseCallback callback) {
     if (!_initialized) {
         if (callback) {
             callback("Error: GPT adapter not initialized");
@@ -138,23 +138,23 @@ void GPTAdapter::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const 
     http.end();
 }
 
-void GPTAdapter::setModel(const Utils::Sstring& model) {
+void GPTService::setModel(const Utils::Sstring& model) {
     _model = model;
 }
 
-void GPTAdapter::setSystemMessage(const Utils::Sstring& message) {
+void GPTService::setSystemMessage(const Utils::Sstring& message) {
     _systemMessage = message;
 }
 
-void GPTAdapter::setMaxTokens(int maxTokens) {
+void GPTService::setMaxTokens(int maxTokens) {
     _maxTokens = maxTokens;
 }
 
-void GPTAdapter::setTemperature(float temperature) {
+void GPTService::setTemperature(float temperature) {
     _temperature = constrain(temperature, 0.0f, 1.0f);
 }
 
-void GPTAdapter::processResponse(const Utils::Sstring& response, ResponseCallback callback) {
+void GPTService::processResponse(const Utils::Sstring& response, ResponseCallback callback) {
     if (!callback) {
         return;
     }

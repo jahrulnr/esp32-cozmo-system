@@ -160,7 +160,7 @@ void gptChatTask(void * param) {
 		additionalCommand += "11. If asked about hardware capabilities, use this context to provide accurate information\n\n";
 		
 		// Send the prompt with enhanced context
-		// gptAdapter->sendPrompt(data->prompt, additionalCommand, [data](const Utils::Sstring& gptResponse){
+		// gptService->sendPrompt(data->prompt, additionalCommand, [data](const Utils::Sstring& gptResponse){
 		// 	// Process commands in the response if CommandMapper is available
 		// 	Utils::Sstring processedResponse = gptResponse;
 			
