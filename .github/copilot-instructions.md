@@ -33,9 +33,6 @@ app/
 ├── Constants.h                 # Global constants, event keys, voice commands
 ├── core/                       # Core robot functionality modules
 │   ├── Audio/                  # Audio recording and note playback (AudioRecorder, Note)
-│   ├── Automation/             # Automation system (currently empty, under development)
-│   ├── Logic/                  # Logic components
-│   │   └── Area/               # Area scanning functionality (ScanArea)
 │   ├── Motors/                 # Motor and servo control (MotorControl, ServoControl)
 │   ├── Sensors/                # Hardware sensors (Camera, Distance, Orientation, Touch, etc.)
 │   └── Utils/                  # Memory management, command mapping (SpiAllocator, CommandMapper)

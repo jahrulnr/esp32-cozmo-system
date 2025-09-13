@@ -44,10 +44,11 @@ void sensorMonitorTask(void* parameter) {
         }
 
 
-        scanArea->update();
-        ESP_LOGD("ScanArea", "Y: %.2f, D: %.2f", 
-            scanArea->getCurrentYaw(), 
-            scanArea->getLastDistance());
+        if (distanceSensor) {
+            if (sendLog)
+                logger->info("Distance: %.2f", 
+                    distanceSensor->measureDistance());
+        }
 
         // Cliff detectors
         if (cliffLeftDetector && cliffRightDetector) {

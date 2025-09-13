@@ -31,7 +31,7 @@ static const csr_cmd_t voice_commands[] = {
 	{Commands::WEATHER, "show weather", "sb Wfjk"},
 	{Commands::REBOOT, "reboot", "RgBoT"},
 	{Commands::REBOOT, "restart", "RmSTnRT"},
-	{Commands::ORIENTATION, "show orientation", "SPdS GdM"},
+	{Commands::ORIENTATION, "show orientation", "sb eRmfNTdscN"},
 	{Commands::GAME_SPACE, "space game", "PLd c GdM"},
 	{Commands::RECORD_START, "record audio", "RfKkD nDmb"},
 	{Commands::SYSTEM_STATUS, "show status", "sb STaTcS"},

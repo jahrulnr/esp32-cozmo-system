@@ -39,7 +39,6 @@ void setupApp() {
 
   delay(10);
   setupWeather();
-  setupScanArea();
   
   logger->info("System initialization complete");
   
