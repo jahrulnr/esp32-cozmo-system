@@ -32,4 +32,29 @@ void setup() {
 
 void loop() {
   vTaskDelete(NULL);
+
+  // static long lastTime = millis() + 10000;
+  // static int i = 0;
+  // if (lastTime <= millis()) {
+  //   lastTime = millis() + 10000;
+
+  //   switch (i) {
+  //     case 0:
+  //       commandMapper->executeCommandString("[TEXT=Time for a twist!][FACE_GLEE=5s][HAND_POSITION=135][TURN_LEFT=3s][HAND_CENTER][TURN_RIGHT=3s]");
+  //     break;
+  //     case 1:
+  //       commandMapper->executeCommandString("[TEXT=Big finish spin!][FACE_HAPPY=6s][LOOK_TOP][HEAD_POSITION=130][HAND_POSITION=60][TURN_LEFT=3s][TURN_RIGHT=3s][HEAD_CENTER][HAND_CENTER]");
+  //     break;
+  //     case 2:
+  //       commandMapper->executeCommandString("[TEXT=Let’s start the fun!][FACE_HAPPY=5s][LOOK_FRONT][HAND_UP][HEAD_POSITION=70][MOVE_FORWARD=5s][HAND_DOWN][MOVE_BACKWARD=5s]");
+  //     break;
+  //     case 3:
+  //       commandMapper->executeCommandString("[TEXT=Back and forth we go!][FACE_HAPPY=5s][BLINK][HEAD_CENTER][HAND_POSITION=180][MOVE_FORWARD=5s][MOVE_BACKWARD=5s]");
+  //     break;
+  //   }
+  //   i++;
+
+  //   if (i > 3) i = 0;
+  //   delay(1000);
+  // }
 }

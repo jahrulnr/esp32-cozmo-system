@@ -50,7 +50,7 @@ public:
      * @param direction Direction to move
      * @param duration Duration of movement in milliseconds (0 = continuous)
      */
-    void move(Direction direction, unsigned long duration = 0);
+    void move(Direction direction, unsigned long duration = 1000);
 
     void disable();
     void enable();

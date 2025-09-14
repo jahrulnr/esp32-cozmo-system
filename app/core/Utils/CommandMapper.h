@@ -31,6 +31,8 @@ public:
     // Extract the natural language text (after commands)
     Utils::Sstring extractText(const Utils::Sstring& gptResponse);
 
+    void interrupt() { _interrupt = true; }
+
 private:
     Display::Display* _display;
     Motors::MotorControl* _motors;
@@ -47,12 +49,13 @@ private:
     // Commands and handlers
     typedef std::function<bool(const Utils::Sstring&)> CommandHandler;
     std::map<String, CommandHandler> _commandHandlers;
+    bool _interrupt = false;
     
     // Initialize all command handlers
     void initCommandHandlers();
     
     // Command regex pattern
-    const Utils::Sstring _cmdPattern = "\\[([A-Z_]+)(?:=([0-9msh]+))?\\]";
+    const char* _cmdPattern = "\\[([A-Z_]+)(?:=([0-9a-zA-Z,.!?'\"\\s-]+))?\\]";
 };
 
 } // namespace Utils

@@ -484,4 +484,64 @@ float Sstring::toFloat() const {
     return atof(buffer);
 }
 
+std::vector<Sstring> Sstring::split(char delimiter) const {
+    std::vector<Sstring> result;
+    if (!buffer || len == 0) {
+        return result;
+    }
+    
+    size_t start = 0;
+    for (size_t i = 0; i <= len; i++) {
+        if (i == len || buffer[i] == delimiter) {
+            if (i > start) {
+                result.push_back(substring(start, i - start));
+            } else {
+                result.push_back(Sstring());  // Empty string for consecutive delimiters
+            }
+            start = i + 1;
+        }
+    }
+    
+    return result;
+}
+
+std::vector<Sstring> Sstring::split(const char* delimiter) const {
+    std::vector<Sstring> result;
+    if (!buffer || len == 0 || !delimiter) {
+        return result;
+    }
+    
+    size_t delimLen = strlen(delimiter);
+    if (delimLen == 0) {
+        result.push_back(*this);
+        return result;
+    }
+    
+    size_t start = 0;
+    int pos = indexOf(delimiter, start);
+    
+    while (pos != -1) {
+        if (pos > (int)start) {
+            result.push_back(substring(start, pos - start));
+        } else {
+            result.push_back(Sstring());  // Empty string for consecutive delimiters
+        }
+        start = pos + delimLen;
+        pos = indexOf(delimiter, start);
+    }
+    
+    // Add the remaining part
+    if (start < len) {
+        result.push_back(substring(start));
+    } else if (start == len) {
+        result.push_back(Sstring());  // Empty string if ends with delimiter
+    }
+    
+    return result;
+}
+
+std::vector<Sstring> Sstring::split(const Sstring& delimiter) const {
+    return split(delimiter.c_str());
+}
+
 } // namespace Utils

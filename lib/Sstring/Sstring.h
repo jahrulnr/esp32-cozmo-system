@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <esp_heap_caps.h>
+#include <vector>
 
 namespace Utils {
 
@@ -377,6 +378,27 @@ public:
      * @return Float value
      */
     float toFloat() const;
+
+    /**
+     * @brief Split string by delimiter
+     * @param delimiter Character delimiter to split by
+     * @return Vector of Sstring containing the split parts
+     */
+    std::vector<Sstring> split(char delimiter) const;
+
+    /**
+     * @brief Split string by delimiter string
+     * @param delimiter String delimiter to split by
+     * @return Vector of Sstring containing the split parts
+     */
+    std::vector<Sstring> split(const char* delimiter) const;
+
+    /**
+     * @brief Split string by delimiter string
+     * @param delimiter Sstring delimiter to split by
+     * @return Vector of Sstring containing the split parts
+     */
+    std::vector<Sstring> split(const Sstring& delimiter) const;
 };
 
 } // namespace Utils

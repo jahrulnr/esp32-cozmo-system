@@ -11,6 +11,12 @@ CommandMapper::CommandMapper(Utils::Logger *logger, Display::Display* display, M
 }
 
 void CommandMapper::initCommandHandlers() {
+    // Text commands
+    _commandHandlers["TEXT"] = [this](const Utils::Sstring& param) -> bool {
+        sayText(param.c_str());
+        return true;
+    };
+
     // Face expression commands
     _commandHandlers["FACE_NORMAL"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
@@ -211,7 +217,6 @@ void CommandMapper::initCommandHandlers() {
             int duration = param.isEmpty() ? _defaultMoveDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::FORWARD, duration);
             _logger->debug("Moving forward for %dms", duration);
-            delay(duration);  // Block until movement completes
             return true;
         }
         return false;
@@ -222,7 +227,6 @@ void CommandMapper::initCommandHandlers() {
             int duration = param.isEmpty() ? _defaultMoveDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::BACKWARD, duration);
             _logger->debug("Moving backward for %dms", duration);
-            delay(duration);  // Block until movement completes
             return true;
         }
         return false;
@@ -233,7 +237,6 @@ void CommandMapper::initCommandHandlers() {
             int duration = param.isEmpty() ? _defaultTurnDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::LEFT, duration);
             _logger->debug("Turning left for %dms", duration);
-            delay(duration);  // Block until movement completes
             return true;
         }
         return false;
@@ -244,7 +247,6 @@ void CommandMapper::initCommandHandlers() {
             int duration = param.isEmpty() ? _defaultTurnDuration : parseTimeParam(param);
             _motors->move(Motors::MotorControl::RIGHT, duration);
             _logger->debug("Turning right for %dms", duration);
-            delay(duration);  // Block until movement completes
             return true;
         }
         return false;
@@ -361,28 +363,11 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
-    _commandHandlers["LOOK_AROUND"] = [this](const Utils::Sstring& param) -> bool {
-        if (_display && _display->getFace()) {
-            _display->getFace()->LookLeft();
-            vTaskDelay(pdMS_TO_TICKS(500));
-            _display->getFace()->LookRight();
-            vTaskDelay(pdMS_TO_TICKS(500));
-            _display->getFace()->LookTop();
-            vTaskDelay(pdMS_TO_TICKS(500));
-            _display->getFace()->LookBottom();
-            vTaskDelay(pdMS_TO_TICKS(500));
-            _display->getFace()->LookFront();
-            _logger->debug("Looked around");
-            return true;
-        }
-        return false;
-    };
 }
 
 bool CommandMapper::executeCommand(const Utils::Sstring& commandStr) {
     // Extract command and parameter using regex
-    std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
+    std::regex cmdRegex(_cmdPattern);
     std::cmatch matches;
     std::string cmdStrStd = commandStr.c_str();
     
@@ -407,7 +392,7 @@ bool CommandMapper::executeCommand(const Utils::Sstring& commandStr) {
 
 int CommandMapper::executeCommandString(const Utils::Sstring& multiCommandStr) {
     // Extract all commands from string
-    std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
+    std::regex cmdRegex(_cmdPattern);
     std::string multiCmdStd = multiCommandStr.c_str();
     std::sregex_iterator it(multiCmdStd.begin(), multiCmdStd.end(), cmdRegex);
     std::sregex_iterator end;
@@ -416,6 +401,11 @@ int CommandMapper::executeCommandString(const Utils::Sstring& multiCommandStr) {
     
     // Execute each command
     for (; it != end; ++it) {
+        if (_interrupt) {
+            _interrupt = false;
+            break;
+        }
+
         std::smatch match = *it;
         Utils::Sstring cmdStr = match.str(0).c_str();
         
@@ -429,7 +419,7 @@ int CommandMapper::executeCommandString(const Utils::Sstring& multiCommandStr) {
 
 Utils::Sstring CommandMapper::extractCommands(const Utils::Sstring& gptResponse) {
     // Extract all commands from GPT response
-    std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
+    std::regex cmdRegex(_cmdPattern);
     std::string responseStd = gptResponse.c_str();
     
     std::string result;
@@ -447,7 +437,7 @@ Utils::Sstring CommandMapper::extractCommands(const Utils::Sstring& gptResponse)
 
 Utils::Sstring CommandMapper::extractText(const Utils::Sstring& gptResponse) {
     // Remove all commands from GPT response to get just the text
-    std::regex cmdRegex("\\[([A-Z_]+)(?:=([0-9msh]+))?\\]");
+    std::regex cmdRegex(_cmdPattern);
     std::string responseStd = gptResponse.c_str();
     
     // Replace all commands with empty string

@@ -27,8 +27,8 @@ bool CliffDetector::init(int pin) {
 }
 
 bool CliffDetector::initWithExtender(Utils::IOExtern* ioExtender, int pin) {
-    if (!ioExtender) {
-        Utils::Logger::getInstance().error("CliffDetector: Invalid I/O extender provided");
+    if (!ioExtender || pin > 15) {
+        Utils::Logger::getInstance().error("CliffDetector: Invalid I/O extender provided, pin %d", pin);
         return false;
     }
     
@@ -36,7 +36,7 @@ bool CliffDetector::initWithExtender(Utils::IOExtern* ioExtender, int pin) {
     _useIoExtender = true;
     _pin = pin;
     
-    ioExtender->digitalRead(pin, true);
+    ioExtender->digitalRead(_pin, true);
     
     _initialized = true;
     Utils::Logger::getInstance().info("CliffDetector: Initialized with I/O extender pin %d", _pin);
@@ -53,14 +53,6 @@ void CliffDetector::update() {
 
 bool CliffDetector::isCliffDetected() {
     return _cliffDetected;
-}
-
-bool CliffDetector::calibrate() {
-    if (!_initialized) {
-        return false;
-    }
-    
-    return true;
 }
 
 int CliffDetector::readPin() {

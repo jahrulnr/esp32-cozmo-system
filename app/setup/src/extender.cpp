@@ -1,6 +1,7 @@
 #include "setup/setup.h"
 
-Utils::IOExtern ioExpander;
+Utils::IOExtern oExpander;
+Utils::IOExtern iExpander;
 
 // PCF8575 driver
 void setupExtender() {
@@ -8,9 +9,19 @@ void setupExtender() {
     Utils::I2CManager::getInstance().initBus("base", SCREEN_SDA_PIN, SCREEN_SCL_PIN);
     
     // Initialize PCF8575 with default address (0x20)
-    if (ioExpander.begin("base", 0x20, SCREEN_SDA_PIN, SCREEN_SCL_PIN)) {
-        Utils::Logger::getInstance().info("PCF8575 extender initialized successfully");
+    if (oExpander.begin("base", 0x20, SCREEN_SDA_PIN, SCREEN_SCL_PIN)) {
+        Utils::Logger::getInstance().info("Output extender initialized successfully");
     } else {
-        Utils::Logger::getInstance().error("PCF8575 initialization failed");
+        Utils::Logger::getInstance().error("Output initialization failed");
+    }
+    
+    delay(10);
+
+    // Initialize PCF8575 with address (0x26)
+    if (iExpander.begin("base", 0x26, SCREEN_SDA_PIN, SCREEN_SCL_PIN)) {
+        iExpander.setMaxPin(8);
+        Utils::Logger::getInstance().info("Input extender initialized successfully");
+    } else {
+        Utils::Logger::getInstance().error("Input initialization failed");
     }
 }

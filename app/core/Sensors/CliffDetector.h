@@ -39,12 +39,6 @@ public:
      */
     bool isCliffDetected();
 
-    /**
-     * Calibrate the cliff detector
-     * @return true if calibration was successful, false otherwise
-     */
-    bool calibrate();
-
 private:
     int _pin;
     bool _cliffDetected;
