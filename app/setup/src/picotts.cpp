@@ -30,7 +30,7 @@ void setupPicoTTS() {
         picotts_set_error_notify(picotts_error_callback);
         picotts_set_idle_notify(picotts_idle_callback);
 
-        sayText("Hi, I am cozmo. Nice to meet you.");
+        // sayText("Hi, I am cozmo. Nice to meet you.");
     } else {
         logger->error("Failed to initialize PicoTTS engine");
         picotts_initialized = false;

@@ -36,7 +36,7 @@ bool Camera::init() {
     config.pin_sccb_scl = SIOC_GPIO_NUM;
     config.pin_pwdn = PWDN_GPIO_NUM;
     config.pin_reset = RESET_GPIO_NUM;
-    config.xclk_freq_hz = 20000000;
+    config.xclk_freq_hz = 20*1000*1000;
     config.pixel_format = CAMERA_PIXEL_FORMAT;
     config.jpeg_quality = CAMERA_QUALITY;  // 0-63, lower is better quality
     config.frame_size = _resolution;
@@ -45,7 +45,7 @@ bool Camera::init() {
     if (psramFound()) {
         config.fb_location = CAMERA_FB_IN_PSRAM;
         config.grab_mode = CAMERA_GRAB_LATEST;
-        config.fb_count = 2;
+        config.fb_count = 1;
     } else {
         config.fb_location = CAMERA_FB_IN_DRAM;
         config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
@@ -54,7 +54,7 @@ bool Camera::init() {
     
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Camera init failed with error 0x%x\n", err);
+        ESP_LOGE(TAG, "Camera init failed with error 0x%x (%s)", err, esp_err_to_name(err));
         return false;
     }
 
@@ -85,7 +85,7 @@ camera_fb_t* Camera::captureFrame() {
     
     size_t fb_len = 0;
     uint8_t* fb_buf = NULL;
-    esp_err_t ret = frame2jpg(fb, 80, &fb_buf, &fb_len) ? ESP_OK : ESP_FAIL;
+    esp_err_t ret = frame2jpg(fb, 90, &fb_buf, &fb_len) ? ESP_OK : ESP_FAIL;
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "convert frame to jpg failed: %s", esp_err_to_name(ret));
         return fb;

@@ -114,7 +114,7 @@ void OrientationSensor::update() {
         // Validate accelerometer data (should be close to 1g total magnitude)
         float accelMag = getAccelMagnitude();
         if (accelMag < 0.5f || accelMag > 2.0f) {
-            ESP_LOGW(TAG, "Unusual accelerometer magnitude: %.2f g", accelMag);
+            // ESP_LOGW(TAG, "Unusual accelerometer magnitude: %.2f g", accelMag);
         }
     } else {
         ESP_LOGE(TAG, "Failed to read accelerometer data");
