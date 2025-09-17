@@ -7,7 +7,9 @@ Sensors::Camera *camera;
 
 void cameraTask(void * param) {
   const char* TAG = "cameraTask";
-  int startDelay = 20000;
+  int startDelay = 10000;
+	TickType_t lastWakeTime = xTaskGetTickCount();
+	TickType_t updateFrequency = pdMS_TO_TICKS(1000);
   vTaskDelay(pdMS_TO_TICKS(startDelay));
 
   #ifdef CONFIG_CAMERA_TASK_STACK_SIZE
@@ -24,6 +26,17 @@ void cameraTask(void * param) {
       esp_camera_set_psram_mode(true);
       logger->info("Camera initialized successfully");
 
+      sensor_t *s = esp_camera_sensor_get();
+      s->set_gain_ctrl(s, 1);     // auto gain on
+      vTaskDelay(10);
+      s->set_exposure_ctrl(s, 1); // auto exposure on
+      vTaskDelay(10);
+      s->set_awb_gain(s, 1);
+      vTaskDelay(10);
+      s->set_hmirror(s, 1);
+      vTaskDelay(10);             // the config sometime not applied, seem like caused by mutex
+      s->set_vflip(s, 1);
+
       vTaskDelay(pdMS_TO_TICKS(1000));
 
       const char* fileName = "/cache/frame.jpg";
@@ -31,12 +44,17 @@ void cameraTask(void * param) {
         fileManager->deleteFile(fileName);
       }
       camera_fb_t *fb = nullptr;
-      while (true){
+      while (1){
         if (fileManager->exists(fileName)) {
           vTaskDelay(3000);
           continue;
         }
 
+        if (esp_camera_available_frames()) {
+          esp_camera_return_all();
+        }
+
+		    vTaskDelayUntil(&lastWakeTime, updateFrequency);
         fb = camera->captureFrame();
 
         if (!fb) {
@@ -61,10 +79,7 @@ void cameraTask(void * param) {
         ESP_LOGI(TAG, "success create image file");
         if (fopen) fileManager->closeFile(fopen);
         camera->returnFrame(fb);
-        vTaskDelay(pdMS_TO_TICKS(1000));
       }
-      
-      printTaskStatus();
     } else {
       camera = nullptr;
       logger->error("Camera initialization failed");
@@ -73,7 +88,5 @@ void cameraTask(void * param) {
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 
-
-  // vTaskDelete(NULL);
   SendTask::removeTask(cameraTaskId);
 }

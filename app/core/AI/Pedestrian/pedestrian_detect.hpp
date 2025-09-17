@@ -1,0 +1,17 @@
+#pragma once
+
+#include "vision/detect/dl_detect_base.hpp"
+#include "vision/detect/dl_detect_pico_postprocessor.hpp"
+
+namespace pedestrian_detect {
+class Pico : public dl::detect::DetectImpl {
+public:
+    Pico(const char *model_name);
+};
+} // namespace pedestrian_detect
+
+class PedestrianDetect : public dl::detect::DetectWrapper {
+public:
+    typedef enum { PICO_S8_V1 } model_type_t;
+    PedestrianDetect(model_type_t model_type = static_cast<model_type_t>(PICO_S8_V1));
+};

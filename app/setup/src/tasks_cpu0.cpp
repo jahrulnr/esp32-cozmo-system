@@ -8,6 +8,7 @@ String taskMonitorerId;
 String displayTaskId;
 String sensorMonitorTaskId;
 String cameraTaskId;
+String pedestrianFeedTaskId;
 
 /**
  * Initialize all background tasks on CPU 0
@@ -52,20 +53,29 @@ void setupTasksCpu0() {
     }
     
     // Create camera task using SendTask library
-    cameraTaskId = SendTask::createLoopTaskOnCore(
-        cameraTask,
-        "CameraTask",
-        4096,                        // Stack size
-        0,                           // Priority (lower priority)
-        core,                        // Core ID (CPU 0)
-        "Camera capture and processing task"
-    );
+    // cameraTaskId = SendTask::createLoopTaskOnCore(
+    //     cameraTask,
+    //     "CameraTask",
+    //     4096,                        // Stack size
+    //     0,                           // Priority (lower priority)
+    //     core,                        // Core ID (CPU 0)
+    //     "Camera capture and processing task"
+    // );
     
-    if (cameraTaskId.isEmpty()) {
-        logger->error("Failed to create camera task");
-    } else {
-        logger->info("Camera task created with ID: %s", cameraTaskId.c_str());
-    }
+    // if (cameraTaskId.isEmpty()) {
+    //     logger->error("Failed to create camera task");
+    // } else {
+    //     logger->info("Camera task created with ID: %s", cameraTaskId.c_str());
+    // }
+
+    pedestrianFeedTaskId = SendTask::createLoopTaskOnCore(
+        pedestrianFeedTask,
+        "PedestrianFeedTask",
+        4096,
+        0,
+        core,
+        "Capture image for object detector"
+    );
 
     // Create taskMonitorer task using SendTask library
     // taskMonitorerId = SendTask::createLoopTaskOnCore(

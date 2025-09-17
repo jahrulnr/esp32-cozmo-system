@@ -4,6 +4,7 @@
 #include <vector>
 #include <Config.h>
 #include <Constants.h>
+#include <setup/enum/pedestrian.h>
 #include <picotts.h>
 #include <csr.h>
 #include <Notification.h>
@@ -24,6 +25,8 @@
 #include <MP3Player.h>
 #include <FTPServer.h>
 #include "battery_manager.h"
+#include "vision/image/dl_image_jpeg.hpp"
+#include "core/AI/Pedestrian/pedestrian_detect.hpp"
 #include "core/Utils/SpiAllocator.h"
 #include "core/Sensors/Camera.h"
 #include "core/Sensors/OrientationSensor.h"
@@ -53,6 +56,7 @@ struct {
 #endif
 
 extern Notification* notification;
+extern PedestrianDetect *pedestrianDetect;
 extern Sensors::Camera* camera;
 extern Sensors::OrientationSensor* orientation;
 extern Sensors::DistanceSensor* distanceSensor;
@@ -108,6 +112,8 @@ void setupFTPServer();
 void setupWeather();
 void setupAudioRecorder();
 void setupNotePlayer();
+void setupCamera();
+void setupPedestrian();
 
 void setupTasksCpu0();
 void setupTasksCpu1();
@@ -116,3 +122,6 @@ void setupTasksCpu1();
 extern bool picotts_initialized;
 #endif
 bool sayText(const char* text);
+
+extern dl_data_t* pedestrianData;
+extern dl::detect::result_t* pedestrianResult;

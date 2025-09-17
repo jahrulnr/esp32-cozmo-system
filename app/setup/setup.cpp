@@ -24,6 +24,8 @@ void setupApp() {
   setupSpeechRecognition();
   setupAudioRecorder();
   setupNotePlayer();
+  setupCamera();
+  setupPedestrian();
 
   delay(10);
 

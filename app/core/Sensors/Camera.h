@@ -26,7 +26,7 @@ public:
      * Capture a frame from the camera
      * @return Pointer to the camera frame buffer, or NULL on failure
      */
-    camera_fb_t* captureFrame();
+    camera_fb_t* captureFrame(bool raw = false);
 
     /**
      * Return a frame buffer to the pool

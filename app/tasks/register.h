@@ -20,6 +20,8 @@ void ftpTask(void* param);
 void weatherServiceTask(void* param);
 void srControlTask(void* param);
 void cameraTask(void* param);
+void pedestrianHandlerTask(void* param);
+void pedestrianFeedTask(void* param);
 void notePlayerTask(void* param);
 
 // Task management utilities

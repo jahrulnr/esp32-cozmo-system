@@ -1,5 +1,10 @@
 just a note.
 
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x310000 model/en-US_ta.bin
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x3B0000 model/en-US_lh0_sg.bin
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x47D000 model/pedestrian_detect_pico_s8_v1.espdl
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x4FD000 model/srmodels.bin
+
 original accelerator on my cozmo
 y=0
 y=-1 -> miring kekanan

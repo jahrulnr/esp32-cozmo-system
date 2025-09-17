@@ -8,6 +8,7 @@ String ftpTaskId;
 String weatherServiceTaskId;
 String srControlTaskId;
 String notePlayerTaskId;
+String pedestrianHandlerTaskId;
 
 /**
  * Initialize all background tasks on CPU 1
@@ -90,6 +91,17 @@ void setupTasksCpu1() {
         logger->info("Note task created with ID: %s", notePlayerTaskId.c_str());
     }
     #endif
+
+
+
+    pedestrianHandlerTaskId = SendTask::createLoopTaskOnCore(
+        pedestrianHandlerTask,
+        "PedestrianHandlerTask",
+        4096,
+        0,
+        core,
+        "Proccess image to get objects"
+    );
 
     delay(1000);
     logger->info("Tasks initialized on cpu 1");

@@ -57,18 +57,13 @@ bool Camera::init() {
         ESP_LOGE(TAG, "Camera init failed with error 0x%x (%s)", err, esp_err_to_name(err));
         return false;
     }
-
-    sensor_t *s = esp_camera_sensor_get();
-    s->set_gain_ctrl(s, 1);                       // auto gain on
-    s->set_exposure_ctrl(s, 1);                   // auto exposure on
-    s->set_awb_gain(s, 1);                        // Auto White Balance enable (0 or 1)
     
     _initialized = true;
     return true;
     #endif
 }
 
-camera_fb_t* Camera::captureFrame() {
+camera_fb_t* Camera::captureFrame(bool raw) {
     if (!_initialized) {
         return nullptr;
     }
@@ -79,7 +74,7 @@ camera_fb_t* Camera::captureFrame() {
         return fb;
     }
 
-    if (fb->format == PIXFORMAT_JPEG) {
+    if (raw || fb->format == PIXFORMAT_JPEG) {
         return fb;
     }
     
