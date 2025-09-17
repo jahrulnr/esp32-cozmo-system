@@ -27,7 +27,7 @@ void setupTasksCpu1() {
         core,                    // Core ID (CPU 1)
         "FTP server task for file management"
     );
-    
+
     if (ftpTaskId.isEmpty()) {
         logger->error("Failed to create FTP task");
     } else {
@@ -43,7 +43,7 @@ void setupTasksCpu1() {
         core,                    // Core ID (CPU 1)
         "Weather service task for weather data updates"
     );
-    
+
     if (weatherServiceTaskId.isEmpty()) {
         logger->error("Failed to create weather service task");
     } else {
@@ -66,7 +66,7 @@ void setupTasksCpu1() {
         core,                    // Core ID (CPU 1, same as ESP-SR)
         "Speech recognition control task for pause/resume handling"
     );
-    
+
     if (srControlTaskId.isEmpty()) {
         logger->error("Failed to create SR control task");
     } else {
@@ -84,7 +84,7 @@ void setupTasksCpu1() {
         core,                    // Core ID (CPU 1)
         "Note musical playback task for audio effects and melodies"
     );
-    
+
     if (notePlayerTaskId.isEmpty()) {
         logger->error("Failed to create Note task");
     } else {

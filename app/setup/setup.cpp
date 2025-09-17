@@ -41,9 +41,9 @@ void setupApp() {
 
   delay(10);
   setupWeather();
-  
+
   logger->info("System initialization complete");
-  
+
   if (display) {
     display->clear();
     display->drawCenteredText(20, "Cozmo System");

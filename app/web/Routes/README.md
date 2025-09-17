@@ -6,7 +6,7 @@ This guide explains how to create and implement routers for the ESP32 Cozmo Robo
 
 The routing system supports three types of routes:
 - **Web Routes**: HTML pages, assets, and user-facing endpoints
-- **API Routes**: RESTful JSON APIs with middleware support  
+- **API Routes**: RESTful JSON APIs with middleware support
 - **WebSocket Routes**: Real-time bidirectional communication
 
 Follow this guide to create your own custom routes for the robot system.
@@ -62,10 +62,10 @@ In your main application, call the registration function:
 
 void setup() {
     Router* router = new Router();
-    
+
     // Register your custom routes
     registerCustomRoutes(router);
-    
+
     // Start the server
     server.start();
 }
@@ -93,7 +93,7 @@ void registerCustomRoutes(Router* router) {
 // Route with URL parameter
 router->get("/robot/{action}", [](Request& request) -> Response {
     String action = request.route("action");
-    
+
     String html = "<h1>Robot Action: " + action + "</h1>";
     return Response(request.getServerRequest())
         .html(html);
@@ -107,12 +107,12 @@ router->get("/robot/{action}", [](Request& request) -> Response {
 router->get("/files/{filename}", [](Request& request) -> Response {
     String filename = request.route("filename");
     String path = "/data/" + filename;
-    
+
     if (LittleFS.exists(path)) {
         return Response(request.getServerRequest())
             .file(path);
     }
-    
+
     return Response(request.getServerRequest())
         .status(404)
         .html("<h1>File not found</h1>");
@@ -126,10 +126,10 @@ router->get("/files/{filename}", [](Request& request) -> Response {
 router->post("/control", [](Request& request) -> Response {
     String command = request.input("command");
     String speed = request.input("speed");
-    
+
     // Process the robot command
     processRobotCommand(command, speed.toInt());
-    
+
     return Response(request.getServerRequest())
         .redirect("/dashboard");
 });
@@ -147,14 +147,14 @@ void registerCustomRoutes(Router* router) {
     router->group("/api/v1", [&](Router& api) {
         // Add JSON middleware
         api.middleware({"json"});
-        
+
         // Simple API endpoint
         api.get("/status", [](Request& request) -> Response {
             Utils::SpiJsonDocument response;
             response["status"] = "online";
             response["timestamp"] = millis();
             response["free_memory"] = ESP.getFreeHeap();
-            
+
             return Response(request.getServerRequest())
                 .status(200)
                 .json(response);
@@ -169,20 +169,20 @@ void registerCustomRoutes(Router* router) {
 // Protected API endpoint
 router->group("/api/v1", [&](Router& api) {
     api.middleware({"json", "auth"});
-    
+
     api.post("/move", [](Request& request) -> Response {
         Utils::SpiJsonDocument requestData = request.json();
-        
+
         String direction = requestData["direction"];
         int duration = requestData["duration"];
-        
+
         // Execute robot movement
         bool success = moveRobot(direction, duration);
-        
+
         Utils::SpiJsonDocument response;
         response["success"] = success;
         response["message"] = success ? "Movement executed" : "Movement failed";
-        
+
         return Response(request.getServerRequest())
             .status(success ? 200 : 400)
             .json(response);
@@ -196,7 +196,7 @@ router->group("/api/v1", [&](Router& api) {
 // Nested route groups with different middleware
 router->group("/api/v1", [&](Router& api) {
     api.middleware({"cors", "json"});
-    
+
     // Public endpoints (no auth required)
     api.get("/info", [](Request& request) -> Response {
         Utils::SpiJsonDocument info;
@@ -204,24 +204,24 @@ router->group("/api/v1", [&](Router& api) {
         info["version"] = "1.0.0";
         return Response(request.getServerRequest()).json(info);
     });
-    
+
     // Protected endpoints
     api.group("/robot", [&](Router& robot) {
         robot.middleware({"auth"});
-        
+
         robot.get("/sensors", [](Request& request) -> Response {
             Utils::SpiJsonDocument sensors;
             sensors["temperature"] = readTemperature();
             sensors["distance"] = readDistance();
             return Response(request.getServerRequest()).json(sensors);
         });
-        
+
         robot.post("/speak", [](Request& request) -> Response {
             Utils::SpiJsonDocument data = request.json();
             String text = data["text"];
-            
+
             bool success = speakText(text);
-            
+
             Utils::SpiJsonDocument response;
             response["success"] = success;
             return Response(request.getServerRequest()).json(response);
@@ -241,13 +241,13 @@ void registerCustomRoutes(Router* router) {
     router->websocket("/ws/robot")
         .onConnect([](WebSocketRequest& request) {
             Serial.printf("[WebSocket] Robot client %u connected\n", request.clientId());
-            
+
             // Send initial robot status
             Utils::SpiJsonDocument status;
             status["type"] = "robot_status";
             status["battery"] = getBatteryLevel();
             status["mode"] = getCurrentMode();
-            
+
             String message;
             serializeJson(status, message);
             request.send(message);
@@ -258,12 +258,12 @@ void registerCustomRoutes(Router* router) {
         .onMessage([](WebSocketRequest& request, const String& message) {
             Utils::SpiJsonDocument doc;
             DeserializationError error = deserializeJson(doc, message);
-            
+
             if (error) {
                 Serial.println("[WebSocket] Invalid JSON received");
                 return;
             }
-            
+
             handleRobotCommand(request, doc);
         });
 }
@@ -275,32 +275,32 @@ void registerCustomRoutes(Router* router) {
 void handleRobotCommand(WebSocketRequest& request, Utils::SpiJsonDocument& command) {
     String type = command["type"];
     Utils::SpiJsonDocument response;
-    
+
     if (type == "move") {
         String direction = command["direction"];
         int speed = command["speed"];
-        
+
         bool success = executeMovement(direction, speed);
-        
+
         response["type"] = "move_response";
         response["success"] = success;
         response["direction"] = direction;
-        
+
     } else if (type == "get_sensors") {
         response["type"] = "sensor_data";
         response["temperature"] = readTemperature();
         response["distance"] = readDistance();
         response["orientation"] = readOrientation();
-        
+
     } else if (type == "ping") {
         response["type"] = "pong";
         response["timestamp"] = millis();
-        
+
     } else {
         response["type"] = "error";
         response["message"] = "Unknown command type";
     }
-    
+
     String responseStr;
     serializeJson(response, responseStr);
     request.send(responseStr);
@@ -345,11 +345,11 @@ class AuthMiddleware {
 public:
     static bool handle(Request& request) {
         String token = request.header("Authorization");
-        
+
         if (token.isEmpty()) {
             return false; // Reject request
         }
-        
+
         // Validate token
         return validateToken(token);
     }
@@ -358,7 +358,7 @@ public:
 // Apply middleware to routes
 router->group("/api", [&](Router& api) {
     api.middleware({"auth"}); // Use auth middleware
-    
+
     // Your protected routes here
 });
 ```
@@ -377,13 +377,13 @@ struct RobotCommand {
 router->post("/api/command", [](Request& request) -> Response {
     RobotCommand cmd;
     Utils::SpiJsonDocument data = request.json();
-    
+
     cmd.action = data["action"];
     cmd.duration = data["duration"];
     cmd.speed = data["speed"];
-    
+
     executeCommand(cmd);
-    
+
     return Response(request.getServerRequest())
         .json({{"success", true}});
 });
@@ -394,24 +394,24 @@ router->post("/api/command", [](Request& request) -> Response {
 ```cpp
 router->get("/api/sensors/{sensor}", [](Request& request) -> Response {
     String sensorName = request.route("sensor");
-    
+
     try {
         float value = readSensor(sensorName);
-        
+
         Utils::SpiJsonDocument response;
         response["sensor"] = sensorName;
         response["value"] = value;
         response["timestamp"] = millis();
-        
+
         return Response(request.getServerRequest())
             .status(200)
             .json(response);
-            
+
     } catch (const std::exception& e) {
         Utils::SpiJsonDocument error;
         error["error"] = "Sensor not found";
         error["message"] = e.what();
-        
+
         return Response(request.getServerRequest())
             .status(404)
             .json(error);
@@ -460,7 +460,7 @@ const ws = new WebSocket('ws://robot-ip/ws/robot');
 
 ws.onopen = function() {
     console.log('Connected to robot');
-    
+
     // Send a command
     ws.send(JSON.stringify({
         type: 'move',
@@ -519,13 +519,13 @@ router->group("/api", [&](Router& api) {
 ```cpp
 router->post("/api/move", [](Request& request) -> Response {
     Utils::SpiJsonDocument data = request.json();
-    
+
     if (!data.containsKey("direction") || !data.containsKey("speed")) {
         return Response(request.getServerRequest())
             .status(400)
             .json({{"error", "Missing required fields"}});
     }
-    
+
     // Process valid request
 });
 ```
@@ -539,7 +539,7 @@ successResponse["success"] = true;
 successResponse["data"] = responseData;
 successResponse["timestamp"] = millis();
 
-// Standard error response  
+// Standard error response
 Utils::SpiJsonDocument errorResponse;
 errorResponse["success"] = false;
 errorResponse["error"] = "Error message";
@@ -563,7 +563,7 @@ errorResponse["timestamp"] = millis();
 router->get("/debug", [](Request& request) -> Response {
     Serial.println("Debug route accessed");
     Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
-    
+
     return Response(request.getServerRequest())
         .json({{"debug", "ok"}});
 });

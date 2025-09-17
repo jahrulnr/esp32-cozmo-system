@@ -56,7 +56,7 @@ dl_rfft_s16_deinit(fft_handle);
 
 
 ```
-Please refer to [dl_fft.h](./dl_fft.h) and [dl_rfft.h](./dl_rfft.h) for more details. 
+Please refer to [dl_fft.h](./dl_fft.h) and [dl_rfft.h](./dl_rfft.h) for more details.
 > Note: The input array x must be allocated with heap_caps_aligned_alloc and aligned to 16 bytes.
 
 
@@ -67,7 +67,7 @@ float *x1 = (float *)heap_caps_aligned_alloc(16, nfft * sizeof(float) *2, MALLOC
 int16_t *x2= (float *)heap_caps_aligned_alloc(16, nfft * sizeof(int16_t)*2, MALLOC_CAP_8BIT);
 FFT *fft = FFT::get_instance();
 
-# float 
+# float
 fft->fft(x1, nfft);
 fft->ifft(x1, nfft);
 fft->rfft(x1, nfft);
@@ -88,20 +88,20 @@ Please refer to [dl_fft.hpp](./dl_fft.hpp) for more details.
 
 ## FAQ:
 
-#### 1. Why not just use esp-dsp directly? 
+#### 1. Why not just use esp-dsp directly?
 
-Because esp-dsp uses global variables to share FFT tables and other parameters in order to minimize memory consumption. This introduces significant risks for independent components. Your FFT results might be corrupted by other programs, and this is something you have little control over.  
+Because esp-dsp uses global variables to share FFT tables and other parameters in order to minimize memory consumption. This introduces significant risks for independent components. Your FFT results might be corrupted by other programs, and this is something you have little control over.
 
 #### 2. What does dl_fft do?
 
-1. Provides an unified and simple FFT/IFFT interface. Users no longer need to worry about their FFT results being affected by other programs. All FFT tables are allocated and released within the function scope.  
-2. Reimplements an int16 FFT/IFFT. Dynamic quantization is used during butterfly operations to achieve better precision.  
+1. Provides an unified and simple FFT/IFFT interface. Users no longer need to worry about their FFT results being affected by other programs. All FFT tables are allocated and released within the function scope.
+2. Reimplements an int16 FFT/IFFT. Dynamic quantization is used during butterfly operations to achieve better precision.
 3. [TODO] Uses built-in FFT instructions on ESP32-S3 and ESP32-P4 to further accelerate int16 FFT/IFFT.
 
 
 ## Benchmark
 
-test code: [test_apps/dl_fft](https://github.com/espressif/esp-dl/tree/master/test_apps/dl_fft) 
+test code: [test_apps/dl_fft](https://github.com/espressif/esp-dl/tree/master/test_apps/dl_fft)
 
 - [ESP32-S3 fft benchmark](./benchmark_esp32s3.md)
 - [ESP32-P4 fft benchmark](./benchmark_esp32p4.md)

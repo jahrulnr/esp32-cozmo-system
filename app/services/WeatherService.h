@@ -156,15 +156,15 @@ public:
         float latitude;                 // Location latitude
         Utils::Sstring timezone;        // Location timezone
         bool isValid;
-        
-        WeatherData() : condition(WeatherCondition::UNKNOWN), temperature(0), humidity(0), 
+
+        WeatherData() : condition(WeatherCondition::UNKNOWN), temperature(0), humidity(0),
                        windSpeed(0), longitude(0.0), latitude(0.0), isValid(false) {}
     };
 
     struct WeatherConfig {
         Utils::Sstring adm4Code;        // Administrative level 4 code (village/kelurahan)
         uint32_t cacheExpiryMinutes;    // Cache expiry time in minutes
-        
+
         WeatherConfig() : adm4Code("31.71.03.1001"), cacheExpiryMinutes(60) {}
     };
 
@@ -180,7 +180,7 @@ public:
      * @return true if initialization was successful, false otherwise
      */
     bool init(const WeatherConfig& config);
-    
+
     /**
      * Check if the service is initialized
      * @return true if initialized, false otherwise

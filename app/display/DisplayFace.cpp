@@ -36,7 +36,7 @@ void Display::faceInit() {
 
     _face->Blink.Timer.SetIntervalMillis(3000);
     _face->Look.Timer.SetIntervalMillis(1000);
-    
+
     clear();
     autoFace(false);
     _face->RandomBlink = true;
@@ -47,9 +47,9 @@ Face *Display::getFace() {
 }
 
 void Display::autoFace(bool exp) {
-  _face->RandomBehavior = 
-  _face->RandomBlink = 
-  _face->RandomLook = 
+  _face->RandomBehavior =
+  _face->RandomBlink =
+  _face->RandomLook =
     exp;
 }
 

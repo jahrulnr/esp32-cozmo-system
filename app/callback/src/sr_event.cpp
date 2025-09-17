@@ -23,12 +23,12 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             logger->info("Listening for commands...");
             lastMode = SR_MODE_WAKEWORD;
             break;
-            
+
         case SR_EVENT_WAKEWORD_CHANNEL:
             logger->info("Wake word detected on channel: %d\n", command_id);
             SR::sr_set_mode(lastMode);
             break;
-            
+
         case SR_EVENT_TIMEOUT:
             sayText("Call me again later!");
             logger->info("⏰ Command timeout - returning to wake word mode");
@@ -38,10 +38,10 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             lastMode = SR_MODE_WAKEWORD;
             SR::sr_set_mode(SR_MODE_WAKEWORD);
             break;
-            
+
         case SR_EVENT_COMMAND:
             logger->info("Command detected! ID=%d, Phrase=%d\n", command_id, phrase_id);
-            
+
             // Handle specific command groups based on command_id (from voice_commands array)
             switch (command_id) {
                 case Commands::AUTOMATION_ACTIVE:
@@ -83,7 +83,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     SR::sr_set_mode(SR_MODE_WAKEWORD);
                     return;
                     break;
-                case Commands::RECORD_START: 
+                case Commands::RECORD_START:
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     if (!audioRecorder->isRecordingActive()) {
                         if (audioRecorder->startRecording()) {
@@ -149,7 +149,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     return;
                     break;
 
-                default: 
+                default:
                     logger->info("Unknown command ID: %d", command_id);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     sayText("Sorry, I not understand!");
@@ -159,7 +159,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             SR::sr_set_mode(SR_MODE_COMMAND);
             lastMode = SR_MODE_COMMAND;
             break;
-            
+
         default:
             logger->info("❓ Unknown SR event: %d\n", event);
             SR::sr_set_mode(lastMode);

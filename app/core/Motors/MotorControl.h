@@ -30,9 +30,9 @@ public:
      * @param rightMotorPin2 Second pin for the right motor
      * @return true if initialization was successful, false otherwise
      */
-    bool init(int leftMotorPin1 = 2, int leftMotorPin2 = 4, 
+    bool init(int leftMotorPin1 = 2, int leftMotorPin2 = 4,
               int rightMotorPin1 = 13, int rightMotorPin2 = 12);
-              
+
     /**
      * Initialize motor control with I/O extender
      * @param ioExtender Pointer to PCF8575 I/O extender
@@ -42,7 +42,7 @@ public:
      * @param rightMotorPin2 Second pin for the right motor on I/O extender
      * @return true if initialization was successful, false otherwise
      */
-    bool initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPin1 = 0, int leftMotorPin2 = 1, 
+    bool initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPin1 = 0, int leftMotorPin2 = 1,
                          int rightMotorPin1 = 2, int rightMotorPin2 = 3);
 
     /**
@@ -79,7 +79,7 @@ private:
     Utils::IOExtern* _ioExtender;
     Display::Display *_display;
     bool _enable;
-    
+
     void moveLook(Direction direction);
     bool isInterrupt();
     void setMotorPin(int pin, int value);  // Helper for unified pin control

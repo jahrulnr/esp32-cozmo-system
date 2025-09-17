@@ -77,7 +77,7 @@ void displayTask(void *param){
 							lastEvent = EVENT_DISPLAY::NOTHING;
 					}
 				}
-				
+
 		#if MICROPHONE_ENABLED
 			#if MICROPHONE_ANALOG
 				display->setMicLevel(amicrophone->readLevel());
@@ -92,7 +92,7 @@ void displayTask(void *param){
 				display->updateOrientation(orientation);
 			}
 		#endif
-			
+
 			display->update();
 		}
 }

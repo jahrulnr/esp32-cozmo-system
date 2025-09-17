@@ -3,7 +3,7 @@
 
 namespace Utils {
 
-Logger::Logger() : _serialEnabled(true), _fileEnabled(false), _fileName("/logs.txt"), 
+Logger::Logger() : _serialEnabled(true), _fileEnabled(false), _fileName("/logs.txt"),
                  _logLevel(LogLevel::INFO), TAG("Logger") {
 }
 
@@ -18,7 +18,7 @@ bool Logger::init(bool serialEnabled, bool fileEnabled) {
     _serialEnabled = serialEnabled;
     _fileEnabled = fileEnabled;
     _fileName = "/logs.txt";
-    
+
     if (_fileEnabled && !LittleFS.begin(false)) {
         if (_serialEnabled) {
             ESP_LOGE(TAG, "Failed to mount LittleFS");
@@ -30,7 +30,7 @@ bool Logger::init(bool serialEnabled, bool fileEnabled) {
     if (!Serial) {
         _logLevel = LogLevel::ERROR;
     }
-    
+
     return true;
 }
 
@@ -48,10 +48,10 @@ bool Logger::isLogLevelEnabled(LogLevel level) const {
 
 String Logger::formatString(const char* format, va_list args) {
     char buffer[256]; // Buffer to hold formatted string
-    
+
     // Format the string
     vsnprintf(buffer, sizeof(buffer), format, args);
-    
+
     // Return as a String object
     return String(buffer);
 }
@@ -65,7 +65,7 @@ void Logger::debug(const char* format, ...) {
     va_start(args, format);
     String formattedMessage = formatString(format, args);
     va_end(args);
-    
+
     log(LogLevel::DEBUG, formattedMessage);
 }
 
@@ -78,7 +78,7 @@ void Logger::info(const char* format, ...) {
     va_start(args, format);
     String formattedMessage = formatString(format, args);
     va_end(args);
-    
+
     log(LogLevel::INFO, formattedMessage);
 }
 
@@ -91,7 +91,7 @@ void Logger::warning(const char* format, ...) {
     va_start(args, format);
     String formattedMessage = formatString(format, args);
     va_end(args);
-    
+
     log(LogLevel::WARNING, formattedMessage);
 }
 
@@ -100,7 +100,7 @@ void Logger::error(const char* format, ...) {
     va_start(args, format);
     String formattedMessage = formatString(format, args);
     va_end(args);
-    
+
     log(LogLevel::ERROR, formattedMessage);
 }
 
@@ -112,7 +112,7 @@ void Logger::log(LogLevel level, const String& message) {
     if (level < _logLevel) {
         return;
     }
-    
+
     // Always log to Serial and file synchronously for immediate feedback
     const char* msg = message.c_str();
     if (_serialEnabled) {
@@ -153,7 +153,7 @@ void Logger::log(LogLevel level, const char* format, ...) {
     va_start(args, format);
     String formattedMessage = formatString(format, args);
     va_end(args);
-    
+
     log(level, formattedMessage);
 }
 

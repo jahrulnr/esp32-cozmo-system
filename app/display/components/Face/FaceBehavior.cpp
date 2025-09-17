@@ -78,7 +78,7 @@ void FaceBehavior::GoToEmotion(eEmotions emotion) {
   // Set the currentEmotion to the desired emotion
 	CurrentEmotion = emotion;
 
-  // Call the appropriate expression transition function 
+  // Call the appropriate expression transition function
 	switch (CurrentEmotion) {
     case eEmotions::Normal: _face.Expression.GoTo_Normal(); break;
     case eEmotions::Angry: _face.Expression.GoTo_Angry(); break;

@@ -14,7 +14,7 @@ namespace Sensors {
 
 /**
  * TemperatureSensor class
- * 
+ *
  * Provides a unified interface for reading temperature from
  * different ESP32 boards (ESP32CAM and ESP32S3).
  */
@@ -32,21 +32,21 @@ public:
 
     /**
      * Initialize the temperature sensor
-     * 
+     *
      * @return true if initialization was successful, false otherwise
      */
     bool init();
 
     /**
      * Read the temperature from the sensor
-     * 
+     *
      * @return Temperature in Celsius or NAN if reading fails
      */
     float readTemperature();
 
     /**
      * Check if the temperature sensor is supported on this device
-     * 
+     *
      * @return true if temperature sensor is supported, false otherwise
      */
     bool isSupported();
@@ -56,7 +56,7 @@ private:
     long _updateInterval;
     long _lastUpdateTime;
     float _lastTemp;
-    
+
     #if SOC_TEMP_SENSOR_SUPPORTED
     // Handle for the ESP32S3 temperature sensor
     temperature_sensor_handle_t _tempSensor;

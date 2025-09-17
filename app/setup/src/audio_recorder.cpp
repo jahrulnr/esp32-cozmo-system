@@ -9,7 +9,7 @@ void setupAudioRecorder() {
     #if AUDIO_RECORDING_ENABLED
     if (audioRecorder == nullptr) {
         audioRecorder = new AudioRecorder(fileManager, logger, notification, mic_fill_callback);
-        
+
         if (audioRecorder) {
             logger->info("AudioRecorder setup complete");
         } else {

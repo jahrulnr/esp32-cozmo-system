@@ -124,7 +124,7 @@ public:
      */
     void update();
     void enableMutex(bool enable = true) { _useMutex = enable; }
-    
+
     void setState(display_event_t state) { _state = state; }
 
     /**
@@ -160,7 +160,7 @@ private:
 
     void faceInit();
     Face *_face;
-    
+
     int _micLevel;
     MicBar *_micBar;
     MicStatus* _micStatus;

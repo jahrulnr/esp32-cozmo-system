@@ -22,7 +22,7 @@ public:
 		case 2: // speak / noise
 			_display->drawXBM(45, 10, 39, 45, full_icon::microphone_recording_bits);
 			break;
-		
+
 		default: // disable
 			_display->drawXBM(49, 17, 30, 30, big_icon::microphone_muted_bits);
 			break;

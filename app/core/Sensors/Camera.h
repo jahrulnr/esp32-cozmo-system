@@ -45,7 +45,7 @@ public:
      * @return The current resolution
      */
     framesize_t getResolution() const;
-    
+
     /**
      * Adjust camera settings
      * @param brightness Value from -2 to 2

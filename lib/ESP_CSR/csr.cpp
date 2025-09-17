@@ -262,7 +262,7 @@ static void audio_detect_task(void *arg) {
 
       esp_mn_state_t mn_state = ESP_MN_STATE_DETECTING;
       mn_state = g_sr_data->multinet->detect(g_sr_data->model_data, res->data);
-      
+
       if (ESP_MN_STATE_DETECTING == mn_state) {
         continue;
       }
@@ -341,7 +341,7 @@ esp_err_t sr_setup(
   g_sr_data = (sr_data_t*) heap_caps_calloc(1, sizeof(sr_data_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if(NULL == g_sr_data){
     ESP_LOGE(SR::TAG, "Failed create sr data");
-   ::sr_stop(); 
+   ::sr_stop();
     return ESP_ERR_NO_MEM;
   }
 
@@ -413,7 +413,7 @@ esp_err_t sr_start(bool core) {
     ::sr_stop();
     return ESP_FAIL;
   }
-  
+
   vTaskDelay(10);
   ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, core);
   if(pdPASS != ret_val) {
@@ -421,7 +421,7 @@ esp_err_t sr_start(bool core) {
     ::sr_stop();
     return ESP_FAIL;
   }
-  
+
   ret_val = xTaskCreatePinnedToCore(&SR::sr_handler_task, "SR Handler Task", 6 * 1024, NULL, configMAX_PRIORITIES - 1, &g_sr_data->handle_task, core);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio handler task");

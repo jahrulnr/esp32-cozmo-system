@@ -27,7 +27,7 @@ public:
      * @return true if initialization was successful, false otherwise
      */
     bool init(int headServoPin = -1, int handServoPin = -1);
-    
+
     /**
      * Initialize servo control with I/O extender
      * @param ioExtender Pointer to PCF8575 I/O extender

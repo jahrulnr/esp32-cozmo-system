@@ -8,7 +8,7 @@
 namespace SendTask {
 	using TaskFunction = std::function<void(void)>;
 	using LoopTaskFunction = std::function<void(void*)>;
-	
+
 	enum class TaskStatus {
 		WAITING,
 		INPROGRESS,
@@ -17,7 +17,7 @@ namespace SendTask {
 		FAILED,
 		EXTERNAL_TASK  // For tasks not created by SendTask
 	};
-	
+
 	struct TaskConfig {
 		String name;
 		uint32_t stackSize = 8192;
@@ -27,7 +27,7 @@ namespace SendTask {
 		bool isLoop = false;
 		void* params = nullptr;
 	};
-	
+
 	struct TaskInfo {
 		String taskId;
 		String name;
@@ -45,15 +45,15 @@ namespace SendTask {
 		uint32_t stackFreeMin = 0; // Minimum free stack (high water mark)
 		uint32_t stackUsed = 0;    // Current stack usage
 	};
-	
+
 	// Core task management functions
 	String createTask(TaskFunction function, const TaskConfig& config);
 	String createLoopTask(LoopTaskFunction function, const TaskConfig& config);
-	String createTaskOnCore(TaskFunction function, const String& name, uint32_t stackSize = 8192, 
+	String createTaskOnCore(TaskFunction function, const String& name, uint32_t stackSize = 8192,
 	                       UBaseType_t priority = 1, BaseType_t coreId = 1, const String& description = "");
 	String createLoopTaskOnCore(LoopTaskFunction function, const String& name, uint32_t stackSize = 8192,
 	                           UBaseType_t priority = 1, BaseType_t coreId = 1, const String& description = "", void* params = nullptr);
-	
+
 	// Task information and control
 	TaskStatus getTaskStatus(const String& taskId);
 	TaskInfo getTaskInfo(const String& taskId);
@@ -67,7 +67,7 @@ namespace SendTask {
 	bool removeTask(const String& taskId);
 	int getTaskCount();
 	int getTaskCountByStatus(TaskStatus status);
-	
+
 	// External task scanning
 	void scanExternalTasks();
 	std::vector<TaskInfo> getExternalTasks();
@@ -82,7 +82,7 @@ namespace Command {
 	using cmd = SendTask::TaskFunction;
 	using TaskStatus = SendTask::TaskStatus;
 	using TaskInfo = SendTask::TaskInfo;
-	
+
 	inline String Send(cmd command, int priority = 1, const String& description = "", uint32_t stackSize = 8192) {
 		SendTask::TaskConfig config;
 		config.name = "CommandTask";
@@ -92,7 +92,7 @@ namespace Command {
 		config.description = description;
 		return SendTask::createTask(command, config);
 	}
-	
+
 	inline TaskStatus GetTaskStatus(const String& taskId) { return SendTask::getTaskStatus(taskId); }
 	inline TaskInfo GetTaskInfo(const String& taskId) { return SendTask::getTaskInfo(taskId); }
 	inline std::vector<TaskInfo> GetAllTasks() { return SendTask::getAllTasks(); }

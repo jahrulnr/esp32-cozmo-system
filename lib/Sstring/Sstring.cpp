@@ -30,24 +30,24 @@ bool Sstring::ensureCapacity(size_t minCap) {
     if (minCap <= capacity) {
         return true;
     }
-    
+
     // Calculate new capacity (with growth factor of about 1.5)
     size_t newCap = capacity + (capacity / 2);
     if (newCap < minCap) {
         newCap = minCap;
     }
-    
+
     // Allocate new buffer
     char* newBuf = static_cast<char*>(heap_caps_malloc(newCap + 1, getMemoryType()));
-    
+
     // Copy existing content if any
     if (buffer && len > 0) {
         memcpy(newBuf, buffer, len);
     }
-    
+
     // Add null terminator
     newBuf[len] = '\0';
-    
+
     // Set new buffer and capacity
     setBuffer(newBuf, newCap);
     return true;
@@ -187,15 +187,15 @@ void Sstring::clear() {
 
 bool Sstring::append(const char* str) {
     if (!str) return false;
-    
+
     size_t strLen = strlen(str);
     if (strLen == 0) return true;
-    
+
     size_t newLen = len + strLen;
     if (!ensureCapacity(newLen)) {
         return false;
     }
-    
+
     memcpy(buffer + len, str, strLen);
     len = newLen;
     buffer[len] = '\0';
@@ -206,7 +206,7 @@ bool Sstring::append(char c) {
     if (!ensureCapacity(len + 1)) {
         return false;
     }
-    
+
     buffer[len] = c;
     len++;
     buffer[len] = '\0';
@@ -489,7 +489,7 @@ std::vector<Sstring> Sstring::split(char delimiter) const {
     if (!buffer || len == 0) {
         return result;
     }
-    
+
     size_t start = 0;
     for (size_t i = 0; i <= len; i++) {
         if (i == len || buffer[i] == delimiter) {
@@ -501,7 +501,7 @@ std::vector<Sstring> Sstring::split(char delimiter) const {
             start = i + 1;
         }
     }
-    
+
     return result;
 }
 
@@ -510,16 +510,16 @@ std::vector<Sstring> Sstring::split(const char* delimiter) const {
     if (!buffer || len == 0 || !delimiter) {
         return result;
     }
-    
+
     size_t delimLen = strlen(delimiter);
     if (delimLen == 0) {
         result.push_back(*this);
         return result;
     }
-    
+
     size_t start = 0;
     int pos = indexOf(delimiter, start);
-    
+
     while (pos != -1) {
         if (pos > (int)start) {
             result.push_back(substring(start, pos - start));
@@ -529,14 +529,14 @@ std::vector<Sstring> Sstring::split(const char* delimiter) const {
         start = pos + delimLen;
         pos = indexOf(delimiter, start);
     }
-    
+
     // Add the remaining part
     if (start < len) {
         result.push_back(substring(start));
     } else if (start == len) {
         result.push_back(Sstring());  // Empty string if ends with delimiter
     }
-    
+
     return result;
 }
 

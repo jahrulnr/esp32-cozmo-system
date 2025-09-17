@@ -19,17 +19,17 @@ Utils::Sstring processTextCommands(const Utils::Sstring& text) {
         logger->warning("CommandMapper not initialized, cannot process commands");
         return text;
     }
-    
+
     // Extract and execute commands
     int commandCount = commandMapper->executeCommandString(text);
-    
+
     if (commandCount > 0) {
         logger->debug("Executed %d commands from text", commandCount);
-        
+
         // Return just the text content (without commands)
         return commandMapper->extractText(text);
     }
-    
+
     // If no commands found, return the original text
     return text;
 }

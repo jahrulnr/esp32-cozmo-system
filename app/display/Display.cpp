@@ -3,10 +3,10 @@
 
 namespace Display {
 
-Display::Display() : _u8g2(nullptr), _initialized(false), 
+Display::Display() : _u8g2(nullptr), _initialized(false),
     _state(STATE_FACE), _holdTimer(0),
     _micLevel(0), _width(128), _height(64),
-    _mux(nullptr), _face(nullptr), _weather(nullptr), _cube3D(nullptr), 
+    _mux(nullptr), _face(nullptr), _weather(nullptr), _cube3D(nullptr),
     _spaceGame(nullptr), _battery(nullptr), _useMutex(false) {
 }
 
@@ -41,7 +41,7 @@ bool Display::init(int sda, int scl, int width, int height) {
     _mux = xSemaphoreCreateMutex();
     _u8g2 = new U8G2_SSD1306_128X64_NONAME_F_HW_I2C(U8G2_R0, U8X8_PIN_NONE);
     Utils::I2CManager::getInstance().initBus("base", sda, scl);
-    
+
     _u8g2->begin();
     _u8g2->setDrawColor(1);
     _u8g2->setFontMode(1);
@@ -56,14 +56,14 @@ bool Display::init(int sda, int scl, int width, int height) {
     _displayStatus = new DisplayStatus(_u8g2);
     _weather = new Weather(_u8g2, width, height);
     _cube3D = new Cube3D(_u8g2, width, height);
-    
+
     // Initialize SpaceGame - it will get sensor data via notification system
     _spaceGame = new SpaceGame(_u8g2, nullptr, width, height);
     if (_spaceGame) {
         _spaceGame->init();
         _spaceGame->setAutoFire(true); // Enable auto-fire for demo
     }
-    
+
     // Initialize Battery component
     _battery = new Battery::BatteryDisplay(_u8g2);
     if (_battery) {
@@ -72,13 +72,13 @@ bool Display::init(int sda, int scl, int width, int height) {
         log_e("failed to initiate battery display status: %s", esp_err_to_name(err));
        }
     }
-    
+
     _width = width;
     _height = height;
 
     faceInit();
     update();
-    
+
     _initialized = true;
     return true;
 }
@@ -87,7 +87,7 @@ void Display::clear() {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
-    
+
     _u8g2->clearBuffer();
     _u8g2->sendBuffer();
 }
@@ -96,7 +96,7 @@ void Display::clearBuffer() {
     if (_initialized == false || _u8g2 == nullptr) {
         return;
     }
-    
+
     _u8g2->clearBuffer();
 }
 
@@ -162,15 +162,15 @@ void Display::update() {
                     _spaceGame->startGame();
                     notification->send(NOTIFICATION_NOTE, (void*)Note::RANDOM);
                 }
-                
+
                 _spaceGame->draw();
             }
             break;
         case STATE_STATUS:
             _u8g2->clearBuffer();
-            
+
             _displayStatus->Draw();
-            
+
             _u8g2->sendBuffer();
             break;
         case STATE_BATTERY:
@@ -201,7 +201,7 @@ void Display::updateOrientation(Sensors::OrientationSensor* orientation) {
     if (_cube3D && orientation) {
         _cube3D->updateRotation(orientation);
     }
-    
+
     // Also update SpaceGame with gyro input if it's the active game
     if (_spaceGame && orientation && _state == STATE_SPACE_GAME) {
         _spaceGame->updateGyroInput(orientation);
@@ -220,7 +220,7 @@ int Display::getWidth() const {
     if (_initialized == false || _u8g2 == nullptr) {
         return 0;
     }
-    
+
     return _u8g2->getWidth();
 }
 
@@ -228,7 +228,7 @@ int Display::getHeight() const {
     if (_initialized == false || _u8g2 == nullptr) {
         return 0;
     }
-    
+
     return _u8g2->getHeight();
 }
 

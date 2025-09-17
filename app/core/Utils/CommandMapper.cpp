@@ -25,7 +25,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_ANGRY"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Angry();
@@ -33,7 +33,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_GLEE"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Glee();
@@ -41,7 +41,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_HAPPY"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Happy();
@@ -49,7 +49,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_SAD"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Sad();
@@ -57,7 +57,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_WORRIED"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Worried();
@@ -65,7 +65,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_FOCUSED"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Focused();
@@ -73,7 +73,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_ANNOYED"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Annoyed();
@@ -81,7 +81,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_SURPRISED"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Surprised();
@@ -89,7 +89,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_SKEPTIC"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Skeptic();
@@ -97,7 +97,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_FRUSTRATED"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Frustrated();
@@ -105,7 +105,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_UNIMPRESSED"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Unimpressed();
@@ -113,7 +113,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_SLEEPY"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Sleepy();
@@ -121,7 +121,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_SUSPICIOUS"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Suspicious();
@@ -129,7 +129,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_SQUINT"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Squint();
@@ -137,7 +137,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_FURIOUS"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Furious();
@@ -145,7 +145,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_SCARED"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Scared();
@@ -153,7 +153,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["FACE_AWE"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->Expression.GoTo_Awe();
@@ -161,7 +161,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     // Look direction commands
     _commandHandlers["LOOK_LEFT"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
@@ -170,7 +170,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["LOOK_RIGHT"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->LookRight();
@@ -178,7 +178,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["LOOK_FRONT"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->LookFront();
@@ -186,7 +186,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["LOOK_TOP"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->LookTop();
@@ -194,7 +194,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["LOOK_BOTTOM"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->LookBottom();
@@ -202,7 +202,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["BLINK"] = [this](const Utils::Sstring& param) -> bool {
         if (_display && _display->getFace()) {
             _display->getFace()->DoBlink();
@@ -210,7 +210,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     // Motor movement commands
     _commandHandlers["MOVE_FORWARD"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
@@ -221,7 +221,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["MOVE_BACKWARD"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? _defaultMoveDuration : parseTimeParam(param);
@@ -231,7 +231,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["TURN_LEFT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? _defaultTurnDuration : parseTimeParam(param);
@@ -241,7 +241,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["TURN_RIGHT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? _defaultTurnDuration : parseTimeParam(param);
@@ -251,7 +251,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["STOP"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             _motors->stop();
@@ -260,7 +260,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     // Servo commands
     _commandHandlers["HEAD_UP"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
@@ -270,7 +270,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["HEAD_DOWN"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHead(0);
@@ -279,7 +279,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["HEAD_CENTER"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHead(90);
@@ -288,7 +288,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["HAND_UP"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHand(180);
@@ -297,7 +297,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["HAND_DOWN"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHand(0);
@@ -306,7 +306,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["HAND_CENTER"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             _servos->setHand(90);
@@ -315,7 +315,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     // Custom position commands
     _commandHandlers["HEAD_POSITION"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
@@ -328,7 +328,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["HAND_POSITION"] = [this](const Utils::Sstring& param) -> bool {
         if (_servos) {
             int angle = param.isEmpty() ? 90 : param.toInt();
@@ -340,7 +340,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     // Custom motor movement commands with duration control
     _commandHandlers["MOTOR_LEFT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
@@ -352,7 +352,7 @@ void CommandMapper::initCommandHandlers() {
         }
         return false;
     };
-    
+
     _commandHandlers["MOTOR_RIGHT"] = [this](const Utils::Sstring& param) -> bool {
         if (_motors) {
             int duration = param.isEmpty() ? 100 : param.toInt();
@@ -370,13 +370,13 @@ bool CommandMapper::executeCommand(const Utils::Sstring& commandStr) {
     std::regex cmdRegex(_cmdPattern);
     std::cmatch matches;
     std::string cmdStrStd = commandStr.c_str();
-    
+
     if (std::regex_match(cmdStrStd.c_str(), matches, cmdRegex)) {
         Utils::Sstring command = Utils::Sstring(matches[1].str().c_str());
         Utils::Sstring parameter = matches.size() > 2 ? Utils::Sstring(matches[2].str().c_str()) : "";
-        
+
         _logger->debug("Executing command: %s%s", command.c_str(), parameter.isEmpty() ? "" : (String(" with param: ") + parameter.c_str()).c_str());
-        
+
         // Look up command handler
         if (_commandHandlers.count(command.c_str()) > 0) {
             return _commandHandlers[command.c_str()](parameter);
@@ -385,7 +385,7 @@ bool CommandMapper::executeCommand(const Utils::Sstring& commandStr) {
             return false;
         }
     }
-    
+
     _logger->warning("Invalid command format: %s", commandStr.c_str());
     return false;
 }
@@ -396,9 +396,9 @@ int CommandMapper::executeCommandString(const Utils::Sstring& multiCommandStr) {
     std::string multiCmdStd = multiCommandStr.c_str();
     std::sregex_iterator it(multiCmdStd.begin(), multiCmdStd.end(), cmdRegex);
     std::sregex_iterator end;
-    
+
     int successCount = 0;
-    
+
     // Execute each command
     for (; it != end; ++it) {
         if (_interrupt) {
@@ -408,12 +408,12 @@ int CommandMapper::executeCommandString(const Utils::Sstring& multiCommandStr) {
 
         std::smatch match = *it;
         Utils::Sstring cmdStr = match.str(0).c_str();
-        
+
         if (executeCommand(cmdStr)) {
             successCount++;
         }
     }
-    
+
     return successCount;
 }
 
@@ -421,17 +421,17 @@ Utils::Sstring CommandMapper::extractCommands(const Utils::Sstring& gptResponse)
     // Extract all commands from GPT response
     std::regex cmdRegex(_cmdPattern);
     std::string responseStd = gptResponse.c_str();
-    
+
     std::string result;
     std::sregex_iterator it(responseStd.begin(), responseStd.end(), cmdRegex);
     std::sregex_iterator end;
-    
+
     // Concatenate all commands
     for (; it != end; ++it) {
         std::smatch match = *it;
         result += match.str(0);
     }
-    
+
     return Utils::Sstring(result.c_str());
 }
 
@@ -439,28 +439,28 @@ Utils::Sstring CommandMapper::extractText(const Utils::Sstring& gptResponse) {
     // Remove all commands from GPT response to get just the text
     std::regex cmdRegex(_cmdPattern);
     std::string responseStd = gptResponse.c_str();
-    
+
     // Replace all commands with empty string
     std::string result = std::regex_replace(responseStd, cmdRegex, "");
-    
+
     // Trim leading/trailing whitespace
     result.erase(0, result.find_first_not_of(" \t\n\r"));
     result.erase(result.find_last_not_of(" \t\n\r") + 1);
-    
+
     return Utils::Sstring(result.c_str());
 }
 
 int CommandMapper::parseTimeParam(const Utils::Sstring& param) {
     int duration = 0;
-    
+
     // Default if parsing fails
     if (param.isEmpty()) {
         return _defaultMoveDuration;
     }
-    
+
     Utils::Sstring numPart = "";
     Utils::Sstring unit = "s";  // Default to seconds
-    
+
     // Extract number and unit
     for (size_t i = 0; i < param.length(); i++) {
         if (isDigit(param.c_str()[i])) {
@@ -470,13 +470,13 @@ int CommandMapper::parseTimeParam(const Utils::Sstring& param) {
             break;
         }
     }
-    
+
     // Parse number
     int value = numPart.toInt();
     if (value == 0) {
         value = 1;  // Default if parsing fails
     }
-    
+
     // Convert to milliseconds based on unit
     if (unit.equals("s")) {
         duration = value * 1000;
@@ -489,12 +489,12 @@ int CommandMapper::parseTimeParam(const Utils::Sstring& param) {
     } else {
         duration = value * 1000;  // Default to seconds
     }
-    
+
     // Enforce a minimum duration to prevent very short actions
     if (duration < 100) {
         duration = 100;  // Minimum 100 ms
     }
-    
+
     return duration;
 }
 

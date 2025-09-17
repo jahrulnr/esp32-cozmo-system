@@ -8,12 +8,12 @@ void registerWebSocketRoutes(Router* router) {
 			Utils::Sstring ip = request.clientIP();
 			logger->info("WebSocket client #%d connected from %s", clientId, ip.c_str());
 			sessions[clientId % 5].authenticated = false;
-			
+
 			// Send welcome message
 			Utils::SpiJsonDocument welcome;
 			welcome["type"] = "welcome";
 			welcome["message"] = "Connected websocket";
-			
+
 			String welcomeMsg;
 			serializeJson(welcome, welcomeMsg);
 			request.send(welcomeMsg.c_str());
@@ -28,7 +28,7 @@ void registerWebSocketRoutes(Router* router) {
 			Utils::SpiJsonDocument doc;
 			DeserializationError error = deserializeJson(doc, message);
 		  uint32_t clientId = request.clientId();
-			
+
 			if (error) {
 				Serial.println("[WebSocket] Invalid JSON received");
 				return;
@@ -42,7 +42,7 @@ void registerWebSocketRoutes(Router* router) {
 
 			}
 			else if (sessions[clientId % 5].authenticated) {
-			
+
 			}
 		});
 }

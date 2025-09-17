@@ -8,6 +8,7 @@ typedef enum {
   DL_MODE_ANALYZE,
   DL_MODE_PROCCESS,
   DL_MODE_READY,
+  DL_MODE_STANBY,
   DL_MODE_MAX
 } dl_mode_t;
 

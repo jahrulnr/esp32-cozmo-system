@@ -17,15 +17,15 @@ void setupSpeechRecognition() {
 				sr_event_callback,                                 // Event callback
 				NULL                                               // Event callback argument
 		);
-		
+
 		if (ret == ESP_OK) {
 				logger->info("✅ Speech Recognition started successfully!");
 				logger->info("📋 Loaded %d voice commands:", sizeof(voice_commands) / sizeof(csr_cmd_t));
 				for (int i = 0; i < (sizeof(voice_commands) / sizeof(csr_cmd_t)); i++) {
-						logger->info("   [%d] Group %d: '%s' -> '%s'", 
-												i, 
+						logger->info("   [%d] Group %d: '%s' -> '%s'",
+												i,
 												voice_commands[i].command_id,
-												voice_commands[i].str, 
+												voice_commands[i].str,
 												voice_commands[i].phoneme);
 				}
 		} else {

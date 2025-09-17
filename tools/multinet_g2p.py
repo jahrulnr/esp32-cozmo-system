@@ -30,7 +30,7 @@ def english_g2p(text, alphabet=None):
 
     print("in:", text)
     print("out:", out)
-    
+
     return out
 
 if __name__ == "__main__":
@@ -42,6 +42,6 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--c_file', help="name of .c files")
     parser.add_argument('-head', '--h_file', help="name of .h files")
     args = parser.parse_args()
-    
+
     if args.text is not None:
         english_g2p(args.text, args.alphabet_map)

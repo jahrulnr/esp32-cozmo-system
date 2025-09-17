@@ -8,7 +8,7 @@ namespace Utils {
 
 /**
  * @brief Driver for IOExtern 16-bit I/O expander
- * 
+ *
  * The IOExtern is a 16-bit I/O expander with I2C interface.
  * It provides 16 general purpose I/O pins that can be individually
  * configured as inputs or outputs through software.
@@ -17,7 +17,7 @@ class IOExtern {
 public:
     /**
      * @brief Initialize IOExtern device
-     * 
+     *
      * @param busName Name of the I2C bus
      * @param address I2C address of IOExtern (default: 0x20)
      * @return true if initialization was successful
@@ -25,27 +25,27 @@ public:
     bool begin(const char* busName, uint8_t address = 0x20, uint8_t sda = -1, uint8_t scl = -1);
 
     void setMaxPin(int maxpin = 16);
-    
+
     /**
      * @brief Write a specific pin's state
-     * 
+     *
      * @param pin Pin number (0-15)
      * @param state Pin state (HIGH/LOW)
      * @return true if write was successful
      */
     bool digitalWrite(int pin, int state);
-    
+
     /**
      * @brief Read a specific pin's state
-     * 
+     *
      * @param pin Pin number (0-15)
      * @return Pin state (HIGH/LOW) or -1 if error
      */
     int digitalRead(int pin, bool force = false);
-    
+
     /**
      * @brief Check if IOExtern device is connected
-     * 
+     *
      * @return true if device is detected
      */
     bool isConnected();

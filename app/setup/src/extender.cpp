@@ -7,14 +7,14 @@ Utils::IOExtern iExpander;
 void setupExtender() {
     // Initialize I2C bus first (if not already initialized elsewhere)
     Utils::I2CManager::getInstance().initBus("base", SCREEN_SDA_PIN, SCREEN_SCL_PIN);
-    
+
     // Initialize PCF8575 with default address (0x20)
     if (oExpander.begin("base", 0x20, SCREEN_SDA_PIN, SCREEN_SCL_PIN)) {
         Utils::Logger::getInstance().info("Output extender initialized successfully");
     } else {
         Utils::Logger::getInstance().error("Output initialization failed");
     }
-    
+
     delay(10);
 
     // Initialize PCF8575 with address (0x26)

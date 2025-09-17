@@ -2,7 +2,7 @@
 
 namespace Display {
 
-Weather::Weather(U8G2_SSD1306_128X64_NONAME_F_HW_I2C* display, int width, int height) 
+Weather::Weather(U8G2_SSD1306_128X64_NONAME_F_HW_I2C* display, int width, int height)
     : _display(display), _hasData(false), _lastUpdate(0), _width(width), _height(height) {
     // Enable UTF8 support for better text rendering (degree symbol, etc.)
     if (_display) {
@@ -45,14 +45,14 @@ void Weather::drawAllWeatherInfo() {
     int iconY = 16;
     int tempX = iconX + ICON_SIZE + 4;
     int tempY = 14;
-    
+
     // Draw weather icon (small, top-left)
     drawWeatherIcon(iconX, iconY, _currentWeather.condition);
-    
+
     // Draw temperature next to icon
     _display->setFont(u8g2_font_ncenB12_tr);
     String tempStr = String(_currentWeather.temperature) + "°C";
-    
+
     // Check if temperature fits, use smaller font if needed
     int tempWidth = _display->getStrWidth(tempStr.c_str());
     if (tempX + tempWidth > _width - 2) {
@@ -60,19 +60,19 @@ void Weather::drawAllWeatherInfo() {
         tempWidth = _display->getStrWidth(tempStr.c_str());
     }
     _display->drawStr(tempX, tempY, tempStr.c_str());
-    
+
     // Draw humidity on the right side, top row
     _display->setFont(u8g2_font_6x10_tf);
     String humidityStr = String(_currentWeather.humidity) + "%";
     int humidityWidth = _display->getStrWidth(humidityStr.c_str());
     _display->drawStr(_width - humidityWidth - 2, 10, humidityStr.c_str());
-    
+
     // Draw description on second line
     int descY = 26;
     String description = truncateText(_currentWeather.description.toString(), _width - 4);
     _display->setFont(u8g2_font_6x10_tf);
     _display->drawStr(2, descY, description.c_str());
-    
+
     // Draw location on third line
     int locationY = 38;
     String location = _currentWeather.location.toString();
@@ -85,7 +85,7 @@ void Weather::drawAllWeatherInfo() {
         location = truncateText(location, _width - 4);
     }
     _display->drawStr(2, locationY, location.c_str());
-    
+
     // Draw wind info on bottom line if space available
     if (_currentWeather.windSpeed > 0 && _height >= 50) {
         int windY = 50;
@@ -105,7 +105,7 @@ void Weather::drawAllWeatherInfo() {
 void Weather::drawWeatherIcon(int x, int y, Services::WeatherService::WeatherCondition condition) {
     // Use smaller, simpler icons that fit the compact layout
     _display->setFont(u8g2_font_unifont_t_symbols);
-    
+
     uint16_t glyph = getWeatherIconGlyph(condition);
     if (glyph != 0) {
         _display->drawGlyph(x, y, glyph);
@@ -140,7 +140,7 @@ void Weather::drawCenteredText(int y, const String& text, const uint8_t* font) {
     if (font != nullptr) {
         _display->setFont(font);
     }
-    
+
     int textWidth = _display->getStrWidth(text.c_str());
     int x = (_width - textWidth) / 2;
     _display->drawStr(x, y, text.c_str());
@@ -150,30 +150,30 @@ String Weather::truncateText(const String& text, int maxWidth, const uint8_t* fo
     if (font != nullptr) {
         _display->setFont(font);
     }
-    
+
     String result = text;
     int textWidth = _display->getStrWidth(result.c_str());
-    
+
     // If text fits, return as is
     if (textWidth <= maxWidth) {
         return result;
     }
-    
+
     // Try to truncate with ellipsis
     String ellipsis = "...";
     int ellipsisWidth = _display->getStrWidth(ellipsis.c_str());
     int availableWidth = maxWidth - ellipsisWidth;
-    
+
     // Binary search for best fit
     int left = 0;
     int right = result.length();
     int bestFit = 0;
-    
+
     while (left <= right) {
         int mid = (left + right) / 2;
         String candidate = result.substring(0, mid);
         int candidateWidth = _display->getStrWidth(candidate.c_str());
-        
+
         if (candidateWidth <= availableWidth) {
             bestFit = mid;
             left = mid + 1;
@@ -181,12 +181,12 @@ String Weather::truncateText(const String& text, int maxWidth, const uint8_t* fo
             right = mid - 1;
         }
     }
-    
+
     if (bestFit == 0) {
         // Even single character doesn't fit, return empty
         return "";
     }
-    
+
     return result.substring(0, bestFit) + ellipsis;
 }
 
@@ -202,16 +202,16 @@ void Weather::drawScrollString(int16_t offset, const String& text, int y, int ma
     _display->setDrawColor(0);
     _display->drawBox(0, y - 13, maxWidth, 13);
     _display->setDrawColor(1);
-    
+
     _display->setFont(u8g2_font_8x13_mf);
-    
+
     const char* s = text.c_str();
     size_t len = strlen(s);
     static char buf[64]; // Buffer for visible text portion
     size_t char_offset = 0;
     int dx = 0;
     size_t visible = 0;
-    
+
     if (offset < 0) {
         char_offset = (-offset) / 8;
         dx = offset + char_offset * 8;
@@ -243,7 +243,7 @@ int Weather::getTextWidth(const String& text, const uint8_t* font) {
     if (font != nullptr) {
         _display->setFont(font);
     }
-    
+
     return _display->getStrWidth(text.c_str());
 }
 

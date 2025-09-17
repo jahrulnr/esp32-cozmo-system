@@ -19,7 +19,7 @@ public:
      * @return true if initialization was successful, false otherwise
      */
     bool init(int pin = 13);
-    
+
     /**
      * Initialize the cliff detector with an I/O extender
      * @param ioExtender Pointer to PCF8575 I/O extender
@@ -46,7 +46,7 @@ private:
     bool _initialized;
     bool _useIoExtender;
     Utils::IOExtern* _ioExtender;
-    
+
     // Helper method to read from either GPIO or I/O extender
     int readPin();
 };

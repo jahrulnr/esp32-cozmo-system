@@ -33,13 +33,13 @@ An intelligent robot system built with ESP32-S3, featuring speech recognition, t
 
 ### GPIO Connections
 - **Display & I2C**: GPIO 3 (SDA), GPIO 46 (SCL)
-- **Audio**: 
+- **Audio**:
   - Microphone: GPIO 21, 47, 14
   - Speaker: GPIO 42, 2, 41
-- **Servos**: 
+- **Servos**:
   - Head: GPIO 19
   - Hand: GPIO 20
-- **Sensors**: 
+- **Sensors**:
   - Ultrasonic: GPIO 0 (trigger), GPIO 45 (echo)
 - **Motors**: Controlled via PCF8575 I2C expander
 - **SD Card**: GPIO 39, 38, 40 (SD_MMC)
@@ -57,13 +57,13 @@ An intelligent robot system built with ESP32-S3, featuring speech recognition, t
    ```bash
    # Build for ESP32-S3
    pio run -e esp32s3dev
-   
+
    # Upload firmware
    pio run -e esp32s3dev -t upload
-   
+
 	 # Flash speech recognition models (required for voice features)
 	 esptool.py --baud 2000000 write_flash 0x47D000 model/srmodels.bin
-		
+
 	 # Flash PicoTTS models (required for text-to-speech)
 	 esptool.py --baud 2000000 write_flash 0x310000 model/picoTTS/en-US_ta.bin
 	 esptool.py --baud 2000000 write_flash 0x3B0000 model/picoTTS/en-US_lh0_sg.bin

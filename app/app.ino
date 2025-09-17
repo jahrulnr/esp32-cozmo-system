@@ -16,7 +16,7 @@ void setup() {
   if (Serial){
     Serial.println("Cozmo System Starting...");
   }
-  
+
   esp_err_t esp_task_wdt_reconfigure(const esp_task_wdt_config_t *config);
   esp_task_wdt_config_t config = {
     .timeout_ms = 120 * 1000,

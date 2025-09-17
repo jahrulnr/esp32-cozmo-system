@@ -19,7 +19,7 @@ bool MotorControl::init(int leftMotorPin1, int leftMotorPin2, int rightMotorPin1
     _leftMotorPin2 = leftMotorPin2;
     _rightMotorPin1 = rightMotorPin1;
     _rightMotorPin2 = rightMotorPin2;
-    
+
     // Use direct GPIO pins
     _useIoExtender = false;
     _ioExtender = nullptr;
@@ -43,7 +43,7 @@ bool MotorControl::initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPi
         Utils::Logger::getInstance().error("MotorControl: Invalid I/O extender provided");
         return false;
     }
-    
+
     _ioExtender = ioExtender;
     _useIoExtender = true;
     _leftMotorPin1 = leftMotorPin1;
@@ -52,7 +52,7 @@ bool MotorControl::initWithExtender(Utils::IOExtern* ioExtender, int leftMotorPi
     _rightMotorPin2 = rightMotorPin2;
 
     // No need to call pinMode for I/O extender pins
-    
+
     // Start with motors stopped
     stop();
 
@@ -77,11 +77,11 @@ void MotorControl::moveLook(MotorControl::Direction direction) {
             default:
                 _display->getFace()->LookFront();
                 break;
-                
+
             case LEFT:
                 _display->getFace()->LookLeft();
                 break;
-                
+
             case RIGHT:
                 _display->getFace()->LookRight();
                 break;
@@ -110,28 +110,28 @@ void MotorControl::move(Direction direction, unsigned long duration) {
             setMotorPin(_rightMotorPin1, HIGH);
             setMotorPin(_rightMotorPin2, LOW);
             break;
-            
+
         case BACKWARD:
             setMotorPin(_leftMotorPin1, LOW);
             setMotorPin(_leftMotorPin2, HIGH);
             setMotorPin(_rightMotorPin1, LOW);
             setMotorPin(_rightMotorPin2, HIGH);
             break;
-            
+
         case LEFT:
             setMotorPin(_leftMotorPin1, LOW);
             setMotorPin(_leftMotorPin2, HIGH);
             setMotorPin(_rightMotorPin1, HIGH);
             setMotorPin(_rightMotorPin2, LOW);
             break;
-            
+
         case RIGHT:
             setMotorPin(_leftMotorPin1, HIGH);
             setMotorPin(_leftMotorPin2, LOW);
             setMotorPin(_rightMotorPin1, LOW);
             setMotorPin(_rightMotorPin2, HIGH);
             break;
-            
+
         case STOP:
         default:
             stop();
@@ -155,13 +155,13 @@ void MotorControl::stop() {
     if (!_initialized) {
         return;
     }
-    
+
     moveLook(STOP);
     setMotorPin(_leftMotorPin1, LOW);
     setMotorPin(_leftMotorPin2, LOW);
     setMotorPin(_rightMotorPin1, LOW);
     setMotorPin(_rightMotorPin2, LOW);
-    
+
     _currentDirection = STOP;
 }
 
@@ -182,7 +182,7 @@ void MotorControl::setMotorPin(int pin, int value) {
     if (!_initialized) {
         return;
     }
-    
+
     if (_useIoExtender && _ioExtender) {
         _ioExtender->digitalWrite(pin, value);
     } else {

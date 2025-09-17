@@ -16,21 +16,16 @@ void setupCamera() {
 
 		sensor_t *s = esp_camera_sensor_get();
 		s->set_gain_ctrl(s, 1);     // auto gain on
-		vTaskDelay(10);
+		vTaskDelay(10);							// the config sometime not applied, seem like caused by mutex
 		s->set_exposure_ctrl(s, 1); // auto exposure on
 		vTaskDelay(10);
 		s->set_awb_gain(s, 1);
 		vTaskDelay(10);
 		s->set_hmirror(s, 1);
-		vTaskDelay(10);             // the config sometime not applied, seem like caused by mutex
+		vTaskDelay(10);
 		s->set_vflip(s, 1);
 
 		vTaskDelay(pdMS_TO_TICKS(1000));
-
-		const char* fileName = "/cache/frame.jpg";
-		if (fileManager->exists(fileName)) {
-			fileManager->deleteFile(fileName);
-		}
 	} else {
 		logger->error("Camera initialization failed");
 	}

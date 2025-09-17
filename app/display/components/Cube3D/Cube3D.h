@@ -10,13 +10,13 @@ namespace Display {
 
 struct Point3D {
     float x, y, z;
-    
+
     Point3D(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
 };
 
 struct Point2D {
     int x, y;
-    
+
     Point2D(int x = 0, int y = 0) : x(x), y(y) {}
 };
 
@@ -27,33 +27,33 @@ private:
     int _height;
     int _centerX;
     int _centerY;
-    
+
     // Cube vertices (in 3D space)
     Point3D _vertices[8];
     Point2D _projectedVertices[8];
-    
+
     // Current rotation angles (in radians)
     float _rotX, _rotY, _rotZ;
-    
+
     // Complementary filter parameters
     float _alpha; // Filter coefficient (0.95 = 95% gyro, 5% accel)
-    
+
     // Timing for gyroscope integration
     unsigned long _lastUpdateTime;
-    
+
     // Auto-drift correction
     float _stationaryTime;
     float _gyroThreshold;
-    
+
     // Last gyro readings for debugging
     float _lastGyroX, _lastGyroY, _lastGyroZ;
-    
+
     // Cube size
     float _cubeSize;
-    
+
     // Projection distance
     float _distance;
-    
+
     // Cube edges (vertex index pairs)
     static const int _edges[12][2];
 
@@ -66,11 +66,11 @@ public:
      * @param orientation The orientation sensor instance
      */
     void updateRotation(Sensors::OrientationSensor* orientation);
-    
+
     /**
      * Update cube rotation with explicit angles
      * @param rotX Rotation around X axis (pitch) in degrees
-     * @param rotY Rotation around Y axis (yaw) in degrees  
+     * @param rotY Rotation around Y axis (yaw) in degrees
      * @param rotZ Rotation around Z axis (roll) in degrees
      */
     void updateRotation(float rotX, float rotY, float rotZ);
@@ -97,7 +97,7 @@ private:
      * Initialize cube vertices
      */
     void initVertices();
-    
+
     /**
      * Rotate a point around X axis
      * @param point The point to rotate
@@ -105,15 +105,15 @@ private:
      * @return Rotated point
      */
     Point3D rotateX(const Point3D& point, float angle);
-    
+
     /**
-     * Rotate a point around Y axis  
+     * Rotate a point around Y axis
      * @param point The point to rotate
      * @param angle Rotation angle in radians
      * @return Rotated point
      */
     Point3D rotateY(const Point3D& point, float angle);
-    
+
     /**
      * Rotate a point around Z axis
      * @param point The point to rotate
@@ -121,21 +121,21 @@ private:
      * @return Rotated point
      */
     Point3D rotateZ(const Point3D& point, float angle);
-    
+
     /**
      * Project 3D point to 2D screen coordinates
      * @param point 3D point to project
      * @return 2D screen coordinates
      */
     Point2D project3Dto2D(const Point3D& point);
-    
+
     /**
      * Draw a line between two 2D points
      * @param p1 First point
      * @param p2 Second point
      */
     void drawLine(const Point2D& p1, const Point2D& p2);
-    
+
     /**
      * Check if a point is within screen bounds
      * @param point Point to check

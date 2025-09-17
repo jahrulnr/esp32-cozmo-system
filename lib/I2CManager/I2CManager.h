@@ -9,7 +9,7 @@ namespace Utils {
 
 /**
  * @brief A centralized I2C bus management system
- * 
+ *
  * This class provides methods for managing multiple I2C buses,
  * synchronizing access with mutexes, and handling common I2C operations.
  */
@@ -23,7 +23,7 @@ public:
 
     /**
      * @brief Initialize an I2C bus
-     * 
+     *
      * @param busName Unique name to identify this I2C bus
      * @param sda SDA pin number
      * @param scl SCL pin number
@@ -35,7 +35,7 @@ public:
 
     /**
      * @brief Get a pointer to a TwoWire instance for a specific bus
-     * 
+     *
      * @param busName Name of the I2C bus
      * @return TwoWire* Pointer to the bus, or nullptr if not found
      */
@@ -43,7 +43,7 @@ public:
 
     /**
      * @brief Check if a device is present on a bus
-     * 
+     *
      * @param busName Name of the I2C bus
      * @param address Device address
      * @return true if device is detected
@@ -52,7 +52,7 @@ public:
 
     /**
      * @brief Write a byte to a device register
-     * 
+     *
      * @param busName Name of the I2C bus
      * @param deviceAddress Device address
      * @param registerAddress Register address
@@ -63,7 +63,7 @@ public:
 
     /**
      * @brief Read a byte from a device register
-     * 
+     *
      * @param busName Name of the I2C bus
      * @param deviceAddress Device address
      * @param registerAddress Register address
@@ -74,7 +74,7 @@ public:
 
     /**
      * @brief Read multiple bytes from a device register
-     * 
+     *
      * @param busName Name of the I2C bus
      * @param deviceAddress Device address
      * @param registerAddress Register address
@@ -82,12 +82,12 @@ public:
      * @param length Number of bytes to read
      * @return true if read was successful
      */
-    bool readRegisters(const char* busName, byte deviceAddress, uint8_t registerAddress, 
+    bool readRegisters(const char* busName, byte deviceAddress, uint8_t registerAddress,
                       uint8_t *buffer, uint8_t length);
 
     /**
      * @brief Scan the bus for I2C devices and log their addresses
-     * 
+     *
      * @param busName Name of the I2C bus
      */
     void scanBus(const char* busName);
@@ -115,7 +115,7 @@ private:
 
     // Helper to get bus info and take mutex if available
     BusInfo* takeBus(const char* busName, uint32_t timeoutMs = 100);
-    
+
     // Helper to release a bus mutex
     void releaseBus(BusInfo* bus);
 };

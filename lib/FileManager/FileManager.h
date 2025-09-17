@@ -40,7 +40,7 @@ public:
      * @param sdmmcFreq SD_MMC frequency in MHz (default: 20)
      * @return true if initialization was successful, false otherwise
      */
-    bool init(bool enableSDMMC = true, 
+    bool init(bool enableSDMMC = true,
               bool use1bitMode = true, bool formatIfMountFailed = false, uint32_t sdmmcFreq = 20);
 
     /**
@@ -210,7 +210,7 @@ private:
     bool _sdInitialized;
     bool _sdmmcInitialized;
     StorageType _defaultStorage;
-    
+
     /**
      * Get the appropriate file system based on storage type
      * @param storageType The storage type

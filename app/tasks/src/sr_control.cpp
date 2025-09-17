@@ -5,16 +5,16 @@
 void srControlTask(void *param) {
     TickType_t lastWakeTime = xTaskGetTickCount();
     TickType_t checkFrequency = pdMS_TO_TICKS(10); // Check every 10ms for responsiveness
-    
+
     logger->info("SR Control Task started");
-    
+
     while(1) {
         vTaskDelayUntil(&lastWakeTime, checkFrequency);
-        
+
         if (notification->has(NOTIFICATION_SR)) {
             void* eventPtr = notification->consume(NOTIFICATION_SR, checkFrequency);
             const char* event = (const char*)eventPtr;
-            
+
             if (event) {
                 if (strcmp(event, EVENT_SR::PAUSE) == 0) {
                     logger->info("Pausing ESP-SR system");

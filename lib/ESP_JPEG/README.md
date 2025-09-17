@@ -31,7 +31,7 @@ ESP_NEW_JPEG is Espressif's lightweight JPEG encoder and decoder library. The me
 
 #### Encoder
 
-For **mono task** encoder, the consume memory(10 kByte DRAM) is constant.  
+For **mono task** encoder, the consume memory(10 kByte DRAM) is constant.
 
 | Resolution  | Source Pixel Format      | Output Quality | Output Subsampling | Frames Per Second(fps) |
 |-------------|--------------------------|----------------|--------------------|------------------------|
@@ -48,7 +48,7 @@ For **mono task** encoder, the consume memory(10 kByte DRAM) is constant.
 | 320 * 240   | JPEG_PIXEL_FORMAT_YCbYCr | 60             | JPEG_SUBSAMPLE_420 | 45.30                  |
 | 320 * 240   | JPEG_PIXEL_FORMAT_RGB888 | 60             | JPEG_SUBSAMPLE_420 | 30.37                  |
 
-When **dual task** encoder in enabled, the wider the image, the more memory is consumed.  
+When **dual task** encoder in enabled, the wider the image, the more memory is consumed.
 
 | Resolution | Source Pixel Format      | Output Quality | Output Subsampling | Frames Per Second(fps) |
 |------------|--------------------------|----------------|--------------------|------------------------|
@@ -60,7 +60,7 @@ When **dual task** encoder in enabled, the wider the image, the more memory is c
 
 #### Decoder
 
-The consume memory(10 kByte DRAM) is constant.  
+The consume memory(10 kByte DRAM) is constant.
 
 Rotate JPEG_ROTATE_0D cases:
 
@@ -100,7 +100,7 @@ Rotate JPEG_ROTATE_90D cases:
 
 #### Encoder
 
-Only support mono task. The consume memory(10 kByte DRAM) is constant.  
+Only support mono task. The consume memory(10 kByte DRAM) is constant.
 
 | Resolution | Source Pixel Format      | Output Quality | Output Subsampling | Frames Per Second(fps) |
 |------------|--------------------------|----------------|--------------------|------------------------|
@@ -115,7 +115,7 @@ Only support mono task. The consume memory(10 kByte DRAM) is constant.
 
 #### Decoder
 
-The consume memory(10 kByte DRAM) is constant.  
+The consume memory(10 kByte DRAM) is constant.
 
 Rotate JPEG_ROTATE_0D cases:
 

@@ -37,7 +37,7 @@ public:
      * @return Logger instance
      */
     static Logger& getInstance();
-    
+
     /**
      * Initialize logger
      * @param serialEnabled Whether to log to Serial
@@ -48,26 +48,26 @@ public:
      * @return true if initialization was successful, false otherwise
      */
     bool init(bool serialEnabled = true, bool fileEnabled = false);
-    
+
     /**
      * Set minimum log level
      * @param level The minimum log level to display
      */
     void setLogLevel(LogLevel level);
-    
+
     /**
      * Get current log level
      * @return The current minimum log level
      */
     LogLevel getLogLevel() const;
-    
+
     /**
      * Check if a specific log level is enabled
      * @param level The log level to check
      * @return true if the specified log level is enabled, false otherwise
      */
     bool isLogLevelEnabled(LogLevel level) const;
-    
+
     /**
      * Log a formatted debug message (printf-style)
      * @param format The format string with placeholders like %d, %s, etc.
@@ -75,7 +75,7 @@ public:
      */
     void debug(const char* format, ...);
     void debug(const String& format, ...);
-    
+
     /**
      * Log a formatted info message (printf-style)
      * @param format The format string with placeholders like %d, %s, etc.
@@ -83,7 +83,7 @@ public:
      */
     void info(const char* format, ...);
     void info(const String& format, ...);
-    
+
     /**
      * Log a formatted warning message (printf-style)
      * @param format The format string with placeholders like %d, %s, etc.
@@ -91,7 +91,7 @@ public:
      */
     void warning(const char* format, ...);
     void warning(const String& format, ...);
-    
+
     /**
      * Log a formatted error message (printf-style)
      * @param format The format string with placeholders like %d, %s, etc.
@@ -99,14 +99,14 @@ public:
      */
     void error(const char* format, ...);
     void error(const String& format, ...);
-    
+
     /**
      * Log a message with a specific level
      * @param level The log level
      * @param message The message to log
      */
     void log(LogLevel level, const String& message);
-    
+
     /**
      * Log a formatted message with a specific level (printf-style)
      * @param level The log level
@@ -119,22 +119,22 @@ private:
     const char* TAG;
     Logger();
     ~Logger();
-    
+
     // Disable copy constructor and assignment operator
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
-    
+
     bool _serialEnabled;
     bool _fileEnabled;
     String _fileName;
     LogLevel _logLevel;
-    
+
     // Convert log level to string
     String logLevelToString(LogLevel level);
-    
+
     // Convert log level to lowercase string (for frontend display)
     String logLevelToLowerString(LogLevel level);
-    
+
     /**
      * Helper method to format a string with variable arguments
      * @param format The format string with placeholders

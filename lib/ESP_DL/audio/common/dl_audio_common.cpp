@@ -178,7 +178,7 @@ mel_filter_t *mel_filter_init(int nfft, int nfilter, int low_freq, int high_freq
     float *bin = (float *)malloc(sizeof(float) * (nfilter + 2));
     float *bin_mel = (float *)malloc(sizeof(float) * (feat_width));
 
-    // init mel_filter_t　
+    // init mel_filter_t
     mel_filter_t *mel_filter = (mel_filter_t *)heap_caps_malloc(sizeof(mel_filter_t), caps);
     mel_filter->coeff = (float *)heap_caps_malloc(sizeof(float) * feat_width * 2, caps);
     mel_filter->bank_pos = (int *)heap_caps_malloc(sizeof(int) * nfilter * 2, caps);

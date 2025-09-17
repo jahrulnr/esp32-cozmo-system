@@ -180,7 +180,7 @@ model/
 # Standard PlatformIO commands
 pio run -e esp32s3dev        # Build for ESP32-S3-N16R8
 pio run -e esp32s3dev -t upload  # Upload firmware
-   
+
 # Flash speech recognition models (required for voice features)
 esptool.py --baud 2000000 write_flash 0x47D000 model/srmodels.bin
 
@@ -283,7 +283,7 @@ void sensorMonitorTask(void* parameter) {
     logger->info("Sensor monitoring task started");
     TickType_t lastWakeTime = xTaskGetTickCount();
     TickType_t updateFrequency = pdMS_TO_TICKS(50);
-    
+
     while (true) {
         vTaskDelayUntil(&lastWakeTime, updateFrequency);
         // Sensor reading logic
@@ -354,7 +354,7 @@ void registerApiRoutes(Router* router) {
 }
 
 // Middleware execution chain (from esp32-mvc-framework)
-Response executeMiddleware(const std::vector<String>& middleware, Request& request, 
+Response executeMiddleware(const std::vector<String>& middleware, Request& request,
                           std::function<Response(Request&)> finalHandler) {
     // Builds reverse-order chain for proper middleware flow
     std::function<Response(Request&)> next = finalHandler;

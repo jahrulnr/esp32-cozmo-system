@@ -15,7 +15,7 @@ private:
     unsigned long _lastUpdate;
     int _width;
     int _height;
-    
+
     // Display positioning constants
     static const int ICON_SIZE = 16;  // Compact size to fit display
     static const int SCROLL_SPEED = 2;
@@ -92,7 +92,7 @@ private:
      * @param font Font to use (optional)
      */
     void drawCenteredText(int y, const String& text, const uint8_t* font = nullptr);
-    
+
     /**
      * Truncate text to fit within specified width
      * @param text Original text
@@ -101,7 +101,7 @@ private:
      * @return Truncated text
      */
     String truncateText(const String& text, int maxWidth, const uint8_t* font = nullptr);
-    
+
     /**
      * Get text width for given font
      * @param text Text to measure

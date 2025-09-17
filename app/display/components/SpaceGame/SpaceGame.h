@@ -137,17 +137,17 @@ private:
     bool _gameActive;
     GameState _gameState;
     GameObject _objects[MAX_OBJECTS];
-    
+
     // Player state
     uint8_t _playerPos;
     uint16_t _playerPoints;
     uint16_t _playerPointsDelayed;
     uint16_t _highScore;
-    
+
     // Game progression
     uint8_t _difficulty;
     uint16_t _toDiffCnt;
-    
+
     // Input state
     float _gyroSensitivity;
     float _playerAccel;
@@ -157,17 +157,17 @@ private:
     uint8_t _firePeriod;
     uint8_t _manualFireDelay;
     uint8_t _isFireLastValue;
-    
+
     // Timing
     unsigned long _lastGyroUpdate;
-    
+
     // Gyro control (following Cube3D pattern)
     float _centerPosition;
     float _currentTilt;
     float _alpha; // Complementary filter coefficient
     float _stationaryTime; // Track how long device has been stationary
     float _gyroThreshold; // Threshold for considering device "stationary"
-    
+
     // Debug variables for gyro/accel display (like Cube3D)
     float _lastGyroX, _lastGyroY, _lastGyroZ;
     float _lastAccelX, _lastAccelY, _lastAccelZ;

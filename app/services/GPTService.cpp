@@ -4,7 +4,7 @@
 
 namespace Services {
 
-GPTService::GPTService() : _model("gpt-4.1-nano-2025-04-14"), 
+GPTService::GPTService() : _model("gpt-4.1-nano-2025-04-14"),
                            _maxTokens(1024), _temperature(0.7), _initialized(false) {
     _systemMessage = Utils::Sstring(R"===(
 You are a digital pet named Cozmo running inside an ESP32-CAM system.
@@ -99,33 +99,33 @@ void GPTService::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const 
         }
         return;
     }
-    
+
     HTTPClient http;
     http.begin("https://api.openai.com/v1/chat/completions");
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Authorization", "Bearer " + _apiKey.toString());
     http.setReuse(true);
     http.setTimeout(15000);
-    
+
     // Prepare JSON payload
     Utils::SpiJsonDocument doc;
     doc["model"] = _model;
     doc["temperature"] = _temperature;
     doc["max_tokens"] = _maxTokens;
-    
+
     // System message
     doc["messages"][0]["role"] = "system";
     doc["messages"][0]["content"] = systemCommand;
-    
+
     // User message
     doc["messages"][1]["role"] = "user";
     doc["messages"][1]["content"] = prompt;
-    
+
     String payload;
     serializeJson(doc, payload);
-    
+
     int httpCode = http.POST(payload.c_str());
-    
+
     if (httpCode > 0) {
         Utils::Sstring response = http.getString();
         processResponse(response, callback);
@@ -134,7 +134,7 @@ void GPTService::sendPromptWithCustomSystem(const Utils::Sstring& prompt, const 
             callback("Error: " + http.errorToString(httpCode));
         }
     }
-    
+
     http.end();
 }
 
@@ -158,20 +158,20 @@ void GPTService::processResponse(const Utils::Sstring& response, ResponseCallbac
     if (!callback) {
         return;
     }
-    
+
     Utils::SpiJsonDocument doc;
     DeserializationError error = deserializeJson(doc, response.c_str());
-    
+
     if (error) {
         callback(Utils::Sstring("Error parsing JSON: ") + error.c_str());
         return;
     }
-    
+
     if (!doc["error"].isUnbound()) {
         callback(Utils::Sstring("API Error: ") + doc["error"]["message"].as<String>());
         return;
     }
-    
+
     // Extract the assistant's message
     if (!doc["choices"].isUnbound() && doc["choices"].size() > 0) {
         Utils::Sstring content = doc["choices"][0]["message"]["content"].as<String>();

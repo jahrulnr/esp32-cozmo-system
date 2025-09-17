@@ -6,7 +6,7 @@ namespace Sensors {
 
 /**
  * HC-SR04 Ultrasonic Distance Sensor class
- * 
+ *
  * This class provides an interface to the HC-SR04 ultrasonic sensor
  * for measuring distances.
  */

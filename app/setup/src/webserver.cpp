@@ -13,10 +13,10 @@ void setupWebServer() {
 	// Initialize application
 	app = Application::getInstance(LittleFS);
 	app->setDeviceName(deviceName);
-	
+
 	// Boot the framework
 	app->boot();
-    
+
 	// Set up mDNS responder for local name resolution
 	if (MDNS.begin(deviceName)) {
 			logger->info("mDNS responder started: %s.local", deviceName);
@@ -25,7 +25,7 @@ void setupWebServer() {
 	} else {
 			logger->info("Error setting up mDNS responder");
 	}
-    
+
 	// Initialize CSV database first (needed for Configuration model)
 	database = new CsvDatabase(LittleFS);
 	Model::setDatabase(database);

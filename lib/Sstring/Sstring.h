@@ -8,7 +8,7 @@ namespace Utils {
 
 /**
  * @brief A string class that uses ESP32's external SPI RAM
- * 
+ *
  * This class provides string functionality similar to Arduino's String class
  * but allocates memory from external SPI RAM, preserving internal memory.
  */
@@ -72,7 +72,7 @@ public:
     ~Sstring();
 
     // Constructors for various types
-    
+
     /**
      * @brief Construct from a character
      * @param value Character value
@@ -213,7 +213,7 @@ public:
     bool isEmpty() const;
 
     // Operator overloads for concatenation
-    
+
     /**
      * @brief Concatenate with another Sstring
      * @param rhs String to add
@@ -271,7 +271,7 @@ public:
     Sstring& operator+=(char rhs);
 
     // Comparison operators
-    
+
     /**
      * @brief Compare with another Sstring
      * @param rhs String to compare

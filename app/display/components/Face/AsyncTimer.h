@@ -28,16 +28,16 @@ class AsyncTimer {
 	bool Update();
 
 	void SetIntervalMillis(unsigned long interval);
-	
+
 	unsigned long GetStartTime();
 	unsigned long GetElapsedTime();
 	unsigned long GetRemainingTime();
 
 	bool IsActive() const;
 	bool IsExpired() const;
-	
+
 	unsigned long Interval;
-	
+
 	AsyncTimerCallback OnFinish;
 
 private:

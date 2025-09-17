@@ -15,9 +15,9 @@ String pedestrianFeedTaskId;
  */
 void setupTasksCpu0() {
     logger->info("Initializing tasks cpu 0 ...");
-    
+
     bool core = 0;
-    
+
     // Create display task using SendTask library
     if (display) {
         displayTaskId = SendTask::createLoopTaskOnCore(
@@ -28,14 +28,14 @@ void setupTasksCpu0() {
             core,                    // Core ID (CPU 0)
             "Display task for face animation and UI updates"
         );
-        
+
         if (displayTaskId.isEmpty()) {
             logger->error("Failed to create display task");
         } else {
             logger->info("Display task created with ID: %s", displayTaskId.c_str());
         }
     }
-    
+
     // Create sensor monitoring task using SendTask library
     sensorMonitorTaskId = SendTask::createLoopTaskOnCore(
         sensorMonitorTask,
@@ -45,13 +45,13 @@ void setupTasksCpu0() {
         core,                        // Core ID (CPU 0)
         "Sensor monitoring task for distance, orientation, and cliff detection"
     );
-    
+
     if (sensorMonitorTaskId.isEmpty()) {
         logger->error("Failed to create sensor monitor task");
     } else {
         logger->info("Sensor monitor task created with ID: %s", sensorMonitorTaskId.c_str());
     }
-    
+
     // Create camera task using SendTask library
     // cameraTaskId = SendTask::createLoopTaskOnCore(
     //     cameraTask,
@@ -61,7 +61,7 @@ void setupTasksCpu0() {
     //     core,                        // Core ID (CPU 0)
     //     "Camera capture and processing task"
     // );
-    
+
     // if (cameraTaskId.isEmpty()) {
     //     logger->error("Failed to create camera task");
     // } else {
@@ -86,7 +86,7 @@ void setupTasksCpu0() {
     //     core,                        // Core ID (CPU 0)
     //     "Task monitor"
     // );
-    
+
     // if (taskMonitorerId.isEmpty()) {
     //     logger->error("Failed to create task monitor");
     // } else {

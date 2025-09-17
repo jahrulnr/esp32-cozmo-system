@@ -10,22 +10,22 @@ bool picotts_initialized = false;
 
 void setupPicoTTS() {
     logger->info("Setting up PicoTTS Text-to-Speech...");
-    
+
     #if SPEAKER_ENABLED
-    
+
     // Ensure speaker is initialized first
     if (!i2sSpeaker) {
         logger->error("Cannot setup PicoTTS: I2S speaker not initialized");
         return;
     }
-    
+
     logger->info("Initializing PicoTTS engine...");
-    
+
     // Initialize PicoTTS using the correct API signature
     if (picotts_init(PICOTTS_TASK_PRIORITY, picotts_output_callback, PICOTTS_CORE)) {
         picotts_initialized = true;
         logger->info("PicoTTS initialized successfully!");
-        
+
         // Set error and idle callbacks
         picotts_set_error_notify(picotts_error_callback);
         picotts_set_idle_notify(picotts_idle_callback);
@@ -35,7 +35,7 @@ void setupPicoTTS() {
         logger->error("Failed to initialize PicoTTS engine");
         picotts_initialized = false;
     }
-    
+
     #else
     logger->warning("Cannot setup PicoTTS: Speaker disabled in configuration");
     picotts_initialized = false;
@@ -50,7 +50,7 @@ bool isPicoTTSInitialized() {
 bool sayText(const char* text) {
     // Validate text length
     if (strlen(text) > PICOTTS_MAX_TEXT_LENGTH) {
-        logger->warning("Text too long (%d chars), truncating to %d", 
+        logger->warning("Text too long (%d chars), truncating to %d",
                 strlen(text), PICOTTS_MAX_TEXT_LENGTH);
         // Create a truncated copy of the text
         char* truncated_text = (char*)malloc(PICOTTS_MAX_TEXT_LENGTH + 1);
@@ -62,7 +62,7 @@ bool sayText(const char* text) {
     logger->info("Task says: %s", text);  // Use the text
     const size_t length = strlen(text) + 1;  // +1 for null terminator
     char arr[length];  // Allocate array large enough to hold the string
-    strcpy(arr, text);  // Copy the string to 
+    strcpy(arr, text);  // Copy the string to
 
     // Send text to PicoTTS engine using the correct API
     if (!i2sSpeaker->isActive()) i2sSpeaker->start();

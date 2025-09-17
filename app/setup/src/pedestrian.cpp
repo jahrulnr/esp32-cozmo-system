@@ -11,4 +11,5 @@ void setupPedestrian() {
   pedestrianData = (dl_data_t*) heap_caps_calloc(1, sizeof(dl_data_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 	pedestrianData->resultQue = xQueueCreate(1, sizeof(dl_data_t));
 	pedestrianData->eventGroup = xEventGroupCreate();
+	pedestrianData->mode = DL_MODE_STANBY;
 }

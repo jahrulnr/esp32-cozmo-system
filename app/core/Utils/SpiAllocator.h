@@ -7,10 +7,10 @@ namespace Utils {
 
 /**
  * @brief Custom allocator for ArduinoJson that uses ESP32's external SPI RAM
- * 
+ *
  * This allocator allows JsonDocument to be stored in external SPI RAM instead of
  * the limited internal RAM. Useful for large JSON documents.
- * 
+ *
  * Usage example:
  * Utils::SpiJsonDocument doc;  // Uses external SPI RAM
  * doc["key"] = "value";
@@ -59,7 +59,7 @@ struct SpiRamAllocator : ArduinoJson::Allocator {
 
 /**
  * @brief A JsonDocument that uses SPI RAM for storage
- * 
+ *
  * Template class that creates a JsonDocument using the SpiRamAllocator
  * @tparam desiredCapacity The capacity of the JsonDocument in bytes
  */
@@ -76,11 +76,11 @@ public:
      * @brief Construct from a JsonVariant
      * @param src The JsonVariant to copy
      */
-    SpiJsonDocument(const ArduinoJson::JsonVariant& src) 
+    SpiJsonDocument(const ArduinoJson::JsonVariant& src)
         : ArduinoJson::JsonDocument(SpiRamAllocator::instance()) {
         this->set(src);
     }
-    
+
     /**
      * @brief Get the capacity of the document (for backward compatibility)
      * @return The capacity in bytes

@@ -6,7 +6,7 @@ namespace Services {
 
 const char* WeatherService::CACHE_FILE_PATH = "/cache/weather_cache.json";
 
-WeatherService::WeatherService(Utils::FileManager* fileManager) 
+WeatherService::WeatherService(Utils::FileManager* fileManager)
     : _lastCacheTime(0), _initialized(false), _fileManager(fileManager),
     _tag("WeatherService") {
 }
@@ -22,10 +22,10 @@ bool WeatherService::init(const WeatherConfig& config) {
 
     _config = config;
     _initialized = true;
-    
+
     // Try to load existing cache
     loadCache();
-    
+
     return true;
 }
 
@@ -52,14 +52,14 @@ void WeatherService::getCurrentWeather(WeatherCallback callback, bool forceRefre
 
 void WeatherService::setLocation(const Utils::Sstring& adm4Code) {
     _config.adm4Code = adm4Code;
-    
+
     // Clear cache when location changes
     clearCache();
 }
 
 void WeatherService::setLocation(const IModel::AdministrativeRegion& region) {
     _config.adm4Code = region.getAdm4();
-    
+
     // Clear cache when location changes
     clearCache();
 }
@@ -71,7 +71,7 @@ void WeatherService::setCacheExpiry(uint32_t minutes) {
 void WeatherService::clearCache() {
     _cachedData = WeatherData();
     _lastCacheTime = 0;
-    
+
     // Remove cache file
     if (_fileManager && _fileManager->exists(CACHE_FILE_PATH)) {
         _fileManager->deleteFile(CACHE_FILE_PATH);
@@ -82,24 +82,24 @@ bool WeatherService::isCacheValid() const {
     if (_lastCacheTime == 0 || !_cachedData.isValid) {
         return false;
     }
-    
+
     unsigned long currentTime = getCurrentTimestamp();
     unsigned long cacheExpiryMs = _config.cacheExpiryMinutes * 60 * 1000;
-    
+
     return (currentTime - _lastCacheTime) < cacheExpiryMs;
 }
 
 void WeatherService::fetchFromAPI(WeatherCallback callback) {
     HTTPClient http;
     Utils::Sstring url = buildAPIUrl();
-    
+
     http.begin(url.toString());
     http.setReuse(true);
     http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     http.setTimeout(10000); // 10 second timeout
-    
+
     int httpCode = http.GET();
-    
+
     if (httpCode == HTTP_CODE_OK) {
         Utils::Sstring response = http.getString();
         processAPIResponse(response, callback);
@@ -110,7 +110,7 @@ void WeatherService::fetchFromAPI(WeatherCallback callback) {
             callback(errorData, false);
         }
     }
-    
+
     http.end();
 }
 
@@ -124,7 +124,7 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
 
     Utils::SpiJsonDocument doc;
     DeserializationError error = deserializeJson(doc, response.c_str());
-    
+
     if (error) {
         ESP_LOGE(_tag, "JSON parsing failed: %s. Value: %s", error.c_str(), response.c_str());
         WeatherData errorData;
@@ -133,7 +133,7 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
     }
 
     WeatherData data;
-    
+
     try {
         // Navigate through new BMKG API structure
         // New BMKG structure: {"lokasi": {...}, "data": [{...}]}
@@ -144,14 +144,14 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
         }
 
         auto lokasi = doc["lokasi"];
-        data.location = String(lokasi["provinsi"].as<String>()) + ", " + 
-                       String(lokasi["kotkab"].as<String>()) + ", " + 
-                       String(lokasi["kecamatan"].as<String>()) + ", " + 
+        data.location = String(lokasi["provinsi"].as<String>()) + ", " +
+                       String(lokasi["kotkab"].as<String>()) + ", " +
+                       String(lokasi["kecamatan"].as<String>()) + ", " +
                        String(lokasi["desa"].as<String>());
         data.longitude = lokasi["lon"].as<float>();
         data.latitude = lokasi["lat"].as<float>();
         data.timezone = lokasi["timezone"].as<String>();
-        
+
         ESP_LOGI(_tag, "Location: %s (Lat: %.6f, Lon: %.6f)", data.location.c_str(), data.latitude, data.longitude);
 
         if (doc["data"].isUnbound() || doc["data"].size() == 0) {
@@ -184,7 +184,7 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
         }
 
         auto currentWeather = cuacaArray[0][0]; // First time period, first entry
-        
+
         // Parse weather data from new API format
         data.temperature = currentWeather["t"].as<int>();
         data.humidity = currentWeather["hu"].as<int>();
@@ -193,19 +193,19 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
         data.description = currentWeather["weather_desc"].as<String>();
         data.imageUrl = currentWeather["image"].as<String>();
         data.lastUpdated = currentWeather["local_datetime"].as<String>();
-        
+
         // Convert weather code to condition
         int weatherCode = currentWeather["weather"].as<int>();
         data.condition = getConditionFromCode(weatherCode);
-        
+
         ESP_LOGI(_tag, "Weather: %s (Code: %d)", data.description.c_str(), weatherCode);
-        ESP_LOGI(_tag, "Temperature: %d°C, Humidity: %d%%, Wind: %d km/h %s", 
+        ESP_LOGI(_tag, "Temperature: %d°C, Humidity: %d%%, Wind: %d km/h %s",
                  data.temperature, data.humidity, data.windSpeed, data.windDirection.c_str());
 
         data.isValid = true;
-        
+
         ESP_LOGI(_tag, "Weather data parsed successfully for %s", data.location.c_str());
-        
+
         // Cache the data
         _cachedData = data;
         _lastCacheTime = getCurrentTimestamp();
@@ -214,9 +214,9 @@ void WeatherService::processAPIResponse(const Utils::Sstring& response, WeatherC
         } else {
             ESP_LOGW(_tag, "Failed to cache weather data");
         }
-        
+
         callback(data, true);
-        
+
     } catch (...) {
         ESP_LOGE(_tag, "Exception occurred while processing API response");
         WeatherData errorData;
@@ -236,7 +236,7 @@ bool WeatherService::loadCache() {
 
     Utils::SpiJsonDocument doc;
     DeserializationError error = deserializeJson(doc, content.c_str());
-    
+
     if (error) {
         return false;
     }
@@ -265,7 +265,7 @@ bool WeatherService::saveCache(const WeatherData& data) {
     }
 
     Utils::SpiJsonDocument doc;
-    
+
     doc["location"] = data.location;
     doc["description"] = data.description;
     doc["condition"] = static_cast<int>(data.condition);
@@ -291,7 +291,7 @@ Utils::Sstring WeatherService::buildAPIUrl() const {
     // New BMKG API endpoint format
     Utils::Sstring url = "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=";
     url += _config.adm4Code;
-    
+
     return url;
 }
 
@@ -300,13 +300,13 @@ Utils::Sstring WeatherService::parseBMKGDateTime(const Utils::Sstring& bmkgDateT
     // We'll return a simplified format
     Utils::Sstring result = bmkgDateTime;
     result.replace("T", " ");
-    
+
     // Remove timezone info if present
     int dotPos = result.indexOf(".");
     if (dotPos != -1) {
         result = result.substring(0, dotPos);
     }
-    
+
     return result;
 }
 
@@ -330,7 +330,7 @@ WeatherService::WeatherCondition WeatherService::getConditionFromDescription(con
     // Convert to String for easier manipulation
     String desc = description.toString();
     desc.toLowerCase();
-    
+
     if (desc.indexOf("cerah") >= 0 || desc.indexOf("clear") >= 0 || desc.indexOf("sunny") >= 0) {
         return WeatherCondition::CLEAR;
     }
@@ -361,7 +361,7 @@ WeatherService::WeatherCondition WeatherService::getConditionFromDescription(con
     if (desc.indexOf("berkabut") >= 0 || desc.indexOf("mist") >= 0) {
         return WeatherCondition::MIST;
     }
-    
+
     return WeatherCondition::UNKNOWN;
 }
 
@@ -373,7 +373,7 @@ WeatherService::WeatherCondition WeatherService::getConditionFromCode(int weathe
     // 3 = Berawan (Cloudy/Mostly Cloudy)
     // 4 = Berawan Tebal (Overcast)
     // And other codes for rain, thunderstorm, etc.
-    
+
     switch (weatherCode) {
         case 0:
             return WeatherCondition::CLEAR;
@@ -406,7 +406,7 @@ IModel::AdministrativeRegion* WeatherService::getCurrentRegion() const {
     if (_config.adm4Code.isEmpty()) {
         return nullptr;
     }
-    
+
     return IModel::AdministrativeRegion::findByAdm4(_config.adm4Code.c_str());
 }
 

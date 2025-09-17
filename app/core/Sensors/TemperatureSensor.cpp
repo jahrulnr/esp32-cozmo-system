@@ -26,17 +26,17 @@ bool TemperatureSensor::init() {
 #if SOC_TEMP_SENSOR_SUPPORTED
     // For ESP32-S3 and other chips with SOC_TEMP_SENSOR_SUPPORTED
     temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(10, 50);
-    
+
     if (temperature_sensor_install(&temp_sensor_config, &_tempSensor) != ESP_OK) {
         return false;
     }
-    
+
     if (temperature_sensor_enable(_tempSensor) != ESP_OK) {
         temperature_sensor_uninstall(_tempSensor);
         _tempSensor = NULL;
         return false;
     }
-    
+
     _initialized = true;
     return true;
 #elif CONFIG_IDF_TARGET_ESP32

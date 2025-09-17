@@ -82,7 +82,7 @@
 #define I2S_SPEAKER_SAMPLE_RATE 16000
 
 // SD card
-#define SD_MMC_CLK 39 
+#define SD_MMC_CLK 39
 #define SD_MMC_CMD 38
 #define SD_MMC_D0 40
 

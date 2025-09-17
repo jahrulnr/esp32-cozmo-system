@@ -129,7 +129,7 @@ public:
 		_t0 = t0;
 		_t1 = t1;
 		_t2 = t2;
-	}; 
+	};
 	float Calculate(unsigned long elapsedMillis) override {
 		if (elapsedMillis > Interval) return 0.0;
 		if (elapsedMillis < _t0) {
@@ -219,7 +219,7 @@ public:
 		_t4 = 0;
 		Interval = _t0 + _t1 + _t2 + _t3 + _t4;
 	}
-	
+
 	void SetPulse(uint16_t t, uint16_t delay) {
 		_t0 = 0;
 		_t1 = t / 3;

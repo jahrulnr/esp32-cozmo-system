@@ -13,7 +13,7 @@ esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read
             mic_volume_multiplier = volume;
         }
     }
-    
+
     #if MICROPHONE_I2S
     if (!microphone)
         return ESP_ERR_INVALID_STATE;
@@ -21,11 +21,11 @@ esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read
     esp_err_t ret = microphone->readAudioData(out, len, bytes_read);
     if (ret != ESP_OK)
         return ret;
-        
+
     if (mic_volume_multiplier == 1.0f) {
         return ret;
     }
-    
+
     int16_t* samples = (int16_t*)out;
     int sample_count = len / sizeof(int16_t);
     for (int i = 0; i < sample_count; i++) {
@@ -34,7 +34,7 @@ esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read
         else if (adjusted < -32768) adjusted = -32768;
         samples[i] = (int16_t)adjusted;
     }
-    
+
     out = samples;
     return ret;
     #elif MICROPHONE_ANALOG
@@ -45,7 +45,7 @@ esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read
         if (!amicrophone->isActive()) amicrophone->start();
         samples_read = amicrophone->readSamples((int16_t*)out, samples_needed, timeout_ms);
     }
-    
+
     if (samples_read > 0) {
         if (mic_volume_multiplier != 1.0f) {
             int16_t* samples = (int16_t*)out;
@@ -57,11 +57,11 @@ esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read
                 samples[i] = (int16_t)adjusted;
             }
         }
-        
+
         *bytes_read = samples_read * sizeof(int16_t);
         return ESP_OK;
     }
-    
+
     *bytes_read = 0;
     #endif
     return ESP_FAIL;

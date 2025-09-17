@@ -41,7 +41,7 @@ bool I2CManager::initBus(const char* busName, int sda, int scl, uint32_t frequen
     // Initialize I2C bus
     bus.wire->setTimeOut(3000);
     if (!bus.wire->begin(sda, scl)) {
-        Serial.printf("Failed to initialize I2C bus '%s' on pins SDA=%d, SCL=%d\n", 
+        Serial.printf("Failed to initialize I2C bus '%s' on pins SDA=%d, SCL=%d\n",
                      busName, sda, scl);
         if (!useWire) {
             delete bus.wire;
@@ -52,10 +52,10 @@ bool I2CManager::initBus(const char* busName, int sda, int scl, uint32_t frequen
 
     // Set bus frequency
     if (frequency > 0)
-        bus.wire->setClock(frequency); 
-    else 
+        bus.wire->setClock(frequency);
+    else
         frequency = bus.wire->getClock();
-    Serial.printf("Initialized I2C bus '%s' on pins SDA=%d, SCL=%d at %dkHz\n", 
+    Serial.printf("Initialized I2C bus '%s' on pins SDA=%d, SCL=%d at %dkHz\n",
                  busName, sda, scl, bus.wire->getClock() / 1000);
 
     // Add to map
@@ -80,12 +80,12 @@ bool I2CManager::devicePresent(const char* busName, byte address) {
 
     bus->wire->beginTransmission(address);
     byte error = bus->wire->endTransmission();
-    
+
     releaseBus(bus);
     return (error == 0);
 }
 
-bool I2CManager::writeRegister(const char* busName, byte deviceAddress, 
+bool I2CManager::writeRegister(const char* busName, byte deviceAddress,
                               uint8_t registerAddress, uint8_t data) {
     BusInfo* bus = takeBus(busName);
     if (!bus) {
@@ -93,44 +93,7 @@ bool I2CManager::writeRegister(const char* busName, byte deviceAddress,
     }
 
     bus->wire->beginTransmission(deviceAddress);
-    
-    if (bus->wire->write(registerAddress) != 1) {
-        Serial.printf("Failed to write register address 0x%02X to device 0x%02X on bus '%s'\n", 
-                     registerAddress, deviceAddress, busName);
-        bus->wire->endTransmission();
-        releaseBus(bus);
-        return false;
-    }
-    
-    if (bus->wire->write(data) != 1) {
-        Serial.printf("Failed to write data 0x%02X to register 0x%02X on device 0x%02X on bus '%s'\n", 
-                     data, registerAddress, deviceAddress, busName);
-        bus->wire->endTransmission();
-        releaseBus(bus);
-        return false;
-    }
-    
-    uint8_t error = bus->wire->endTransmission();
-    releaseBus(bus);
-    
-    if (error != 0) {
-        Serial.printf("I2C transmission error %d when writing to device 0x%02X on bus '%s'\n", 
-                     error, deviceAddress, busName);
-        return false;
-    }
-    
-    return true;
-}
 
-bool I2CManager::readRegister(const char* busName, byte deviceAddress, 
-                             uint8_t registerAddress, uint8_t &result) {
-    BusInfo* bus = takeBus(busName);
-    if (!bus) {
-        return false;
-    }
-
-    bus->wire->beginTransmission(deviceAddress);
-    
     if (bus->wire->write(registerAddress) != 1) {
         Serial.printf("Failed to write register address 0x%02X to device 0x%02X on bus '%s'\n",
                      registerAddress, deviceAddress, busName);
@@ -138,31 +101,68 @@ bool I2CManager::readRegister(const char* busName, byte deviceAddress,
         releaseBus(bus);
         return false;
     }
-    
+
+    if (bus->wire->write(data) != 1) {
+        Serial.printf("Failed to write data 0x%02X to register 0x%02X on device 0x%02X on bus '%s'\n",
+                     data, registerAddress, deviceAddress, busName);
+        bus->wire->endTransmission();
+        releaseBus(bus);
+        return false;
+    }
+
+    uint8_t error = bus->wire->endTransmission();
+    releaseBus(bus);
+
+    if (error != 0) {
+        Serial.printf("I2C transmission error %d when writing to device 0x%02X on bus '%s'\n",
+                     error, deviceAddress, busName);
+        return false;
+    }
+
+    return true;
+}
+
+bool I2CManager::readRegister(const char* busName, byte deviceAddress,
+                             uint8_t registerAddress, uint8_t &result) {
+    BusInfo* bus = takeBus(busName);
+    if (!bus) {
+        return false;
+    }
+
+    bus->wire->beginTransmission(deviceAddress);
+
+    if (bus->wire->write(registerAddress) != 1) {
+        Serial.printf("Failed to write register address 0x%02X to device 0x%02X on bus '%s'\n",
+                     registerAddress, deviceAddress, busName);
+        bus->wire->endTransmission();
+        releaseBus(bus);
+        return false;
+    }
+
     if (bus->wire->endTransmission(false) != 0) {
         Serial.printf("I2C transmission failed on bus '%s' when setting register\n", busName);
         releaseBus(bus);
         return false;
     }
-    
+
     if (bus->wire->requestFrom(deviceAddress, (uint8_t)1) != 1) {
         Serial.printf("Failed to request data from device 0x%02X on bus '%s'\n", deviceAddress, busName);
         releaseBus(bus);
         return false;
     }
-    
+
     if (bus->wire->available()) {
         result = bus->wire->read();
         releaseBus(bus);
         return true;
     }
-    
+
     Serial.printf("No data available from device 0x%02X on bus '%s'\n", deviceAddress, busName);
     releaseBus(bus);
     return false;
 }
 
-bool I2CManager::readRegisters(const char* busName, byte deviceAddress, 
+bool I2CManager::readRegisters(const char* busName, byte deviceAddress,
                               uint8_t registerAddress, uint8_t *buffer, uint8_t length) {
     if (!buffer) {
         Serial.printf("Buffer is NULL for readRegisters call on bus '%s'\n", busName);
@@ -175,7 +175,7 @@ bool I2CManager::readRegisters(const char* busName, byte deviceAddress,
     }
 
     bus->wire->beginTransmission(deviceAddress);
-    
+
     if (bus->wire->write(registerAddress) != 1) {
         Serial.printf("Failed to write register address 0x%02X to device 0x%02X on bus '%s'\n",
                      registerAddress, deviceAddress, busName);
@@ -183,23 +183,23 @@ bool I2CManager::readRegisters(const char* busName, byte deviceAddress,
         releaseBus(bus);
         return false;
     }
-    
+
     if (bus->wire->endTransmission(false) != 0) {
         Serial.printf("I2C transmission failed on bus '%s' when setting register\n", busName);
         releaseBus(bus);
         return false;
     }
-    
+
     uint8_t bytesReceived = bus->wire->requestFrom(deviceAddress, length);
     if (bytesReceived != length) {
-        Serial.printf("Requested %d bytes, received %d from device 0x%02X on bus '%s'\n", 
+        Serial.printf("Requested %d bytes, received %d from device 0x%02X on bus '%s'\n",
                      length, bytesReceived, deviceAddress, busName);
     }
-    
+
     for (uint8_t i = 0; i < bytesReceived && bus->wire->available(); i++) {
         buffer[i] = bus->wire->read();
     }
-    
+
     releaseBus(bus);
     return bytesReceived > 0;
 }
@@ -210,15 +210,15 @@ void I2CManager::scanBus(const char* busName) {
         return;
     }
 
-    Serial.printf("Scanning I2C bus '%s' (SDA=%d, SCL=%d) for devices...\n", 
+    Serial.printf("Scanning I2C bus '%s' (SDA=%d, SCL=%d) for devices...\n",
                  busName, bus->sdaPin, bus->sclPin);
-    
+
     uint8_t deviceCount = 0;
-    
+
     for (byte address = 1; address < 127; address++) {
         bus->wire->beginTransmission(address);
         byte error = bus->wire->endTransmission();
-        
+
         if (error == 0) {
             Serial.printf("Device found at address 0x%02X on bus '%s'\n", address, busName);
             deviceCount++;
@@ -226,13 +226,13 @@ void I2CManager::scanBus(const char* busName) {
             Serial.printf("Unknown error at address 0x%02X on bus '%s'\n", address, busName);
         }
     }
-    
+
     if (deviceCount == 0) {
         Serial.printf("No I2C devices found on bus '%s'\n", busName);
     } else {
         Serial.printf("Found %d I2C device(s) on bus '%s'\n", deviceCount, busName);
     }
-    
+
     releaseBus(bus);
 }
 
@@ -242,16 +242,16 @@ I2CManager::BusInfo* I2CManager::takeBus(const char* busName, uint32_t timeoutMs
         Serial.printf("I2C bus '%s' not found\n", busName);
         return nullptr;
     }
-    
+
     BusInfo* bus = &(it->second);
-    
+
     if (bus->mutex) {
         if (xSemaphoreTake(bus->mutex, pdMS_TO_TICKS(timeoutMs)) != pdTRUE) {
             Serial.printf("Failed to take mutex for I2C bus '%s', timeout occurred\n", busName);
             return nullptr;
         }
     }
-    
+
     return bus;
 }
 

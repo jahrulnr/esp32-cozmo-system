@@ -17,10 +17,10 @@ public:
     static Response listFiles(Request& request);
     static Response deleteFile(Request& request);
     static Response getFileInfo(Request& request);
-    
+
     // Storage information
     static Response getStorageInfo(Request& request);
-    
+
 private:
     // Helper methods
     static bool isValidPath(const Utils::Sstring& path);

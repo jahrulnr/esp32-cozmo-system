@@ -17,7 +17,7 @@ Sensors::TemperatureSensor *temperatureSensor;
 
 void setupTemperatureSensor() {
   logger->info("Setting up temperature sensor...");
-  
+
   temperatureSensor = new Sensors::TemperatureSensor();
   if (temperatureSensor->init()) {
     logger->info("Temperature sensor initialized successfully");

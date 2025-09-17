@@ -6,21 +6,21 @@
  *
  * Modification History:
  * Date         Version     Modified By     Description
- * 2021-12-21   2.0.0       Roberto D'Amico New version of the project that integrates the callback functions, while 
- *                                          maintaining compatibility with previous versions. Fixed Issue #27 too, 
+ * 2021-12-21   2.0.0       Roberto D'Amico New version of the project that integrates the callback functions, while
+ *                                          maintaining compatibility with previous versions. Fixed Issue #27 too,
  *                                          thanks to @artisticfox8 for the suggestion.
  * 2020-06-09   1.1.6       Roberto D'Amico Fixed Issue #10 and #11
  * 2020-04-20   1.1.5       Roberto D'Amico Correct: Two sticks in a row, thanks to @liamw9534 for the suggestion
- * 2020-04-03               Roberto D'Amico Correct: InternalRadius when change the size of canvas, thanks to 
+ * 2020-04-03               Roberto D'Amico Correct: InternalRadius when change the size of canvas, thanks to
  *                                          @vanslipon for the suggestion
- * 2020-01-07   1.1.4       Roberto D'Amico Close #6 by implementing a new parameter to set the functionality of 
+ * 2020-01-07   1.1.4       Roberto D'Amico Close #6 by implementing a new parameter to set the functionality of
  *                                          auto-return to 0 position
  * 2019-11-18   1.1.3       Roberto D'Amico Close #5 correct indication of East direction
- * 2019-11-12   1.1.2       Roberto D'Amico Removed Fix #4 incorrectly introduced and restored operation with touch 
+ * 2019-11-12   1.1.2       Roberto D'Amico Removed Fix #4 incorrectly introduced and restored operation with touch
  *                                          devices
- * 2019-11-12   1.1.1       Roberto D'Amico Fixed Issue #4 - Now JoyStick work in any position in the page, not only 
+ * 2019-11-12   1.1.1       Roberto D'Amico Fixed Issue #4 - Now JoyStick work in any position in the page, not only
  *                                          at 0,0
- * 
+ *
  * The MIT License (MIT)
  *
  *  This file is part of the JoyStick Project (https://github.com/bobboteck/JoyStick).
@@ -32,7 +32,7 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
@@ -68,7 +68,7 @@ let StickStatus =
  *  externalLineWidth {Int} (optional) - External reference circonference width (Default value is 2)
  *  externalStrokeColor {String} (optional) - External reference circonference color (Default value is '#008000')
  *  autoReturnToCenter {Bool} (optional) - Sets the behavior of the stick, whether or not, it should return to zero position when released (Default value is True and return to zero)
- * @param callback {StickStatus} - 
+ * @param callback {StickStatus} -
  */
 var JoyStick = (function(container, parameters, callback)
 {
@@ -87,7 +87,7 @@ var JoyStick = (function(container, parameters, callback)
 
     // Create Canvas element and add it in the Container object
     var objContainer = document.getElementById(container);
-    
+
     // Fixing Unable to preventDefault inside passive event listener due to target being treated as passive in Chrome [Thanks to https://github.com/artisticfox8 for this suggestion]
     objContainer.style.touchAction = "none";
 
@@ -175,7 +175,7 @@ var JoyStick = (function(container, parameters, callback)
     /**
      * @desc Events for manage touch
      */
-    function onTouchStart(event) 
+    function onTouchStart(event)
     {
         pressed = 1;
     }
@@ -211,9 +211,9 @@ var JoyStick = (function(container, parameters, callback)
             StickStatus.cardinalDirection = getCardinalDirection();
             callback(StickStatus);
         }
-    } 
+    }
 
-    function onTouchEnd(event) 
+    function onTouchEnd(event)
     {
         pressed = 0;
         // If required reset position store variable
@@ -240,13 +240,13 @@ var JoyStick = (function(container, parameters, callback)
     /**
      * @desc Events for manage mouse
      */
-    function onMouseDown(event) 
+    function onMouseDown(event)
     {
         pressed = 1;
     }
 
     /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
-    function onMouseMove(event) 
+    function onMouseMove(event)
     {
         if(pressed === 1)
         {
@@ -279,7 +279,7 @@ var JoyStick = (function(container, parameters, callback)
         }
     }
 
-    function onMouseUp(event) 
+    function onMouseUp(event)
     {
         pressed = 0;
         // If required reset position store variable
@@ -308,7 +308,7 @@ var JoyStick = (function(container, parameters, callback)
         let result = "";
         let orizontal = movedX - centerX;
         let vertical = movedY - centerY;
-        
+
         if(vertical >= directionVerticalLimitNeg && vertical <= directionVerticalLimitPos)
         {
             result = "C";
@@ -321,11 +321,11 @@ var JoyStick = (function(container, parameters, callback)
         {
             result = "S";
         }
-        
+
         if(orizontal < directionHorizontalLimitNeg)
         {
             if(result === "C")
-            { 
+            {
                 result = "W";
             }
             else
@@ -336,7 +336,7 @@ var JoyStick = (function(container, parameters, callback)
         if(orizontal > directionHorizontalLimitPos)
         {
             if(result === "C")
-            { 
+            {
                 result = "E";
             }
             else
@@ -344,7 +344,7 @@ var JoyStick = (function(container, parameters, callback)
                 result += "E";
             }
         }
-        
+
         return result;
     }
 
@@ -354,9 +354,9 @@ var JoyStick = (function(container, parameters, callback)
 
     /**
      * @desc The width of canvas
-     * @return Number of pixel width 
+     * @return Number of pixel width
      */
-    this.GetWidth = function () 
+    this.GetWidth = function ()
     {
         return canvas.width;
     };
@@ -365,7 +365,7 @@ var JoyStick = (function(container, parameters, callback)
      * @desc The height of canvas
      * @return Number of pixel height
      */
-    this.GetHeight = function () 
+    this.GetHeight = function ()
     {
         return canvas.height;
     };

@@ -7,7 +7,7 @@ namespace Motors {
 ServoControl::ServoControl() : _headAngle(90), _handAngle(90),
                               _headServoPin(-1), _handServoPin(-1),
                               _initialized(false), _useIoExtender(false),
-                              _ioExtender(nullptr), _lastHeadPosition(0), 
+                              _ioExtender(nullptr), _lastHeadPosition(0),
                               _lastHandPosition(0) {
 }
 
@@ -22,7 +22,7 @@ ServoControl::~ServoControl() {
 bool ServoControl::init(int headServoPin, int handServoPin) {
     _headServoPin = headServoPin;
     _handServoPin = handServoPin;
-    
+
     // Using direct GPIO pins
     _useIoExtender = false;
     _ioExtender = nullptr;
@@ -32,14 +32,14 @@ bool ServoControl::init(int headServoPin, int handServoPin) {
     ESP32PWM::allocateTimer(1);
     ESP32PWM::allocateTimer(2);
     ESP32PWM::allocateTimer(3);
-    
+
     // Attach servos to pins
     _headServo.setPeriodHertz(50);    // Standard 50hz servo
     _handServo.setPeriodHertz(50);   // Standard 50hz servo
-    
+
     _headServo.attach(_headServoPin, 500, 2500);
     _handServo.attach(_handServoPin, 500, 2500);
-    
+
     _initialized = true;
     logger->info("ServoControl: Initialized with direct GPIO pins");
     return true;
@@ -50,7 +50,7 @@ bool ServoControl::initWithExtender(Utils::IOExtern* ioExtender, int headServoPi
         logger->error("ServoControl: Invalid I/O extender provided");
         return false;
     }
-    
+
     _ioExtender = ioExtender;
     _useIoExtender = true;
     _headServoPin = headServoPin;
@@ -58,27 +58,27 @@ bool ServoControl::initWithExtender(Utils::IOExtern* ioExtender, int headServoPi
 
     // The PCF8575 I/O expander doesn't directly support PWM for servo control
     // We need to use software PWM or external PWM driver for servos
-    
+
     // For now, we'll use direct pins for servo control
     // In a real implementation, you might connect servos through a dedicated PWM driver like PCA9685
-    
+
     // Initialize ESP32 servo library
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
     ESP32PWM::allocateTimer(2);
     ESP32PWM::allocateTimer(3);
-    
+
     // We'll simulate PWM with the I/O extender using software PWM
     // This is not ideal but could work for simple applications
-    
+
     // Set initial pin state to LOW
     _ioExtender->digitalWrite(_headServoPin, LOW);
     _ioExtender->digitalWrite(_handServoPin, LOW);
-    
+
     _initialized = true;
     logger->info("ServoControl: Initialized with I/O extender");
     logger->warning("ServoControl: Note - I/O extender based servos use software PWM which may not be precise");
-    
+
     return true;
 }
 
@@ -88,7 +88,7 @@ void ServoControl::setDisplay(Display::Display *display) {
 
 void ServoControl::moveLook(ServoType type, int angle) {
     if (!_display || !_display->getFace()) return;
-    
+
     int lastPosition = 0;
     switch (type) {
         case HEAD:
@@ -99,7 +99,7 @@ void ServoControl::moveLook(ServoType type, int angle) {
         break;
     }
 
-    if (angle > lastPosition) 
+    if (angle > lastPosition)
         _display->getFace()->LookTop();
     else _display->getFace()->LookFront();
 }
@@ -110,18 +110,18 @@ void ServoControl::setHead(int angle) {
     }
 
     moveLook(HEAD, angle);
-    
+
     // Constrain angle to valid range
     angle = constrain(angle, 60, 110);
-    
+
     if (_useIoExtender && _ioExtender) {
         // Software PWM implementation for I/O extender
         logger->debug("ServoControl: Moving head to %d degrees using I/O extender", angle);
-        
+
         // Smooth movement implementation
         const int step = 2;  // smaller step for smoother movement
         const int delayMs = 15;  // delay between steps
-        
+
         // Move servo gradually to target position
         if (_headAngle < angle) {
             for (int pos = _headAngle; pos <= angle; pos += step) {
@@ -143,7 +143,7 @@ void ServoControl::setHead(int angle) {
                 vTaskDelay(pdMS_TO_TICKS(delayMs));
             }
         }
-        
+
         // Ensure final position is reached
         int finalPulseWidth = angleToPulseWidth(angle);
         for (int i = 0; i < 10; i++) {
@@ -154,7 +154,7 @@ void ServoControl::setHead(int angle) {
         // Smooth movement implementation
         const int step = 2;  // smaller step for smoother movement
         const int delayMs = 15;  // delay between steps
-        
+
         // Move servo gradually to target position
         if (_headAngle < angle) {
             for (int pos = _headAngle; pos <= angle; pos += step) {
@@ -167,11 +167,11 @@ void ServoControl::setHead(int angle) {
                 vTaskDelay(pdMS_TO_TICKS(delayMs));
             }
         }
-        
+
         // Ensure final position is exact
         _headServo.write(angle);
     }
-    
+
     _headAngle = angle;
     _lastHeadPosition = angle;
 }
@@ -182,21 +182,21 @@ void ServoControl::setHand(int angle) {
     }
 
     moveLook(HAND, angle);
-    
+
     // Constrain angle to valid range
     angle = constrain(angle, 0, 180);
     // reverse
     angle = 180 - angle;
     int targetAngle = constrain(angle, 90, 133);
-    
+
     if (_useIoExtender && _ioExtender) {
         // Software PWM implementation for I/O extender
         logger->debug("ServoControl: Moving hand to %d degrees using I/O extender", angle);
-        
+
         // Smooth movement implementation
         const int step = 2;  // smaller step for smoother movement
         const int delayMs = 20;  // delay between steps
-        
+
         // Move servo gradually to target position
         if (_handAngle < targetAngle) {
             for (int pos = _handAngle; pos <= targetAngle; pos += step) {
@@ -217,7 +217,7 @@ void ServoControl::setHand(int angle) {
                 vTaskDelay(pdMS_TO_TICKS(delayMs));
             }
         }
-        
+
         // Ensure final position is reached
         int finalPulseWidth = angleToPulseWidth(targetAngle);
         for (int i = 0; i < 10; i++) {
@@ -228,7 +228,7 @@ void ServoControl::setHand(int angle) {
         // Smooth movement implementation
         const int step = 2;  // smaller step for smoother movement
         const int delayMs = 20;  // delay between steps
-        
+
         // Move servo gradually to target position
         if (_handAngle < targetAngle) {
             for (int pos = _handAngle; pos <= targetAngle; pos += step) {
@@ -241,11 +241,11 @@ void ServoControl::setHand(int angle) {
                 vTaskDelay(pdMS_TO_TICKS(delayMs));
             }
         }
-        
+
         // Ensure final position is exact
         _handServo.write(targetAngle);
     }
-    
+
     _handAngle = targetAngle;
     _lastHandPosition = angle;
 }
@@ -261,7 +261,7 @@ int ServoControl::getHand() const {
 
 void ServoControl::softwarePwm(int pin, int pulseWidth, int totalPeriod) {
     if (!_ioExtender) return;
-    
+
     // Simple software PWM implementation
     // This is not ideal for servo control, but can work for basic applications
     _ioExtender->digitalWrite(pin, HIGH);

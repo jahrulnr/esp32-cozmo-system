@@ -7,12 +7,12 @@ void callbackNotePlayer(void* data) {
         logger->error("Note callback: No data received");
         return;
     }
-    
+
     if (!notePlayer) {
         logger->error("Note callback: notePlayer is null");
         return;
     }
-    
+
     const Note::Melody event = (Note::Melody)(intptr_t)data;
     logger->info("Note callback received event: %d", (int)event);
 
@@ -23,11 +23,11 @@ void callbackNotePlayer(void* data) {
 
     }
     else if (event == Note::DOREMI_SCALE) {
-        notePlayer->playMelody(Note::DOREMI_SCALE);   
+        notePlayer->playMelody(Note::DOREMI_SCALE);
 
     }
     else if (event == Note::HAPPY_BIRTHDAY) {
-        notePlayer->playMelody(Note::HAPPY_BIRTHDAY);   
+        notePlayer->playMelody(Note::HAPPY_BIRTHDAY);
 
     }
     else if (event == Note::RANDOM) {
@@ -40,13 +40,13 @@ void callbackNotePlayer(void* data) {
         noteRandomPlayerId = SendTask::createTaskOnCore([](){
             const size_t melodyLength = 64;
             Note::MusicNote melodyBuffer1[melodyLength];
-            
+
             // Check if notePlayer is initialized before using it
             if (notePlayer && notePlayer->isReady()) {
                 Note::Frequency endingNote = (Note::Frequency)0; // Start with auto-chosen note
-                
+
                 logger->info("Starting random melody loop, interrupt = false");
-                
+
                 // Generate and play continuous random melodies until interrupted
                 while (true) {
                     if (notePlayer->generateRandomMelody(melodyLength, melodyBuffer1, endingNote, &endingNote)) {
@@ -55,7 +55,7 @@ void callbackNotePlayer(void* data) {
                             logger->info("Melody playback failed - exiting loop");
                             break; // Exit if playback failed
                         }
-                        
+
                         // Short pause between melodies
                         vTaskDelay(pdMS_TO_TICKS(300));
                     } else {
@@ -70,7 +70,7 @@ void callbackNotePlayer(void* data) {
             noteRandomPlayerId = "";
             SendTask::stopTask(id);
         }, "RandomMusicTask");
-        
+
     } else {
         logger->warning("Unknown Note event: %s", event);
     }

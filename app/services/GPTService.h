@@ -21,7 +21,7 @@ public:
      * @return true if initialization was successful, false otherwise
      */
     bool init(const Utils::Sstring& apiKey);
-    
+
     /**
      * Check if the adapter is initialized
      * @return true if initialized, false otherwise
@@ -68,7 +68,7 @@ private:
     int _maxTokens;
     float _temperature;
     bool _initialized;
-    
+
     // Process the HTTP response
     void processResponse(const Utils::Sstring& response, ResponseCallback callback);
 };

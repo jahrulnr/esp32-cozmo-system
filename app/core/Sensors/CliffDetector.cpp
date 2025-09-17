@@ -3,8 +3,8 @@
 
 namespace Sensors {
 
-CliffDetector::CliffDetector() : _pin(-1), 
-                                 _cliffDetected(false), 
+CliffDetector::CliffDetector() : _pin(-1),
+                                 _cliffDetected(false),
                                  _initialized(false),
                                  _useIoExtender(false),
                                  _ioExtender(nullptr) {
@@ -18,9 +18,9 @@ bool CliffDetector::init(int pin) {
     _pin = pin;
     _useIoExtender = false;
     _ioExtender = nullptr;
-    
+
     pinMode(_pin, INPUT);
-    
+
     _initialized = true;
     Utils::Logger::getInstance().info("CliffDetector: Initialized with direct GPIO pin %d", _pin);
     return true;
@@ -31,13 +31,13 @@ bool CliffDetector::initWithExtender(Utils::IOExtern* ioExtender, int pin) {
         Utils::Logger::getInstance().error("CliffDetector: Invalid I/O extender provided, pin %d", pin);
         return false;
     }
-    
+
     _ioExtender = ioExtender;
     _useIoExtender = true;
     _pin = pin;
-    
+
     ioExtender->digitalRead(_pin, true);
-    
+
     _initialized = true;
     Utils::Logger::getInstance().info("CliffDetector: Initialized with I/O extender pin %d", _pin);
     return true;
@@ -59,7 +59,7 @@ int CliffDetector::readPin() {
     if (!_initialized) {
         return LOW;
     }
-    
+
     if (_useIoExtender && _ioExtender) {
         return _ioExtender->digitalRead(_pin, true);
     } else {
