@@ -1,6 +1,10 @@
 #include "../register.h"
 
-#if MICROPHONE_ENABLED
+#if !MICROPHONE_ENABLED
+esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read, uint32_t timeout_ms) {
+    return ESP_ERR_NOT_SUPPORTED;
+}
+#else
 
 // fill callback for ESP-SR system
 esp_err_t mic_fill_callback(void *arg, void *out, size_t len, size_t *bytes_read, uint32_t timeout_ms) {

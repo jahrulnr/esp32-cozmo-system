@@ -84,28 +84,12 @@ void pedestrianHandlerTask(void* param) {
 			fileManager->deleteFile(fileName);
 	}
 
-	TickType_t lastWakeTime = xTaskGetTickCount();
-	TickType_t updateFrequency = pdMS_TO_TICKS(100);
+	ESP_LOGI(tag, "set feed task to stanby mode");
+	pedestrianData->mode = DL_MODE_STANBY;
+
+	TickType_t updateFrequency = pdMS_TO_TICKS(50);
 	while(1){
-		vTaskDelayUntil(&lastWakeTime, updateFrequency);
-
-		// Check EventGroup for pause/stop events
-		EventBits_t bits = xEventGroupGetBits(pedestrianData->eventGroup);
-    if (DL_EVENT_PAUSE & bits) {
-			// Wait for resume or stop event
-			xEventGroupWaitBits(pedestrianData->eventGroup,
-												  DL_EVENT_RESUME | DL_EVENT_STOP,
-												  pdTRUE,  // Clear bits on exit
-												  pdFALSE, // Wait for any bit (OR operation)
-												  portMAX_DELAY);
-			continue;
-    }
-
-    if (DL_EVENT_STOP & bits) {
-			ESP_LOGI(tag, "Pedestrian handler task stopping");
-			xEventGroupClearBits(pedestrianData->eventGroup, DL_EVENT_STOP);
-			break;
-    }
+		vTaskDelay(updateFrequency);
 
 		if (pedestrianData->mode != DL_MODE_READY) {
 			continue;
@@ -113,14 +97,23 @@ void pedestrianHandlerTask(void* param) {
 
 		// Wait for image data from feed task
 		dl::image::img_t imageData;
-		if (xQueueReceive(pedestrianData->resultQue, &imageData, pdMS_TO_TICKS(100)) != pdTRUE) {
+		if (xQueueReceive(pedestrianData->resultQue, &imageData, updateFrequency) != pdTRUE) {
       continue;
     }
 
+		if (imageData.data == nullptr) {
+			ESP_LOGI(tag, "camera data received, but empty. skipping");
+			pedestrianData->mode = DL_MODE_STANBY;
+			continue;
+		}
+
+		ESP_LOGI(tag, "camera data received");
 		pedestrianData->mode = DL_MODE_ANALYZE;
+		ESP_LOGI(tag, "analyze camera data");
     auto &detect_results = pedestrianDetect->run(imageData);
 
     // Log detection results
+		ESP_LOGI(tag, "analyze done, result: %d", detect_results.size());
     for (const auto &res : detect_results) {
         ESP_LOGI(tag,
                  "[score: %f, x1: %d, y1: %d, x2: %d, y2: %d]",
@@ -132,6 +125,7 @@ void pedestrianHandlerTask(void* param) {
     }
 
 		if (fileManager->exists(fileName)) {
+			heap_caps_free(imageData.data);
 			pedestrianData->mode = DL_MODE_STANBY;
 			continue;
 		}
@@ -172,7 +166,7 @@ void pedestrianHandlerTask(void* param) {
 				}
     }
 
-    // heap_caps_free(imageData.data);
+    heap_caps_free(imageData.data);
 		if (pedestrianData->mode != DL_MODE_OFF)
 			pedestrianData->mode = DL_MODE_STANBY;
 	}
@@ -180,36 +174,27 @@ void pedestrianHandlerTask(void* param) {
 
 void pedestrianFeedTask(void* param) {
 	static const char* tag = "pedestrianFeedTask";
-	TickType_t lastWakeTime = xTaskGetTickCount();
-	TickType_t updateFrequency = pdMS_TO_TICKS(100);
+	const char* fileName = "/cache/frame.jpg";
+
+	TickType_t updateFrequency = pdMS_TO_TICKS(500);
+
+	if (fileManager->exists(fileName)) {
+			fileManager->deleteFile(fileName);
+	}
 
 	camera_fb_t* fb;
-	dl::image::img_t img;
 	while(1){
-		vTaskDelayUntil(&lastWakeTime, updateFrequency);
-		std::list<dl::detect::result_t> result;
+		vTaskDelay(updateFrequency);
+		if (pedestrianData->mode == DL_MODE_WAITING) {
+			ESP_LOGI(tag, "waiting mode");
+			continue;
+		}
+
 		if (pedestrianData->mode != DL_MODE_STANBY) {
       continue;
     }
 
-		// Check EventGroup bits correctly
-		EventBits_t bits = xEventGroupGetBits(pedestrianData->eventGroup);
-    if (DL_EVENT_PAUSE & bits) {
-			// Wait for resume or stop event
-			xEventGroupWaitBits(pedestrianData->eventGroup,
-												  DL_EVENT_RESUME | DL_EVENT_STOP,
-												  pdTRUE,  // Clear bits on exit
-												  pdFALSE, // Wait for any bit (OR operation)
-												  portMAX_DELAY);
-			continue;
-    }
-
-    if (DL_EVENT_STOP & bits) {
-			ESP_LOGI(tag, "Pedestrian feed task stopping");
-			xEventGroupClearBits(pedestrianData->eventGroup, DL_EVENT_STOP);
-			break;
-    }
-
+		std::list<dl::detect::result_t> result;
 		if (camera == nullptr) {
 			continue;
 		}
@@ -217,48 +202,76 @@ void pedestrianFeedTask(void* param) {
 		pedestrianData->mode = DL_MODE_PROCCESS;
 
 		camera->returnFrame(fb);
-		vTaskDelay(pdMS_TO_TICKS(10));
+		delay(100);
+		if (!fileManager->exists(fileName)) {
+			fb = camera->captureFrame();
+			if (!fb) {
+				ESP_LOGW(tag, "failed to get camera data");
+				pedestrianData->mode = DL_MODE_STANBY;
+				continue;
+			}
+			auto file = fileManager->openFileForWriting(fileName);
+			if (file) {
+					size_t written = fileManager->writeBinary(file, fb->buf, fb->len);
+					fileManager->closeFile(file);
+
+					if (written == fb->len) {
+							ESP_LOGI(tag, "Saved image: %s (%d bytes)", fileName, fb->len);
+					} else {
+							ESP_LOGW(tag, "Failed to write complete annotated image");
+					}
+			}
+	
+			camera->returnFrame(fb);
+			vTaskDelay(pdMS_TO_TICKS(500));
+		}
+
 		fb = camera->captureFrame(1);
 		if (!fb) {
+			ESP_LOGW(tag, "failed to get camera data");
 			pedestrianData->mode = DL_MODE_STANBY;
 			continue;
 		}
 
     dl::image::img_t imageToProcess = {
-			.data = fb->buf, // void *
-			.width = (uint16_t)fb->width, // uint16_t
-			.height = (uint16_t)fb->height, // uint16_t
+			.width = uint16_t(fb->width),
+			.height = uint16_t(fb->height),
 			.pix_type = dl::image::DL_IMAGE_PIX_TYPE_RGB565 // pix_type_t
 		};
 
+		uint8_t* imgRes;
 		switch (fb->format)
 		{
 		case PIXFORMAT_RGB565:
-			imageToProcess.pix_type = dl::image::DL_IMAGE_PIX_TYPE_RGB565;
+			imageToProcess.data = fb->buf;
 			break;
 
 		default: // if jpeg
-			dl::image::jpeg_img_t jpeg_img = {.data = (void *)fb->buf,
-                                      .data_len = fb->len};
-			img = dl::image::sw_decode_jpeg(jpeg_img, dl::image::DL_IMAGE_PIX_TYPE_RGB565);
-			imageToProcess.data = img.data;
-			imageToProcess.height = img.height;
-			imageToProcess.width = img.width;
-			imageToProcess.pix_type = img.pix_type;
+			imgRes = (uint8_t*) heap_caps_malloc(fb->width*fb->height*3, MALLOC_CAP_SPIRAM);
+			bool success = jpg2rgb565(fb->buf, fb->len, imgRes, JPEG_IMAGE_SCALE_0);
+			imageToProcess.data = imgRes;
 			break;
 		}
 
-		if (pedestrianData->mode != DL_MODE_OFF)
+		if (imageToProcess.data == nullptr) {
+			ESP_LOGW(tag, "failed to decode camera data");
+			pedestrianData->mode = DL_MODE_STANBY;
+			continue;
+		}
+
+		if (pedestrianData->mode != DL_MODE_OFF){
+			ESP_LOGI(tag, "camera data ready to proccess");
 			pedestrianData->mode = DL_MODE_READY;
+		}
 
 		// Send image data to handler task via queue
-		if (xQueueSend(pedestrianData->resultQue, &imageToProcess, pdMS_TO_TICKS(100)) != pdTRUE) {
+		if (xQueueSend(pedestrianData->resultQue, &imageToProcess, updateFrequency) != pdTRUE) {
 			ESP_LOGW(tag, "Failed to send image data to queue");
 			pedestrianData->mode = DL_MODE_STANBY;
 			if (fb->format != PIXFORMAT_RGB565) {
-				heap_caps_free(img.data); // Free decoded JPEG data
+				heap_caps_free(imgRes); // Free decoded JPEG data
 			}
-			vTaskDelay(pdMS_TO_TICKS(1000));
 		}
+		vTaskDelay(pdMS_TO_TICKS(1000));
 	}
 }

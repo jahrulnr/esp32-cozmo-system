@@ -1,6 +1,8 @@
 #include "../register.h"
 
-#if MICROPHONE_ENABLED
+#if !MICROPHONE_ENABLED
+void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {}
+#else
 
 // Event callback for SR system
 void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_id) {

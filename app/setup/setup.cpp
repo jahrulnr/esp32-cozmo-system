@@ -25,7 +25,8 @@ void setupApp() {
   setupAudioRecorder();
   setupNotePlayer();
   setupCamera();
-  setupPedestrian();
+  // setupPedestrian();
+  setupCoco();
 
   delay(10);
 

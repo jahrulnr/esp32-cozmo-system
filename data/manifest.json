@@ -1,0 +1,21 @@
+{
+  "name": "Cozmo Robot Control",
+  "short_name": "Cozmo",
+  "description": "Control interface for ESP32 Cozmo Robot System",
+  "start_url": "/views/app.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#0d6efd",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
+}

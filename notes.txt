@@ -1,18 +1,16 @@
 just a note.
 
+# pedestrian
 # esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x310000 model/en-US_ta.bin
 # esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x3B0000 model/en-US_lh0_sg.bin
 # esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x47D000 model/pedestrian_detect_pico_s8_v1.espdl
 # esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x4FD000 model/srmodels.bin
 
-original accelerator on my cozmo
-y=0
-y=-1 -> miring kekanan
-y=1 > miring kiri
-x=0
-x=1 putar atas
-x=-1 putar bawah
-
+# coco yolo11n_320_s8_v3
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x310000 model/en-US_ta.bin
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x3B0000 model/en-US_lh0_sg.bin
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x47D000 model/coco_detect_yolo11n_320_s8_v3.espdl
+# esptool.py --baud 2000000 --before default_reset --after hard_reset  write_flash 0x77D000 model/srmodels.bin
 
 // static const uint8_t SDA = 8;
 // static const uint8_t SCL = 9;

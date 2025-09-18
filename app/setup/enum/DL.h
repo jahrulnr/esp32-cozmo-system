@@ -9,18 +9,12 @@ typedef enum {
   DL_MODE_PROCCESS,
   DL_MODE_READY,
   DL_MODE_STANBY,
+  DL_MODE_WAITING,
   DL_MODE_MAX
 } dl_mode_t;
-
-// Define bit flags for EventGroup
-#define DL_EVENT_PAUSE     BIT0
-#define DL_EVENT_RESUME    BIT1
-#define DL_EVENT_STOP      BIT2
-#define DL_EVENT_START     BIT3
 
 typedef struct {
 	dl::image::img_t imageData;
 	QueueHandle_t resultQue;
 	dl_mode_t mode;
-  EventGroupHandle_t eventGroup;
 } dl_data_t;

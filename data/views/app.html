@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>Cozmo Robot Control</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/assets/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/assets/cozmo-ui.css" rel="stylesheet">
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body class="bg-dark text-light">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Connecting to Cozmo...</p>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app-container d-none">
+        <!-- Mobile Header -->
+        <header class="mobile-header d-md-none">
+            <button class="btn btn-outline-light" id="sidebar-toggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h1 class="h5 mb-0">Cozmo Control</h1>
+            <div class="connection-status" id="connection-status">
+                <span class="status-dot offline"></span>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h4>Cozmo Robot</h4>
+                <button class="btn btn-sm btn-outline-light d-md-none" id="sidebar-close">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-view="dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-view="sensors">
+                        <i class="bi bi-graph-up"></i> Sensors
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-view="wifi">
+                        <i class="bi bi-wifi"></i> WiFi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-view="chat">
+                        <i class="bi bi-chat-dots"></i> Chat
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view-content active">
+                <div class="row g-3">
+                    <!-- Camera Feed -->
+                    <div class="col-12 col-lg-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Camera Feed</h5>
+                                <button class="btn btn-sm btn-outline-primary" id="camera-toggle">
+                                    <i class="bi bi-camera-video"></i>
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="camera-container">
+                                    <canvas id="camera-canvas" class="w-100"></canvas>
+                                    <div class="camera-overlay" id="camera-overlay">
+                                        <div class="camera-status">Camera Offline</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Controls -->
+                    <div class="col-12 col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Quick Controls</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- System Status -->
+                                <div class="status-grid mb-3">
+                                    <div class="status-item">
+                                        <span class="status-label">Battery</span>
+                                        <span class="status-value" id="battery-level">--</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Memory</span>
+                                        <span class="status-value" id="memory-usage">--</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Temp</span>
+                                        <span class="status-value" id="temperature">--</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">WiFi</span>
+                                        <span class="status-value" id="wifi-strength">--</span>
+                                    </div>
+                                </div>
+
+                                <!-- Emergency Stop -->
+                                <button class="btn btn-danger w-100 mb-3" id="emergency-stop">
+                                    <i class="bi bi-stop-circle"></i> Emergency Stop
+                                </button>
+
+                                <!-- Voice Control -->
+                                <button class="btn btn-success w-100" id="voice-control">
+                                    <i class="bi bi-mic"></i> Voice Control
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Motor Control -->
+                    <div class="col-12 col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Motor Control</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="joystick-container">
+                                    <div id="motor-joystick" class="joystick"></div>
+                                    <div class="joystick-label">Drag to move</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Servo Control -->
+                    <div class="col-12 col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Servo Control</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Servo X -->
+                                <div class="mb-3">
+                                    <label class="form-label">Head Pan (X): <span id="servo-x-value">90°</span></label>
+                                    <input type="range" class="form-range" id="servo-x" min="0" max="180" value="90">
+                                </div>
+                                <!-- Servo Y -->
+                                <div class="mb-3">
+                                    <label class="form-label">Head Tilt (Y): <span id="servo-y-value">90°</span></label>
+                                    <input type="range" class="form-range" id="servo-y" min="0" max="180" value="90">
+                                </div>
+                                <!-- Center Button -->
+                                <button class="btn btn-outline-primary w-100" id="servo-center">
+                                    <i class="bi bi-arrows-move"></i> Center Position
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensors View -->
+            <div id="sensors-view" class="view-content">
+                <div class="row g-3">
+                    <!-- Accelerometer -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Accelerometer</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <canvas id="accelerometer-canvas" width="200" height="150"></canvas>
+                                <div class="sensor-values">
+                                    <small>X: <span id="accel-x">0.00</span>g</small>
+                                    <small>Y: <span id="accel-y">0.00</span>g</small>
+                                    <small>Z: <span id="accel-z">0.00</span>g</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gyroscope -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Gyroscope</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <canvas id="gyroscope-canvas" width="200" height="150"></canvas>
+                                <div class="sensor-values">
+                                    <small>X: <span id="gyro-x">0.00</span>°/s</small>
+                                    <small>Y: <span id="gyro-y">0.00</span>°/s</small>
+                                    <small>Z: <span id="gyro-z">0.00</span>°/s</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Distance Sensor -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Distance Sensor</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <canvas id="distance-canvas" width="200" height="150"></canvas>
+                                <div class="sensor-values">
+                                    <small>Distance: <span id="distance">0</span>cm</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cliff Detector -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Cliff Detector</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <canvas id="cliff-canvas" width="200" height="150"></canvas>
+                                <div class="sensor-values">
+                                    <small>Status: <span id="cliff-status">Safe</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WiFi View -->
+            <div id="wifi-view" class="view-content">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">WiFi Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <strong>SSID:</strong> <span id="current-ssid">--</span>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Signal:</strong> <span id="signal-strength">--</span>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>IP:</strong> <span id="ip-address">--</span>
+                                </div>
+                                <button class="btn btn-primary" id="refresh-wifi">Refresh</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Available Networks</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="wifi-networks" class="wifi-networks">
+                                    <div class="text-center">
+                                        <button class="btn btn-outline-primary" id="scan-networks">
+                                            <i class="bi bi-arrow-clockwise"></i> Scan Networks
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat View -->
+            <div id="chat-view" class="view-content">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">AI Chat</h5>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <div class="chat-messages flex-grow-1 mb-3" id="chat-messages">
+                                    <div class="chat-message bot">
+                                        <div class="message-content">
+                                            Hi! I'm Cozmo. How can I help you today?
+                                        </div>
+                                        <div class="message-time">Just now</div>
+                                    </div>
+                                </div>
+                                <div class="chat-input-group">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="chat-input" 
+                                               placeholder="Type a message...">
+                                        <button class="btn btn-primary" id="send-message">
+                                            <i class="bi bi-send"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="sidebar-overlay d-md-none" id="sidebar-overlay"></div>
+
+    <!-- Scripts -->
+    <script src="/assets/bootstrap.bundle.js"></script>
+    <script src="/assets/joy.js"></script>
+    <script src="/assets/cozmo-core.js"></script>
+    <script src="/assets/cozmo-ui.js"></script>
+    <script src="/assets/cozmo-sensors.js"></script>
+    <script src="/assets/cozmo-app.js"></script>
+</body>
+</html>

@@ -8,7 +8,8 @@ String taskMonitorerId;
 String displayTaskId;
 String sensorMonitorTaskId;
 String cameraTaskId;
-String pedestrianFeedTaskId;
+// String pedestrianFeedTaskId;
+String cocoFeedTaskId;
 
 /**
  * Initialize all background tasks on CPU 0
@@ -68,14 +69,35 @@ void setupTasksCpu0() {
     //     logger->info("Camera task created with ID: %s", cameraTaskId.c_str());
     // }
 
-    pedestrianFeedTaskId = SendTask::createLoopTaskOnCore(
-        pedestrianFeedTask,
+    // pedestrianFeedTaskId = SendTask::createLoopTaskOnCore(
+    //     pedestrianFeedTask,
+    //     "PedestrianFeedTask",
+    //     4096,
+    //     0,
+    //     core,
+    //     "Capture image for object detector"
+    // );
+
+    // if (pedestrianFeedTaskId.isEmpty()) {
+    //     logger->error("Failed to create pedestrianFeedTask");
+    // } else {
+    //     logger->info("pedestrianFeedTask created with ID: %s", pedestrianFeedTaskId.c_str());
+    // }
+
+    cocoFeedTaskId = SendTask::createLoopTaskOnCore(
+        cocoFeedTask,
         "PedestrianFeedTask",
         4096,
         0,
         core,
         "Capture image for object detector"
     );
+
+    if (cocoFeedTaskId.isEmpty()) {
+        logger->error("Failed to create pedestrianFeedTask");
+    } else {
+        logger->info("pedestrianFeedTask created with ID: %s", cocoFeedTaskId.c_str());
+    }
 
     // Create taskMonitorer task using SendTask library
     // taskMonitorerId = SendTask::createLoopTaskOnCore(

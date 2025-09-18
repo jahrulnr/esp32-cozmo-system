@@ -27,11 +27,6 @@ void setupSpeakers() {
     } else {
       logger->info("MP3Player initialized successfully");
     }
-
-    // Test with a simple beep first
-    if (audioSamples) {
-      audioSamples->playSample(AudioSamples::BEEP_SHORT);
-    }
   } else {
     logger->error("I2S speaker (MAX98357) initialization failed");
     delete i2sSpeaker;

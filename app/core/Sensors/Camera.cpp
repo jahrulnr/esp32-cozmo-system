@@ -58,6 +58,8 @@ bool Camera::init() {
         return false;
     }
 
+    if (config.pixel_format != PIXFORMAT_JPEG)
+        esp_camera_set_psram_mode(1);
     _initialized = true;
     return true;
     #endif
@@ -107,6 +109,10 @@ void Camera::returnFrame(camera_fb_t* fb) {
     if (fb) {
         esp_camera_fb_return(fb);
     }
+}
+
+void Camera::returnAllFrame() {
+    esp_camera_return_all();
 }
 
 void Camera::setResolution(framesize_t resolution) {

@@ -8,7 +8,8 @@ String ftpTaskId;
 String weatherServiceTaskId;
 String srControlTaskId;
 String notePlayerTaskId;
-String pedestrianHandlerTaskId;
+// String pedestrianHandlerTaskId;
+String cocoHandlerTaskId;
 
 /**
  * Initialize all background tasks on CPU 1
@@ -32,6 +33,36 @@ void setupTasksCpu1() {
         logger->error("Failed to create FTP task");
     } else {
         logger->info("FTP task created with ID: %s", ftpTaskId.c_str());
+    }
+
+    // pedestrianHandlerTaskId = SendTask::createLoopTaskOnCore(
+    //     pedestrianHandlerTask,
+    //     "PedestrianHandlerTask",
+    //     4096,
+    //     1,
+    //     core,
+    //     "Proccess image to get objects"
+    // );
+
+    // if (pedestrianHandlerTaskId.isEmpty()) {
+    //     logger->error("Failed to create pedestrianHandlerTask");
+    // } else {
+    //     logger->info("pedestrianHandlerTask created with ID: %s", pedestrianHandlerTaskId.c_str());
+    // }
+
+    cocoHandlerTaskId = SendTask::createLoopTaskOnCore(
+        cocoHandlerTask,
+        "PedestrianHandlerTask",
+        4096,
+        1,
+        core,
+        "Proccess image to get objects"
+    );
+
+    if (cocoHandlerTaskId.isEmpty()) {
+        logger->error("Failed to create cocoHandlerTask");
+    } else {
+        logger->info("pedestrianHandlerTask created with ID: %s", cocoHandlerTaskId.c_str());
     }
 
     // Create weather service task using SendTask library
@@ -91,17 +122,6 @@ void setupTasksCpu1() {
         logger->info("Note task created with ID: %s", notePlayerTaskId.c_str());
     }
     #endif
-
-
-
-    pedestrianHandlerTaskId = SendTask::createLoopTaskOnCore(
-        pedestrianHandlerTask,
-        "PedestrianHandlerTask",
-        4096,
-        0,
-        core,
-        "Proccess image to get objects"
-    );
 
     delay(1000);
     logger->info("Tasks initialized on cpu 1");

@@ -33,6 +33,7 @@ public:
      * @param fb Pointer to the frame buffer to return
      */
     void returnFrame(camera_fb_t* fb);
+    void returnAllFrame();
 
     /**
      * Set the camera resolution
