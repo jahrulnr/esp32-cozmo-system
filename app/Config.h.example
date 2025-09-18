@@ -5,14 +5,25 @@
 #define FTP_PASS "root"
 
 #define PROTECT_COZMO true
+#define AUTOMATION_ENABLED true
+#define AUTOMATION_INACTIVITY_TIMEOUT 10000  // 10 seconds inactivity before resuming automation
+#define AUTOMATION_CHECK_INTERVAL 2000      // Check for automation resumption every 1 second
+#define AUTOMATION_MAX_BEHAVIORS 50         // Maximum number of behaviors to store (prevent memory issues)
+#define AUTOMATION_MAX_BEHAVIOR_LENGTH 512  // Maximum length in bytes for a single behavior
 
 // Camera configuration
+// just as note, when camera is active, that will run on task 0 with higger priority
+// check sdkconfig.h for more
+// camera block esp-sr, so camera and esp-sr maybe is bad idea
 #define CAMERA_MODEL_FREENOVE_ESP32S3_CAM
 // #define CAMERA_MODEL_AI_THINKER
-#define CAMERA_ENABLED false
+#define CAMERA_ENABLED true
 #define CAMERA_FRAME_SIZE FRAMESIZE_128X128
-#define CAMERA_PIXEL_FORMAT PIXFORMAT_RGB565
-#define CAMERA_QUALITY 12
+// #define CAMERA_PIXEL_FORMAT PIXFORMAT_RGB565 // RHYX-M21
+#define CAMERA_PIXEL_FORMAT PIXFORMAT_YUV422 // RHYX-M21
+// #define CAMERA_FRAME_SIZE FRAMESIZE_QVGA
+// #define CAMERA_PIXEL_FORMAT PIXFORMAT_JPEG // ov2640
+#define CAMERA_QUALITY 10
 
 // Motor configuration
 #define MOTOR_ENABLED true
@@ -31,25 +42,26 @@
 
 // Screen configuration
 #define SCREEN_ENABLED true
-#define SCREEN_SDA_PIN 3
-#define SCREEN_SCL_PIN 46
+#define SCREEN_SDA_PIN 46
+#define SCREEN_SCL_PIN 3
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
 // Gyroscope configuration
-#define ORIENTATION_ENABLED SCREEN_ENABLED
+#define ORIENTATION_ENABLED true
 #define ORIENTATION_SDA_PIN SCREEN_SDA_PIN
 #define ORIENTATION_SCL_PIN SCREEN_SCL_PIN
 
 #define CLIFF_DETECTOR_ENABLED true
 #define CLIFF_IO_EXTENDER true
-#define CLIFF_RIGHT_DETECTOR_PIN 5
-#define CLIFF_LEFT_DETECTOR_PIN 6
+#define CLIFF_RIGHT_DETECTOR_PIN 1
+#define CLIFF_LEFT_DETECTOR_PIN 0
 
 #define ULTRASONIC_ENABLED true
 #define ULTRASONIC_TRIGGER_PIN 0
 #define ULTRASONIC_ECHO_PIN 45
 #define ULTRASONIC_OBSTACLE_TRESHOLD 8.0
+#define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in centimeters
 
 // Microphone configuration (MAX9814)
 #define MICROPHONE_ENABLED true
@@ -67,11 +79,12 @@
 
 // Speaker configuration
 #define SPEAKER_ENABLED true
+#define SPEAKER_VOLUME 0.5f
 
 // PicoTTS configuration
 #define PICOTTS_ENABLED true
-#define PICOTTS_CORE 1
-#define PICOTTS_TASK_PRIORITY 15
+#define PICOTTS_CORE 0
+#define PICOTTS_TASK_PRIORITY configMAX_PRIORITIES - 1
 #define PICOTTS_QUEUE_SIZE 1
 #define PICOTTS_MAX_TEXT_LENGTH 512
 
@@ -108,6 +121,25 @@
 #define GPT_MODEL "gpt-4.1-nano-2025-04-14"
 #define GPT_MAX_TOKENS 1024
 #define GPT_TEMPERATURE 0.7
+
+// Audio Recording Configuration
+#define AUDIO_RECORDING_ENABLED true
+#define AUDIO_SAMPLE_RATE 16000
+#define AUDIO_BITS_PER_SAMPLE 16
+#define AUDIO_CHANNELS 1
+#define AUDIO_BUFFER_SIZE 8096
+#define AUDIO_RECORDING_DURATION_MS 10000  // 10 seconds default
+#define AUDIO_RECORDING_PATH "/recordings"
+
+// Battery Configuration
+#define BATTERY_ENABLED true
+#define BATTERY_ADC_PIN 1             // ADC pin for battery measurement
+#define BATTERY_CHARGE_PIN -1         // Optional charging detection pin
+#define BATTERY_VOLTAGE_MIN 3.3       // Minimum battery voltage (0%)
+#define BATTERY_VOLTAGE_MAX 4.2       // Maximum battery voltage (100%)
+#define BATTERY_VOLTAGE_DIVIDER 2.0   // Voltage divider ratio
+#define BATTERY_ADC_RESOLUTION 4095   // 12-bit ADC resolution
+#define BATTERY_UPDATE_INTERVAL 5000  // Update interval in milliseconds
 
 // Miscellaneous
 #define SERIAL_BAUD_RATE 115200
