@@ -4,12 +4,8 @@
 #include <SendTask.h>
 
 // Task IDs for tracking
-String taskMonitorerId;
-String displayTaskId;
-String sensorMonitorTaskId;
-String cameraTaskId;
-// String pedestrianFeedTaskId;
-String cocoFeedTaskId;
+String cocoHandlerTaskId;
+String notePlayerTaskId;
 
 /**
  * Initialize all background tasks on CPU 0
@@ -19,101 +15,38 @@ void setupTasksCpu0() {
 
     bool core = 0;
 
-    // Create display task using SendTask library
-    if (display) {
-        displayTaskId = SendTask::createLoopTaskOnCore(
-            displayTask,
-            "DisplayTask",
-            4096,                    // Stack size
-            5,                       // Priority
-            core,                    // Core ID (CPU 0)
-            "Display task for face animation and UI updates"
-        );
-
-        if (displayTaskId.isEmpty()) {
-            logger->error("Failed to create display task");
-        } else {
-            logger->info("Display task created with ID: %s", displayTaskId.c_str());
-        }
-    }
-
-    // Create sensor monitoring task using SendTask library
-    sensorMonitorTaskId = SendTask::createLoopTaskOnCore(
-        sensorMonitorTask,
-        "SensorMonitor",
-        4096,                        // Stack size
-        5,                           // Priority
-        core,                        // Core ID (CPU 0)
-        "Sensor monitoring task for distance, orientation, and cliff detection"
-    );
-
-    if (sensorMonitorTaskId.isEmpty()) {
-        logger->error("Failed to create sensor monitor task");
-    } else {
-        logger->info("Sensor monitor task created with ID: %s", sensorMonitorTaskId.c_str());
-    }
-
-    // Create camera task using SendTask library
-    // cameraTaskId = SendTask::createLoopTaskOnCore(
-    //     cameraTask,
-    //     "CameraTask",
-    //     4096,                        // Stack size
-    //     0,                           // Priority (lower priority)
-    //     core,                        // Core ID (CPU 0)
-    //     "Camera capture and processing task"
-    // );
-
-    // if (cameraTaskId.isEmpty()) {
-    //     logger->error("Failed to create camera task");
-    // } else {
-    //     logger->info("Camera task created with ID: %s", cameraTaskId.c_str());
-    // }
-
-    // pedestrianFeedTaskId = SendTask::createLoopTaskOnCore(
-    //     pedestrianFeedTask,
-    //     "PedestrianFeedTask",
-    //     4096,
-    //     0,
-    //     core,
-    //     "Capture image for object detector"
-    // );
-
-    // if (pedestrianFeedTaskId.isEmpty()) {
-    //     logger->error("Failed to create pedestrianFeedTask");
-    // } else {
-    //     logger->info("pedestrianFeedTask created with ID: %s", pedestrianFeedTaskId.c_str());
-    // }
-
-    cocoFeedTaskId = SendTask::createLoopTaskOnCore(
-        cocoFeedTask,
-        "PedestrianFeedTask",
+    cocoHandlerTaskId = SendTask::createLoopTaskOnCore(
+        cocoHandlerTask,
+        "cocoHandlerTask",
         4096,
-        0,
+        1,
         core,
-        "Capture image for object detector"
+        "Proccess image to get objects"
     );
 
-    if (cocoFeedTaskId.isEmpty()) {
-        logger->error("Failed to create pedestrianFeedTask");
+    if (cocoHandlerTaskId.isEmpty()) {
+        logger->error("Failed to create cocoHandlerTask");
     } else {
-        logger->info("pedestrianFeedTask created with ID: %s", cocoFeedTaskId.c_str());
+        logger->info("pedestrianHandlerTask created with ID: %s", cocoHandlerTaskId.c_str());
     }
 
-    // Create taskMonitorer task using SendTask library
-    // taskMonitorerId = SendTask::createLoopTaskOnCore(
-    //     taskMonitorer,
-    //     "taskMonitorer",
-    //     4096,                        // Stack size
-    //     0,                           // Priority (lower priority)
-    //     core,                        // Core ID (CPU 0)
-    //     "Task monitor"
-    // );
+    #if SPEAKER_ENABLED
+    // Create Note task for musical note playback using SendTask library
+    notePlayerTaskId = SendTask::createLoopTaskOnCore(
+        notePlayerTask,
+        "NotePlayer",
+        4096,                    // Stack size
+        1,                       // Priority
+        core,                    // Core ID (CPU 1)
+        "Note musical playback task for audio effects and melodies"
+    );
 
-    // if (taskMonitorerId.isEmpty()) {
-    //     logger->error("Failed to create task monitor");
-    // } else {
-    //     logger->info("Task monitor created with ID: %s", taskMonitorerId.c_str());
-    // }
+    if (notePlayerTaskId.isEmpty()) {
+        logger->error("Failed to create Note task");
+    } else {
+        logger->info("Note task created with ID: %s", notePlayerTaskId.c_str());
+    }
+    #endif
 
     delay(1000);
     logger->info("Tasks initialized on cpu 0");

@@ -66,9 +66,7 @@ void callbackNotePlayer(void* data) {
             }
             logger->info("Random melody loop ended");
 
-            String id = noteRandomPlayerId;
-            noteRandomPlayerId = "";
-            SendTask::stopTask(id);
+            SendTask::stopTask(noteRandomPlayerId);
         }, "RandomMusicTask");
 
     } else {

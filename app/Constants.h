@@ -100,4 +100,6 @@ namespace EVENT_AUDIO {
 // Note Music Events
 static const char* NOTIFICATION_NOTE = "note";
 
+// DL_EVENTS
+static const char* NOTIFICATION_DL = "dl";
 #endif

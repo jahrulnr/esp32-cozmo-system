@@ -142,7 +142,7 @@ void sr_handler_task(void *pvParam) {
       continue;
     }
   }
-  vTaskDelete(NULL);
+  vTaskDeleteWithCaps(NULL);
 }
 
 static void audio_feed_task(void *arg) {
@@ -210,7 +210,7 @@ static void audio_feed_task(void *arg) {
     // vTaskDelay(1);
 		vTaskDelayUntil(&lastWakeTime, updateFrequency);
   }
-  vTaskDelete(NULL);
+  vTaskDeleteWithCaps(NULL);
 }
 
 static void audio_detect_task(void *arg) {
@@ -303,7 +303,7 @@ static void audio_detect_task(void *arg) {
       ESP_LOGE(SR::TAG, "Exception unhandled");
     }
   }
-  vTaskDelete(NULL);
+  vTaskDeleteWithCaps(NULL);
 }
 
 esp_err_t sr_set_mode(sr_mode_t mode) {
@@ -402,12 +402,13 @@ esp_err_t sr_setup(
     }
   }
 
+  heap_caps_malloc_extmem_enable(0);
   return ESP_OK;
 }
 
-esp_err_t sr_start(bool core) {
+esp_err_t sr_start(bool feedCore, bool detectCore) {
   //Start tasks
-  esp_err_t ret_val = xTaskCreatePinnedToCore(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, configMAX_PRIORITIES - 5, &g_sr_data->feed_task, core);
+  esp_err_t ret_val = xTaskCreatePinnedToCoreWithCaps(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 5, &g_sr_data->feed_task, feedCore, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio feed task");
     ::sr_stop();
@@ -415,14 +416,14 @@ esp_err_t sr_start(bool core) {
   }
 
   vTaskDelay(10);
-  ret_val = xTaskCreatePinnedToCore(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, core);
+  ret_val = xTaskCreatePinnedToCoreWithCaps(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, detectCore, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio detect task");
     ::sr_stop();
     return ESP_FAIL;
   }
 
-  ret_val = xTaskCreatePinnedToCore(&SR::sr_handler_task, "SR Handler Task", 6 * 1024, NULL, configMAX_PRIORITIES - 1, &g_sr_data->handle_task, core);
+  ret_val = xTaskCreatePinnedToCoreWithCaps(&SR::sr_handler_task, "SR Handler Task", 6 * 1024, NULL, configMAX_PRIORITIES - 1, &g_sr_data->handle_task, feedCore, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio handler task");
     ::sr_stop();
@@ -439,7 +440,7 @@ esp_err_t sr_stop(void) {
      * Waiting for all task stopped
      * TODO: A task creation failure cannot be handled correctly now
      * */
-  vTaskDelete(g_sr_data->handle_task);
+  vTaskDeleteWithCaps(g_sr_data->handle_task);
   xEventGroupSetBits(g_sr_data->event_group, NEED_DELETE);
   xEventGroupWaitBits(g_sr_data->event_group, NEED_DELETE | FEED_DELETED | DETECT_DELETED, 1, 1, portMAX_DELAY);
 

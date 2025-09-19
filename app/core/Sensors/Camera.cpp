@@ -44,8 +44,8 @@ bool Camera::init() {
     // PSRAM configuration
     if (psramFound()) {
         config.fb_location = CAMERA_FB_IN_PSRAM;
-        config.grab_mode = CAMERA_GRAB_LATEST;
-        config.fb_count = 1;
+        config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+        config.fb_count = 4;
     } else {
         config.fb_location = CAMERA_FB_IN_DRAM;
         config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;

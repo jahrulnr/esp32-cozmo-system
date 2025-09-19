@@ -9,7 +9,7 @@
 
 void setup() {
   setCpuFrequencyMhz(240);
-  heap_caps_malloc_extmem_enable(128);
+  heap_caps_malloc_extmem_enable(0);
 
   // Initialize Serial
   Serial.begin(SERIAL_BAUD_RATE);
@@ -26,11 +26,13 @@ void setup() {
 
   LittleFS.begin(false);
   setupApp();
+  
   setupTasksCpu0();
   setupTasksCpu1();
 }
 
 void loop() {
+  // printTaskStatus();
   vTaskDelete(NULL);
 
   // static long lastTime = millis() + 10000;

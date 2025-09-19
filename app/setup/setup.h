@@ -116,7 +116,6 @@ void setupAudioRecorder();
 void setupNotePlayer();
 void setupCamera();
 
-void setupPedestrian();
 void setupCoco();
 
 void setupTasksCpu0();

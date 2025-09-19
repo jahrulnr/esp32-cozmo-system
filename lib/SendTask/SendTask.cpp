@@ -84,7 +84,7 @@ namespace SendTask {
 		BaseType_t result;
 
 		if (config.coreId == tskNO_AFFINITY) {
-			result = xTaskCreate([](void* param) {
+			result = xTaskCreateWithCaps([](void* param) {
 				TaskParams* taskParams = static_cast<TaskParams*>(param);
 				String currentTaskId = taskParams->taskId;
 
@@ -103,41 +103,43 @@ namespace SendTask {
 
 				// Cleanup
 				delete taskParams;
-				vTaskDelete(NULL);
-			},
-			config.name.c_str(),
-			config.stackSize,
-			params,
-			config.priority,
-			&taskHandle);
-		} else {
-			result = xTaskCreatePinnedToCore([](void* param) {
-				TaskParams* taskParams = static_cast<TaskParams*>(param);
-				String currentTaskId = taskParams->taskId;
-
-				// Update status to in progress
-				updateTaskStatus(currentTaskId, TaskStatus::INPROGRESS);
-
-				try {
-					// Execute the function
-					taskParams->function();
-					// Update status to done
-					updateTaskStatus(currentTaskId, TaskStatus::DONE);
-				} catch (...) {
-					// Update status to failed
-					updateTaskStatus(currentTaskId, TaskStatus::FAILED);
-				}
-
-				// Cleanup
-				delete taskParams;
-				vTaskDelete(NULL);
+				vTaskDeleteWithCaps(NULL);
 			},
 			config.name.c_str(),
 			config.stackSize,
 			params,
 			config.priority,
 			&taskHandle,
-			config.coreId);
+			MALLOC_CAP_SPIRAM | MALLOC_CAP_DEFAULT);
+		} else {
+			result = xTaskCreatePinnedToCoreWithCaps([](void* param) {
+				TaskParams* taskParams = static_cast<TaskParams*>(param);
+				String currentTaskId = taskParams->taskId;
+
+				// Update status to in progress
+				updateTaskStatus(currentTaskId, TaskStatus::INPROGRESS);
+
+				try {
+					// Execute the function
+					taskParams->function();
+					// Update status to done
+					updateTaskStatus(currentTaskId, TaskStatus::DONE);
+				} catch (...) {
+					// Update status to failed
+					updateTaskStatus(currentTaskId, TaskStatus::FAILED);
+				}
+
+				// Cleanup
+				delete taskParams;
+				vTaskDeleteWithCaps(NULL);
+			},
+			config.name.c_str(),
+			config.stackSize,
+			params,
+			config.priority,
+			&taskHandle,
+			config.coreId,
+			MALLOC_CAP_SPIRAM | MALLOC_CAP_DEFAULT);
 		}
 
 		// Update task handle in registry
@@ -194,7 +196,7 @@ namespace SendTask {
 		BaseType_t result;
 
 		if (config.coreId == tskNO_AFFINITY) {
-			result = xTaskCreate([](void* param) {
+			result = xTaskCreateWithCaps([](void* param) {
 				LoopTaskParams* taskParams = static_cast<LoopTaskParams*>(param);
 				String currentTaskId = taskParams->taskId;
 
@@ -213,13 +215,14 @@ namespace SendTask {
 
 				// Cleanup
 				delete taskParams;
-				vTaskDelete(NULL);
+				vTaskDeleteWithCaps(NULL);
 			},
 			config.name.c_str(),
 			config.stackSize,
 			params,
 			config.priority,
-			&taskHandle
+			&taskHandle,
+			MALLOC_CAP_SPIRAM | MALLOC_CAP_DEFAULT
 			);
 		} else {
 			result = xTaskCreatePinnedToCore([](void* param) {
@@ -401,7 +404,7 @@ namespace SendTask {
 					    it->second.status == TaskStatus::PAUSED) {
 
 						// Stop the task
-						vTaskDelete(it->second.handle);
+						vTaskDeleteWithCaps(it->second.handle);
 						it->second.handle = nullptr;
 						it->second.status = TaskStatus::FAILED;
 						it->second.completedAt = millis();

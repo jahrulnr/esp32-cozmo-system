@@ -25,7 +25,7 @@ void printTaskStatus() {
     SendTask::scanExternalTasks();
 
     // Update memory usage for all tasks
-    SendTask::updateAllTasksMemoryUsage();
+    do { SendTask::updateAllTasksMemoryUsage(); }while(0);
 
     auto allTasks = SendTask::getAllTasks();
 

@@ -1,10 +1,16 @@
 #include "setup.h"
 
 void setupApp() {
+  heap_caps_malloc_extmem_enable(0);
 	setupLogger();
 	setupFilemanager();
   setupNotification();
   setupDisplay();
+
+  heap_caps_malloc_extmem_enable(128);
+	setupCamera();
+  setupSpeechRecognition();
+  heap_caps_malloc_extmem_enable(0);
 
   // Initialize components
   setupExtender();
@@ -12,21 +18,13 @@ void setupApp() {
   setupOrientation();
   setupMotors();
   setupServos();
-  setupDistanceSensor();
-  setupTouchDetector();
-  setupTemperatureSensor();
-  setupBatteryManager();
   setupMicrophone();
   setupSpeakers();
   setupCommandMapper();
   // setupAutomation();
   setupPicoTTS();
-  setupSpeechRecognition();
   setupAudioRecorder();
   setupNotePlayer();
-  setupCamera();
-  // setupPedestrian();
-  setupCoco();
 
   delay(10);
 
