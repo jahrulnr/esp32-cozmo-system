@@ -87,6 +87,10 @@ void updaterTask(void* parameter) {
 			}, "weatherUpdate", 4096, 0, 0);
 		}
 
+		#if SPEAKER_ENABLED
+			notePlayerHandler();
+		#endif
+
 		if (sendLog) {
 			notification->send(NOTIFICATION_DL, dl_mode_t::DL_MODE_OFF);
 		}

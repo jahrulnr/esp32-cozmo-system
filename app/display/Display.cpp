@@ -109,7 +109,7 @@ void Display::update() {
 
     if (_state != STATE_SPACE_GAME && _spaceGame->isGameActive()) {
         _spaceGame->pauseGame();
-        notification->send(NOTIFICATION_NOTE, (void*)Note::STOP);
+        notification->send(NOTIFICATION_NOTE, Note::STOP);
     }
 
     // each state maybe need clearBuffer or not, check each state to makesure.
@@ -160,7 +160,7 @@ void Display::update() {
             if (_spaceGame) {
                 if (!_spaceGame->isGameActive()) {
                     _spaceGame->startGame();
-                    notification->send(NOTIFICATION_NOTE, (void*)Note::RANDOM);
+                    notification->send(NOTIFICATION_NOTE, Note::RANDOM);
                 }
 
                 _spaceGame->draw();

@@ -5,12 +5,8 @@ void setupSpeechRecognition() {
 		float volume = 1.f;
 		esp_err_t ret = SR::sr_setup(
 				mic_fill_callback,                                 // data fill callback
-				&volume,																							 // data fill callback argument
-#if MICROPHONE_I2S
-				SR_CHANNELS_STEREO,
-#else
+				&volume,	
 				SR_CHANNELS_MONO,                                  // Single channel I2S input
-#endif
 				SR_MODE_WAKEWORD,                                  // Start in wake word mode
 				voice_commands,                                    // Commands array
 				sizeof(voice_commands) / sizeof(csr_cmd_t),        // Number of commands

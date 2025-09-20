@@ -408,7 +408,7 @@ esp_err_t sr_setup(
 
 esp_err_t sr_start(bool feedCore, bool detectCore) {
   //Start tasks
-  esp_err_t ret_val = xTaskCreatePinnedToCoreWithCaps(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 5, &g_sr_data->feed_task, feedCore, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  esp_err_t ret_val = xTaskCreatePinnedToCoreWithCaps(&SR::audio_feed_task, "SR Feed Task", 4 * 1024, NULL, 6, &g_sr_data->feed_task, feedCore, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio feed task");
     ::sr_stop();
@@ -416,7 +416,7 @@ esp_err_t sr_start(bool feedCore, bool detectCore) {
   }
 
   vTaskDelay(10);
-  ret_val = xTaskCreatePinnedToCoreWithCaps(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 15, &g_sr_data->detect_task, detectCore, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  ret_val = xTaskCreatePinnedToCoreWithCaps(&SR::audio_detect_task, "SR Detect Task", 8 * 1024, NULL, 6, &g_sr_data->detect_task, detectCore, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if(pdPASS != ret_val) {
     ESP_LOGE(SR::TAG, "Failed create audio detect task");
     ::sr_stop();

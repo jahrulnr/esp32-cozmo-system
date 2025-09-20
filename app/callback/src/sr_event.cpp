@@ -16,7 +16,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
             resetScreenWhenTimeout = true;
             notification->send(NOTIFICATION_AUTOMATION, (void*)EVENT_AUTOMATION::PAUSE);
             notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::WAKEWORD);
-            notification->send(NOTIFICATION_NOTE, (void*)Note::STOP);
+            notification->send(NOTIFICATION_NOTE, Note::STOP);
             motors->stop();
             servos->setHand(0);
             servos->setHead(180);
@@ -109,7 +109,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     break;
                 case Commands::NOTE_HAPPY_BIRTHDAY:
                     servos->setHead(180);
-                    notification->send(NOTIFICATION_NOTE, (void*)Note::HAPPY_BIRTHDAY);
+                    notification->send(NOTIFICATION_NOTE, Note::HAPPY_BIRTHDAY);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
                     resetScreenWhenTimeout = true;
                     SR::sr_set_mode(SR_MODE_WAKEWORD);
@@ -117,13 +117,13 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                     break;
                 case Commands::NOTE_RANDOM:
                     servos->setHead(DEFAULT_HEAD_ANGLE);
-                    notification->send(NOTIFICATION_NOTE, (void*)Note::RANDOM);
+                    notification->send(NOTIFICATION_NOTE, Note::RANDOM);
                     resetScreenWhenTimeout = true;
                     break;
                 case Commands::SPEAKER_LOWER:
                     notePlayer->setVolume(30);
                     servos->setHead(DEFAULT_HEAD_ANGLE);
-                    notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                    notification->send(NOTIFICATION_NOTE, Note::DOREMI_SCALE);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
 
                     resetScreenWhenTimeout = true;
@@ -133,7 +133,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                 case Commands::SPEAKER_MIDDLE:
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     notePlayer->setVolume(55);
-                    notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                    notification->send(NOTIFICATION_NOTE, Note::DOREMI_SCALE);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
 
                     resetScreenWhenTimeout = true;
@@ -143,7 +143,7 @@ void sr_event_callback(void *arg, sr_event_t event, int command_id, int phrase_i
                 case Commands::SPEAKER_LOUD:
                     servos->setHead(DEFAULT_HEAD_ANGLE);
                     notePlayer->setVolume(80);
-                    notification->send(NOTIFICATION_NOTE, (void*)Note::DOREMI_SCALE);
+                    notification->send(NOTIFICATION_NOTE, Note::DOREMI_SCALE);
                     notification->send(NOTIFICATION_DISPLAY, (void*)EVENT_DISPLAY::FACE);
 
                     resetScreenWhenTimeout = true;

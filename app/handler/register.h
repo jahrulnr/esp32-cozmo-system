@@ -6,3 +6,4 @@
 void batteryHandler(bool sendLog = false);
 void displayHandler();
 void weatherHandler();
+void notePlayerHandler();

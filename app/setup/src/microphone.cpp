@@ -17,7 +17,7 @@ void setupMicrophone() {
         MICROPHONE_WS,     // Word select pin
         I2S_NUM_1          // Port
     );
-    esp_err_t ret = microphone->init(16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO);
+    esp_err_t ret = microphone->init(16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);
     if (ret != ESP_OK) {
         logger->error("[setupI2SMicrophone] ERROR: Failed to initialize I2S Standard driver: %s\n", esp_err_to_name(ret));
         return;

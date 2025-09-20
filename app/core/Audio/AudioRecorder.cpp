@@ -146,7 +146,7 @@ uint8_t* AudioRecorder::recordWavToMemory(uint32_t durationMs, size_t* out_size)
     // Get recording parameters from microphone
     uint32_t sample_rate = 16000;
     i2s_data_bit_width_t mic_bits = I2S_DATA_BIT_WIDTH_16BIT;
-    i2s_slot_mode_t mic_channels = I2S_SLOT_MODE_STEREO;
+    i2s_slot_mode_t mic_channels = I2S_SLOT_MODE_MONO;
 
     bool need_32_to_16_transform = true;
     bool need_stereo_to_mono_transform = true;

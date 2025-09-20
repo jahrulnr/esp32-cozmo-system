@@ -21,12 +21,6 @@ Cube3D::Cube3D(U8G2_SSD1306_128X64_NONAME_F_HW_I2C* display, int width, int heig
     _lastUpdateTime = 0;
     _stationaryTime = 0;
     _gyroThreshold = 0.5f;    // degrees/second threshold for "stationary"
-
-    // Initialize debug variables
-    _lastGyroX = 0;
-    _lastGyroY = 0;
-    _lastGyroZ = 0;
-
     initVertices();
 }
 
@@ -74,18 +68,13 @@ void Cube3D::updateRotation(Sensors::OrientationSensor* orientation) {
     // When turning left/right → yaw rotation (Y-axis)
     // When rolling left/right → roll rotation (Z-axis)
     float gyroX = -orientation->getY(); // Pitch rate (forward/backward tilt) - negated and swapped
-    float gyroY = orientation->getZ();  // Yaw rate (left/right turn) - swapped
+    float gyroY = -orientation->getZ();  // Yaw rate (left/right turn) - swapped
     float gyroZ = orientation->getX();  // Roll rate (left/right tilt) - swapped
 
-    // Store for debugging
-    _lastGyroX = orientation->getX(); // Store original values for debug
-    _lastGyroY = orientation->getY();
-    _lastGyroZ = orientation->getZ();
-
     // Get accelerometer data for gravity reference - match the gyro axis swap
-    float accelX = -orientation->getAccelY(); // For pitch calculation - negated and swapped
-    float accelY = orientation->getAccelZ();  // For yaw (not used) - swapped
-    float accelZ = orientation->getAccelX();  // For roll calculation - swapped
+    float accelX = -orientation->getAccelY(); // For pitch calculation 
+    float accelY = orientation->getAccelZ();  // For yaw (not used)
+    float accelZ = orientation->getAccelX();  // For roll calculation
 
     // Calculate tilt angles from accelerometer (absolute reference)
     // Pitch: rotation around X-axis (forward/backward tilt)
@@ -172,21 +161,14 @@ void Cube3D::draw() {
     _display->setFont(u8g2_font_4x6_tf);
 
     // Show rotation values as text (in degrees) with clear axis labels
-    String rotText = "P:" + String((int)(_rotX * 180.0f / PI)) +
+    String rotText = "X:" + String((int)(_rotX * 180.0f / PI)) +
                     " Y:" + String((int)(_rotY * 180.0f / PI)) +
-                    " R:" + String((int)(_rotZ * 180.0f / PI));
+                    " Z:" + String((int)(_rotZ * 180.0f / PI));
 
     // Draw text at bottom of screen
     int textWidth = _display->getStrWidth(rotText.c_str());
     int textX = (_width - textWidth) / 2;
     _display->drawStr(textX, _height - 16, rotText.c_str());
-
-    // Show raw gyro values for debugging
-    String gyroText = "GX:" + String((int)_lastGyroX) +
-                     " GY:" + String((int)_lastGyroY) +
-                     " GZ:" + String((int)_lastGyroZ);
-    _display->setFont(u8g2_font_4x6_tf);
-    _display->drawStr(2, 8, gyroText.c_str());
 
     // Show complementary filter status
     String filterText = "CF:" + String((int)(_alpha * 100)) + "%";

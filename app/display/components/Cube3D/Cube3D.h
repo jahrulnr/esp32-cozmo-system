@@ -45,9 +45,6 @@ private:
     float _stationaryTime;
     float _gyroThreshold;
 
-    // Last gyro readings for debugging
-    float _lastGyroX, _lastGyroY, _lastGyroZ;
-
     // Cube size
     float _cubeSize;
 
